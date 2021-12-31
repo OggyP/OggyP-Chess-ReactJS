@@ -1,0 +1,111 @@
+#board-wrapper {
+    width: 800px;
+    height: 800px;
+    aspect-ratio: 1;
+}
+
+#main-board {
+    background-image: url('brownBoard.svg');
+    width: inherit;
+    height: inherit;
+    position: absolute;
+}
+
+#pieces-layer,
+#legal-moves-layer {
+    position: absolute;
+    width: inherit;
+    height: inherit;
+}
+
+#pieces-layer {
+    z-index: 2;
+    pointer-events: none;
+}
+
+.valid-move {
+    shape-rendering: auto;
+    background: radial-gradient(rgba(20, 85, 30, 0.5) 19%, rgba(0, 0, 0, 0) 20%);
+    width: 12.5%;
+    height: 12.5%;
+    margin: auto;
+    position: absolute;
+    /* top: 0;
+  left: 0; */
+    background-size: cover;
+    will-change: transform;
+    z-index: 2;
+}
+
+.valid-move.capture {
+    background: radial-gradient(transparent 0%, transparent 79%, rgba(20, 85, 0, 0.3) 80%);
+}
+
+.valid-move:hover {
+    background: rgba(20, 85, 30, 0.3)
+}
+
+.piece {
+    width: 12.5%;
+    height: 12.5%;
+    margin: auto;
+    position: absolute;
+    z-index: 4;
+    /* top: 0;
+  left: 0; */
+    background-size: cover;
+    will-change: transform;
+    pointer-events: none;
+    cursor: pointer;
+}
+
+.square {
+    width: 12.5%;
+    height: 12.5%;
+    margin: auto;
+    position: absolute;
+    z-index: 1;
+    /* top: 0;
+left: 0; */
+    background-size: cover;
+    will-change: transform;
+}
+
+#promotion-choice {
+    position: absolute;
+    background: rgba(22, 21, 18, 0.7);
+    z-index: 205;
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    /* right: 0 */
+}
+
+#promotion-choice .square {
+    cursor: pointer;
+    border-radius: 50%;
+    background-color: #b0b0b0;
+    box-shadow: inset 0 0 25px 3px #808080;
+    transition: all 150ms
+}
+
+#promotion-choice .piece {
+    pointer-events: auto;
+    opacity: 1
+}
+
+#promotion-choice .piece {
+    width: 100%;
+    height: 100%;
+    transition: all 150ms;
+    transform: scale(0.8)
+}
+
+#promotion-choice .square:hover {
+    box-shadow: inset 0 0 48px 8px #d64f00;
+    border-radius: 0%
+}
+
+#promotion-choice .square:hover .piece {
+    transform: none
+}
