@@ -156,7 +156,7 @@ class Pawn extends ChessPiece {
         let yMoveVal = (ownTeam === "white") ? -1 : 1
         let vectorToCheck: Vector | null = addVectorsAndCheckPos(pos, { "x": 1, "y": yMoveVal })
         if (vectorToCheck) {
-            if (board.enPassant && board.enPassant.x === vectorToCheck.x && board.enPassant.y === vectorToCheck.y) {
+            if (board.enPassant && board.enPassant.x === vectorToCheck.x && board.enPassant.y === vectorToCheck.y && board.enPassant.y === ((ownTeam === 'white') ? 2 : 5)) {
                 const newBoard = new Board(board)
                 newBoard.doMove(pos, vectorToCheck)
                 newBoard.setPos({ "x": vectorToCheck.x, "y": pos.y }, null)
@@ -182,7 +182,7 @@ class Pawn extends ChessPiece {
         // Take Left
         vectorToCheck = addVectorsAndCheckPos(pos, { "x": -1, "y": yMoveVal })
         if (vectorToCheck) {
-            if (board.enPassant && board.enPassant.x === vectorToCheck.x && board.enPassant.y === vectorToCheck.y) {
+            if (board.enPassant && board.enPassant.x === vectorToCheck.x && board.enPassant.y === vectorToCheck.y && board.enPassant.y === ((ownTeam === 'white') ? 2 : 5)) {
                 const newBoard = new Board(board)
                 newBoard.doMove(pos, vectorToCheck)
                 newBoard.setPos({ "x": vectorToCheck.x, "y": pos.y }, null)

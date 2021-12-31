@@ -117,7 +117,24 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   mouseUp() {
+
     if (this.state.pieceBeingDragged) {
+      let posSelected: Vector;
+      if (this.props.notFlipped)
+        posSelected = { "x": Math.floor(this.state.mousePos.x / 100), "y": Math.floor(this.state.mousePos.y / 100) }
+      else
+        posSelected = { "x": 7 - Math.floor(this.state.mousePos.x / 100), "y": 7 - Math.floor(this.state.mousePos.y / 100) }
+      console.log(posSelected)
+
+
+      for (let i = 0; i < this.props.validMoves.length; i++) {
+        const validMoveToCheck = this.props.validMoves[i]
+        if (posSelected.x === validMoveToCheck.move.x && posSelected.y === validMoveToCheck.move.y) {
+          this.props.onValidMoveClick(posSelected)
+          return
+        }
+      }
+
       console.log("Stop Drag")
       this.setState({
         pieceBeingDragged: null
@@ -126,14 +143,15 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   private _onMouseMove(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    // if (!this.state.pieceBeingDragged) return
-    // const checkTarget = event.target as HTMLDivElement
-    // const parent = checkTarget.offsetParent as HTMLDivElement
-    this.setState({
-      mousePos: { "x": event.nativeEvent.offsetX, "y": event.nativeEvent.offsetY }
-    })
-    // console.log(event)
-    // console.log(this.state.mousePos)
+    const mainBoard = document.getElementById("main-board")
+    if (mainBoard) {
+      var bounds = mainBoard.getBoundingClientRect();
+      this.setState({
+        mousePos: { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
+      })
+      // console.log(event)
+      console.log(this.state.mousePos)
+    }
   }
 
   render() {
@@ -148,11 +166,11 @@ class Board extends React.Component<BoardProps, BoardState> {
     const piecesToDisplay = pieces.map((item, index) => {
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
         return <Piece key={item.piece.key}
-        type={item.piece.code}
-        team={item.piece.team}
-        x={this.state.mousePos.x - 50}
-        y={this.state.mousePos.y - 50}
-      />;
+          type={item.piece.code}
+          team={item.piece.team}
+          x={this.state.mousePos.x - 50}
+          y={this.state.mousePos.y - 50}
+        />;
       } else
         return <Piece key={item.piece.key}
           type={item.piece.code}
