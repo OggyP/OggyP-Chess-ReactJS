@@ -219,6 +219,7 @@ interface GameState {
     team: Teams
     pos: Vector
   } | null
+  turn: Teams
 }
 
 class Game extends React.Component<{}, GameState> {
@@ -229,7 +230,8 @@ class Game extends React.Component<{}, GameState> {
       validMoves: [],
       notFlipped: true,
       selectedPiece: null,
-      promotionSelector: null
+      promotionSelector: null,
+      turn: "white"
     }
   }
 
@@ -252,22 +254,30 @@ class Game extends React.Component<{}, GameState> {
     newBoard.promote(this.state.promotionSelector?.pos as Vector, piece, this.state.promotionSelector?.team as Teams)
     if (!newBoard.inCheck(this.state.promotionSelector?.team as Teams))
       this.setState({
-        "currentBoard": newBoard,
-        "selectedPiece": null,
-        "validMoves": [],
-        "promotionSelector": null
+        currentBoard: newBoard,
+        selectedPiece: null,
+        validMoves: [],
+        promotionSelector: null,
+        turn: (this.state.turn === 'white') ? 'black' : 'white'
       })
     else
       alert("L, you can't do that because you will be in check!")
   }
 
   handlePieceClick(posClicked: Vector): void {
-    const newValidMoves = this.state.currentBoard.getPos(posClicked)?.getMoves(posClicked, this.state.currentBoard)
-    if (newValidMoves)
+    if (this.state.currentBoard.getPos(posClicked)?.team === this.state.turn) {
+      const newValidMoves = this.state.currentBoard.getPos(posClicked)?.getMoves(posClicked, this.state.currentBoard)
+      if (newValidMoves)
+        this.setState({
+          validMoves: newValidMoves,
+          selectedPiece: posClicked
+        })
+    } else {
       this.setState({
-        validMoves: newValidMoves,
-        selectedPiece: posClicked
+        validMoves: [],
+        selectedPiece: null
       })
+    }
   }
 
   handleMoveClick(posClicked: Vector): void {
@@ -286,8 +296,10 @@ class Game extends React.Component<{}, GameState> {
       }
     }
 
+    let isPromotion = false
     if (selectedPiece && selectedPiecePos) {
       if (moveType && moveType.includes('promote')) {
+        isPromotion = true
         this.setState({
           "promotionSelector": {
             "team": selectedPiece.team,
@@ -301,12 +313,14 @@ class Game extends React.Component<{}, GameState> {
 
     // newBoard = new ChessBoard(this.state.currentBoard)
     // console.log(newBoard)
-    if (newBoard)
+    if (newBoard) {
       this.setState({
         "currentBoard": newBoard,
         "selectedPiece": null,
         "validMoves": []
       })
+      if (!isPromotion) this.setState({ turn: (this.state.turn === 'white') ? 'black' : 'white' })
+    }
   }
 
   render() {
@@ -343,7 +357,7 @@ class Game extends React.Component<{}, GameState> {
           {promotionSelector}
         </div>
         <button onClick={() => this.flipBoard()}>Flip Board</button>
-        <button onClick={() => this.swapPositions()}>Swap Positions</button>
+        {/* <button onClick={() => this.swapPositions()}>Swap Positions</button> */}
       </div>
     );
   }
