@@ -95,7 +95,6 @@ class Board extends React.Component<BoardProps, BoardState> {
       posSelected = { "x": Math.floor(this.state.mousePos.x / 100), "y": Math.floor(this.state.mousePos.y / 100) }
     else
       posSelected = { "x": 7 - Math.floor(this.state.mousePos.x / 100), "y": 7 - Math.floor(this.state.mousePos.y / 100) }
-    console.log(posSelected)
     if (this.props.selectedPiece) {
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
@@ -108,7 +107,6 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
 
     if (this.props.board.getPos(posSelected)) {
-      console.log("Start Drag")
       this.props.onPieceClick(posSelected)
       this.setState({
         pieceBeingDragged: posSelected
@@ -124,7 +122,6 @@ class Board extends React.Component<BoardProps, BoardState> {
         posSelected = { "x": Math.floor(this.state.mousePos.x / 100), "y": Math.floor(this.state.mousePos.y / 100) }
       else
         posSelected = { "x": 7 - Math.floor(this.state.mousePos.x / 100), "y": 7 - Math.floor(this.state.mousePos.y / 100) }
-      console.log(posSelected)
 
 
       for (let i = 0; i < this.props.validMoves.length; i++) {
@@ -135,7 +132,6 @@ class Board extends React.Component<BoardProps, BoardState> {
         }
       }
 
-      console.log("Stop Drag")
       this.setState({
         pieceBeingDragged: null
       })
@@ -149,8 +145,6 @@ class Board extends React.Component<BoardProps, BoardState> {
       this.setState({
         mousePos: { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
       })
-      // console.log(event)
-      console.log(this.state.mousePos)
     }
   }
 
@@ -233,21 +227,30 @@ class Game extends React.Component<{}, GameState> {
     this.state = {
       currentBoard: new ChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
       validMoves: [],
-      notFlipped: false,
+      notFlipped: true,
       selectedPiece: null,
       promotionSelector: null
     }
   }
 
+  flipBoard(): void {
+    this.setState({
+      "notFlipped": !this.state.notFlipped
+    })
+  }
+
   handlePromotionClick(piece: PieceCodes): void {
     const newBoard = new ChessBoard(this.state.currentBoard)
     newBoard.promote(this.state.promotionSelector?.pos as Vector, piece, this.state.promotionSelector?.team as Teams)
-    this.setState({
-      "currentBoard": newBoard,
-      "selectedPiece": null,
-      "validMoves": [],
-      "promotionSelector": null
-    })
+    if (!newBoard.inCheck(this.state.promotionSelector?.team as Teams))
+      this.setState({
+        "currentBoard": newBoard,
+        "selectedPiece": null,
+        "validMoves": [],
+        "promotionSelector": null
+      })
+    else
+      alert("L, you can't do that because you will be in check!")
   }
 
   handlePieceClick(posClicked: Vector): void {
@@ -289,6 +292,7 @@ class Game extends React.Component<{}, GameState> {
       console.warn("The selected piece was undefined")
 
     // newBoard = new ChessBoard(this.state.currentBoard)
+    // console.log(newBoard)
     if (newBoard)
       this.setState({
         "currentBoard": newBoard,
@@ -301,7 +305,7 @@ class Game extends React.Component<{}, GameState> {
     let promotionSelector
     const promotionSelectorVal = this.state.promotionSelector
     if (promotionSelectorVal) {
-      const promotionChoices: PieceCodes[] = ['q', 'r', 'n', 'b']
+      const promotionChoices: PieceCodes[] = ['q', 'n', 'r', 'b', 'k', 'p']
       const promotionOptionsDisplay = promotionChoices.map((item, index) => {
         const x = promotionSelectorVal.pos.x
         const y = (promotionSelectorVal.team === 'white') ? index : (7 - index)
@@ -330,6 +334,7 @@ class Game extends React.Component<{}, GameState> {
           />
           {promotionSelector}
         </div>
+        <button onClick={() => this.flipBoard()}>Flip Board</button>
       </div>
     );
   }

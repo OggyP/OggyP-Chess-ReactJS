@@ -79,6 +79,67 @@ class King extends ChessPiece {
             { "x": -1, "y": 1 },
         ]
         let moves = getVectors(board, vectors, pos, super.getTeam()).vectors
+        for (let i = 0; i < moves.length; i++) {
+            moves[i].board.castleInfo[this.team].kingSide = false
+            moves[i].board.castleInfo[this.team].queenSide = false
+        }
+
+        if (!board.inCheck(this.team)) {
+            if (board.castleInfo[this.team].kingSide) {
+                let piecesInWay: PieceCodes[] = []
+                for (let i = 4; i < 8; i++) {
+                    const piece = board.getPos({ "x": i, "y": pos.y })
+                    if (piece && piece.team === this.team) piecesInWay.push(piece.code)
+                }
+                if (piecesInWay.length === 2 && piecesInWay.includes('k') && piecesInWay.includes('r')) {
+                    let newBoard = new Board(board)
+                    const vectorToDisplay = { "x": 6, "y": pos.y }
+                    if (vectorToDisplay) {
+                        newBoard.doMove(pos, { "x": 5, "y": pos.y })
+                        if (!newBoard.inCheck(this.team)) {
+                            newBoard.doMove({ "x": 5, "y": pos.y }, vectorToDisplay)
+                            if (!newBoard.inCheck(this.team)) {
+                                newBoard.doMove({ "x": 7, "y": pos.y }, { "x": 5, "y": pos.y })
+                                newBoard.castleInfo[this.team].kingSide = false
+                                newBoard.castleInfo[this.team].queenSide = false
+                                moves.push({
+                                    "move": vectorToDisplay,
+                                    "board": newBoard,
+                                    "moveType": "castle"
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+            if (board.castleInfo[this.team].queenSide) {
+                let piecesInWay: PieceCodes[] = []
+                for (let i = 4; i >= 0; i--) {
+                    const piece = board.getPos({ "x": i, "y": pos.y })
+                    if (piece && piece.team === this.team) piecesInWay.push(piece.code)
+                }
+                if (piecesInWay.length === 2 && piecesInWay.includes('k') && piecesInWay.includes('r')) {
+                    const newBoard = new Board(board)
+                    const vectorToDisplay = { "x": 2, "y": pos.y }
+                    if (vectorToDisplay) {
+                        newBoard.doMove(pos, { "x": 3, "y": pos.y })
+                        if (!newBoard.inCheck(this.team)) {
+                            newBoard.doMove({ "x": 3, "y": pos.y }, vectorToDisplay)
+                            if (!newBoard.inCheck(this.team)) {
+                                newBoard.doMove({ "x": 0, "y": pos.y }, { "x": 3, "y": pos.y })
+                                newBoard.castleInfo[this.team].kingSide = false
+                                newBoard.castleInfo[this.team].queenSide = false
+                                moves.push({
+                                    "move": vectorToDisplay,
+                                    "board": newBoard,
+                                    "moveType": "castle"
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         return moves.filter(legal, this)
     }
@@ -137,6 +198,14 @@ class Rook extends ChessPiece {
             { "x": -1, "y": 0 },
         ]
         let moves = getRayCastVectors(board, vectors, pos, super.getTeam()).vectors
+        const isAtBackRow = (pos.y === ((this.team === 'white') ? 7 : 0))
+        if (isAtBackRow)
+            for (let i = 0; i < moves.length; i++) {
+                if (pos.x === 0)
+                    moves[i].board.castleInfo[this.team].queenSide = false
+                if (pos.x === 7)
+                moves[i].board.castleInfo[this.team].kingSide = false
+            }
 
         return moves.filter(legal, this)
     }
@@ -371,7 +440,8 @@ class Board {
             this.turn = input.turn
             this.halfMoveNumber = input.halfMoveNumber
             this.halfMovesSinceCaptureOrPawnMove = input.halfMovesSinceCaptureOrPawnMove
-            this.castleInfo = Object.assign({}, input.castleInfo)
+            this.castleInfo.white = Object.assign({}, input.castleInfo.white)
+            this.castleInfo.black = Object.assign({}, input.castleInfo.black)
             this.enPassant = input.enPassant
             this._pieceId = input._pieceId
         } else {
@@ -494,7 +564,7 @@ class Board {
                 let piece = this._squares[pos.y][pos.x]
                 if (piece instanceof King && piece.team === team) {
                     // Now we have the correct King to check
-                    let QueenAndRookVectors: Vector[] = [
+                    const QueenAndRookVectors: Vector[] = [
                         { "x": 0, "y": 1 },
                         { "x": 1, "y": 0 },
                         { "x": 0, "y": -1 },
@@ -506,7 +576,7 @@ class Board {
                         if (pieces[i] instanceof Queen || pieces[i] instanceof Rook)
                             return true;
 
-                    let QueenAndBishopVectors: Vector[] = [
+                    const QueenAndBishopVectors: Vector[] = [
                         { "x": 1, "y": 1 },
                         { "x": 1, "y": -1 },
                         { "x": -1, "y": -1 },
@@ -518,7 +588,7 @@ class Board {
                         if (pieces[i] instanceof Queen || pieces[i] instanceof Bishop)
                             return true;
 
-                    let knightVectors: Vector[] = [
+                    const knightVectors: Vector[] = [
                         { "x": 2, "y": 1 },
                         { "x": 1, "y": 2 },
                         { "x": 2, "y": -1 },
@@ -532,6 +602,22 @@ class Board {
 
                     for (let i = 0; i < pieces.length; i++)
                         if (pieces[i] instanceof Knight)
+                            return true;
+
+                    const kingVectors: Vector[] = [
+                        { "x": 0, "y": 1 },
+                        { "x": 1, "y": 1 },
+                        { "x": 1, "y": 0 },
+                        { "x": 1, "y": -1 },
+                        { "x": 0, "y": -1 },
+                        { "x": -1, "y": -1 },
+                        { "x": -1, "y": 0 },
+                        { "x": -1, "y": 1 },
+                    ]
+                    pieces = getVectors(this, kingVectors, pos, team).pieces;
+
+                    for (let i = 0; i < pieces.length; i++)
+                        if (pieces[i] instanceof King)
                             return true;
 
                     let pawnVectors
@@ -550,8 +636,6 @@ class Board {
                     for (let i = 0; i < pieces.length; i++)
                         if (pieces[i] instanceof Pawn)
                             return true;
-
-                    return false;
                 }
             }
         return false;
