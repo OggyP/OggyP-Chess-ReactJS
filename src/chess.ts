@@ -204,7 +204,7 @@ class Rook extends ChessPiece {
                 if (pos.x === 0)
                     moves[i].board.castleInfo[this.team].queenSide = false
                 if (pos.x === 7)
-                moves[i].board.castleInfo[this.team].kingSide = false
+                    moves[i].board.castleInfo[this.team].kingSide = false
             }
 
         return moves.filter(legal, this)
@@ -555,6 +555,17 @@ class Board {
             FEN += ' -'
         FEN += ` ${this.halfMovesSinceCaptureOrPawnMove} ${1 + Math.floor(this.halfMoveNumber / 2)}`
         return FEN
+    }
+
+    swapPositions(): void {
+        let pos: Vector = { "x": 0, "y": 0 }
+        for (pos.x = 0; pos.x < 8; pos.x++)
+            for (pos.y = 0; pos.y < 8; pos.y++) {
+                const pieceAtPos = this._squares[pos.y][pos.x]
+                if (pieceAtPos)
+                    this._squares[pos.y][pos.x] = this._squares[pos.y][pos.x] = new pieceCodeClasses[pieceAtPos.code]((pieceAtPos.team === 'white') ? 'black' : 'white', this._pieceId)
+            }
+
     }
 
     inCheck(team: Teams): boolean {

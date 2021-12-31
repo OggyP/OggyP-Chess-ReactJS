@@ -239,6 +239,14 @@ class Game extends React.Component<{}, GameState> {
     })
   }
 
+  swapPositions(): void {
+    const newBoard = new ChessBoard(this.state.currentBoard)
+    newBoard.swapPositions()
+    this.setState({
+      currentBoard: newBoard
+    })
+  }
+
   handlePromotionClick(piece: PieceCodes): void {
     const newBoard = new ChessBoard(this.state.currentBoard)
     newBoard.promote(this.state.promotionSelector?.pos as Vector, piece, this.state.promotionSelector?.team as Teams)
@@ -335,6 +343,7 @@ class Game extends React.Component<{}, GameState> {
           {promotionSelector}
         </div>
         <button onClick={() => this.flipBoard()}>Flip Board</button>
+        <button onClick={() => this.swapPositions()}>Swap Positions</button>
       </div>
     );
   }
