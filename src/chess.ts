@@ -311,6 +311,8 @@ class Pawn extends ChessPiece {
 }
 
 function legal(this: ChessPiece, value: MovesAndBoard): boolean {
+    if (this instanceof Pawn || value.moveType.includes('capture')) value.board.halfMovesSinceCaptureOrPawnMove = 0
+    else value.board.halfMovesSinceCaptureOrPawnMove++
     return !value.board.inCheck(this.team)
 }
 
