@@ -22,11 +22,34 @@ ul {
     background: #ddd;
 }
 
-.game {
+.horizontal {
     display: flex;
     flex-direction: row;
 }
 
-.game-info {
+#game-controls {
     margin-left: 20px;
 }
+
+#game-controls button {
+    padding: 7px;
+    margin: 10px;
+}
+
+#previous-moves tr,
+#previous-moves th,
+#previous-moves td {
+    height: 15px;
+}
+
+#previous-moves p {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+table {
+    height: auto;
+}
+
+#game-info #current-board {}

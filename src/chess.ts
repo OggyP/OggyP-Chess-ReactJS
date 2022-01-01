@@ -313,6 +313,7 @@ class Pawn extends ChessPiece {
 function legal(this: ChessPiece, value: MovesAndBoard): boolean {
     if (this instanceof Pawn || value.moveType.includes('capture')) value.board.halfMovesSinceCaptureOrPawnMove = 0
     else value.board.halfMovesSinceCaptureOrPawnMove++
+    value.board.halfMoveNumber++
     return !value.board.inCheck(this.team)
 }
 
@@ -567,6 +568,17 @@ class Board {
                 if (pieceAtPos)
                     this._squares[pos.y][pos.x] = this._squares[pos.y][pos.x] = new pieceCodeClasses[pieceAtPos.code]((pieceAtPos.team === 'white') ? 'black' : 'white', this._pieceId)
             }
+    }
+
+    areLegalMoves(team: Teams): boolean {
+        let pos: Vector = { "x": 0, "y": 0 }
+        for (pos.x = 0; pos.x < 8; pos.x++)
+            for (pos.y = 0; pos.y < 8; pos.y++) {
+                const piece = this._squares[pos.y][pos.x]
+                if (piece && piece.team === team && piece.getMoves(pos, this).length)
+                    return true
+            }
+        return false
 
     }
 
@@ -664,12 +676,30 @@ class Board {
     }
 }
 
+interface GameConstuctorInput {
+    fen?: string
+    pgn?: string
+}
+
+// class Game {
+//     this.history = 
+
+//     constructor(input: GameConstuctorInput) {
+//         if (input.pgn) {
+
+//         }
+//         else if (input.fen) {
+
+//         }
+//     }
+// }
+
 function convertToChessNotation(position: Vector): string {
-    return String.fromCharCode(97 + position.x) + (8 + position.y);
+    return String.fromCharCode(97 + position.x) + (8 - position.y);
 }
 
 function convertToPosition(notation: string): Vector {
     return { "x": parseInt(notation[0], 36) - 10, "y": 8 - Number(notation[1]) };
 }
 
-export { Board as ChessBoard, ChessPiece, King, Queen, Rook, Bishop, Knight, Pawn }
+export { Board as ChessBoard, ChessPiece, King, Queen, Rook, Bishop, Knight, Pawn, convertToChessNotation }
