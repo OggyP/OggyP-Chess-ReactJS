@@ -14,15 +14,18 @@ interface PieceProps {
   team: Teams
   x: number
   y: number
-  beingDragged: boolean
+  showAnimation: boolean
+  isGhost: boolean
+  text?: number
 }
 
 function Piece(props: PieceProps) {
-  const classes = `piece ${(props.team === 'white') ? "l" : "d"} ${props.type} ${(!props.beingDragged) ? "ani" : ""}`;
+  const classes = `piece ${(props.team === 'white') ? "l" : "d"} ${props.type}${(props.showAnimation) ? " ani" : ""}${(props.isGhost) ? " ghost" : ""}`;
   return (
     <div className={classes} style={{
       "transform": `translate(${props.x}px, ${props.y}px)`,
     }}>
+      {props.text}
     </div>
   )
 }
@@ -83,6 +86,7 @@ interface BoardProps {
   notFlipped: boolean
   onPieceClick: Function
   onValidMoveClick: Function
+  deselectPiece: Function
 }
 
 interface BoardState {
@@ -132,6 +136,8 @@ class Board extends React.Component<BoardProps, BoardState> {
       else
         posSelected = { "x": 7 - Math.floor(this.state.mousePos.x / 100), "y": 7 - Math.floor(this.state.mousePos.y / 100) }
 
+      if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y)
+        this.props.deselectPiece()
 
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
@@ -166,23 +172,31 @@ class Board extends React.Component<BoardProps, BoardState> {
           pieces.push({ "piece": boardSquare, "pos": { "x": x, "y": y } })
       }
     const pieceBeingDragged = this.state.pieceBeingDragged
-    const piecesToDisplay = pieces.map((item, index) => {
+    let unsortedPieces: [JSX.Element, number][] = pieces.map((item, index) => {
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
-        return <Piece key={item.piece.key}
+        return [<Piece key={item.piece.key}
+          text={item.piece.key}
           type={item.piece.code}
           team={item.piece.team}
           x={this.state.mousePos.x - 50}
           y={this.state.mousePos.y - 50}
-          beingDragged={true}
-        />;
+          showAnimation={false}
+          isGhost={false}
+        />, item.piece.key]
       } else
-        return <Piece key={item.piece.key}
+        return [<Piece key={item.piece.key}
+          text={item.piece.key}
           type={item.piece.code}
           team={item.piece.team}
           x={100 * ((this.props.notFlipped) ? item.pos.x : 7 - item.pos.x)}
           y={100 * ((this.props.notFlipped) ? item.pos.y : 7 - item.pos.y)}
-          beingDragged={false}
-        />;
+          showAnimation={true}
+          isGhost={false}
+        />, item.piece.key]
+    })
+    unsortedPieces.sort(function(a, b){return a[1]-b[1]})
+    const piecesToDisplay = unsortedPieces.map((item, index) => {
+      return item[0]
     })
 
     const legalMovesToDisplay = this.props.validMoves.map((item, index) => {
@@ -191,11 +205,24 @@ class Board extends React.Component<BoardProps, BoardState> {
         isCapture={(item.moveType.includes('capture'))}
         x={(this.props.notFlipped) ? item.move.x : 7 - item.move.x}
         y={(this.props.notFlipped) ? item.move.y : 7 - item.move.y}
-      // onClick={() => this.props.onValidMoveClick({ "x": item.move.x, "y": item.move.y })}
-      // onClick={() => this.props.onClick(i)}
       />;
     })
 
+    let ghostPiece = null
+    if (this.props.selectedPiece) {
+      const piece = this.props.board.getPos(this.props.selectedPiece)
+      if (piece)
+        ghostPiece = <Piece
+          type={piece.code}
+          team={piece.team}
+          x={100 * ((this.props.notFlipped) ? this.props.selectedPiece.x : 7 - this.props.selectedPiece.x)}
+          y={100 * ((this.props.notFlipped) ? this.props.selectedPiece.y : 7 - this.props.selectedPiece.y)}
+          showAnimation={false}
+          isGhost={true}
+        />;
+    }
+
+    console.log("Render Board")
 
     return (
       <div id='main-board' onMouseMove={this._onMouseMove.bind(this)} onMouseDown={() => this.mouseDown()} onMouseUp={() => this.mouseUp()} onMouseLeave={() => this.mouseUp()}>
@@ -204,6 +231,7 @@ class Board extends React.Component<BoardProps, BoardState> {
         </div>
         <div id='pieces-layer'>
           {piecesToDisplay}
+          {ghostPiece}
         </div>
       </div>
     );
@@ -299,6 +327,13 @@ class Game extends React.Component<{}, GameState> {
         alert("L, you can't do that because you will be in check!")
     } else
       console.warn("Promotion Turn / Piece Check Failed")
+  }
+
+  deselectPiece(): void {
+    this.setState({
+      validMoves: [],
+      selectedPiece: null
+    })
   }
 
   handlePieceClick(posClicked: Vector): void {
@@ -451,6 +486,7 @@ class Game extends React.Component<{}, GameState> {
               notFlipped={this.state.notFlipped}
               onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
               onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
+              deselectPiece={() => this.deselectPiece()}
             />
             {promotionSelector}
           </div>
