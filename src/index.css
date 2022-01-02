@@ -39,17 +39,18 @@ ul {
 #previous-moves tr,
 #previous-moves th,
 #previous-moves td {
-    height: 15px;
+    height: 2px;
+    padding: 0;
 }
 
 #previous-moves p {
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    padding: 0;
+    /* overflow: hidden; */
 }
 
-table {
+
+/* table {
     height: auto;
-}
-
-#game-info #current-board {}
+} */

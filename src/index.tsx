@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import './chess.css';
 import './assets.css'
-import { ChessBoard, ChessPiece, convertToChessNotation } from './chess'
+import { ChessBoard, ChessGame, ChessPiece, convertToChessNotation } from './chess'
 
 type Teams = "white" | "black"
 type PieceCodes = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
@@ -121,7 +121,6 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   mouseUp() {
-
     if (this.state.pieceBeingDragged) {
       let posSelected: Vector;
       if (this.props.notFlipped)
@@ -213,7 +212,8 @@ interface GameState {
 interface Vector { "x": number, "y": number }
 
 interface GameState {
-  currentBoard: ChessBoard
+  game: ChessGame
+  viewingMove: number
   validMoves: {
     "move": Vector,
     "board": ChessBoard,
@@ -221,40 +221,40 @@ interface GameState {
   }[]
   selectedPiece: Vector | null
   notFlipped: boolean
-  history: History[]
   promotionSelector: {
     team: Teams
     moveType: string
+    board: ChessBoard
     pos: {
       start: Vector
       end: Vector
     }
   } | null
-  turn: Teams
 }
 
 interface History {
-  board: string
+  board: Board
   text: string
   move: {
     start: Vector
     end: Vector
     type: string
+    team: Teams
   } | null
 }
+
 
 class Game extends React.Component<{}, GameState> {
   constructor(props: BoardProps) {
     super(props)
     const startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     this.state = {
-      currentBoard: new ChessBoard(startingFEN),
-      history: [{ "board": startingFEN, "text": "Starting Position", "move": null }],
+      game: new ChessGame({ fen: startingFEN }),
+      viewingMove: 0,
       validMoves: [],
       notFlipped: true,
       selectedPiece: null,
       promotionSelector: null,
-      turn: "white"
     }
   }
 
@@ -265,41 +265,39 @@ class Game extends React.Component<{}, GameState> {
   }
 
   handlePromotionClick(piece: PieceCodes): void {
-    const startingPos = this.state.promotionSelector?.pos.start
-    const endingPos = this.state.promotionSelector?.pos.end
-    const pieceTeam = this.state.promotionSelector?.team
-    if (startingPos && endingPos && pieceTeam) {
-      const newBoard = new ChessBoard(this.state.currentBoard)
-      newBoard.promote(endingPos, piece, pieceTeam)
-      if (!newBoard.inCheck(pieceTeam)) {
-        let history = this.state.history.slice()
-        history.push({
-          board: newBoard.getFen(),
-          text: convertToChessNotation(startingPos) + convertToChessNotation(endingPos) + piece,
+    const info = this.state.promotionSelector
+    if (info  && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
+      const newBoard = new ChessBoard(info.board)
+      newBoard.promote(info.pos.end, piece, info.team)
+      if (!newBoard.inCheck(info.team)) {
+        console.log("update game prom")
+        this.state.game.newMove({
+          board: newBoard,
+          text: convertToChessNotation(info.pos.start) + convertToChessNotation(info.pos.end) + piece,
           move: {
-            start: startingPos,
-            end: endingPos,
+            start: info.pos.start,
+            end: info.pos.end,
             type: this.state.promotionSelector?.moveType as string,
           }
         })
+        console.log(this.state.game.getMoveCount())
         this.setState({
-          history: history,
-          currentBoard: newBoard,
+          game: this.state.game,
           selectedPiece: null,
           validMoves: [],
           promotionSelector: null,
-          turn: (this.state.turn === 'white') ? 'black' : 'white'
+          viewingMove: this.state.viewingMove + 1
         })
       }
       else
         alert("L, you can't do that because you will be in check!")
     } else
-      console.warn("Starting Pos and / or Ending Pos in handlePromotionClick() was null")
+      console.warn("Promotion Turn / Piece Check Failed")
   }
 
   handlePieceClick(posClicked: Vector): void {
-    if (this.state.currentBoard.getPos(posClicked)?.team === this.state.turn) {
-      const newValidMoves = this.state.currentBoard.getPos(posClicked)?.getMoves(posClicked, this.state.currentBoard)
+    if (this.state.viewingMove === this.state.game.getMoveCount() && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next')) {
+      const newValidMoves = this.latestBoard().getPos(posClicked)?.getMoves(posClicked, this.latestBoard())
       if (newValidMoves)
         this.setState({
           validMoves: newValidMoves,
@@ -308,59 +306,66 @@ class Game extends React.Component<{}, GameState> {
     } else {
       this.setState({
         validMoves: [],
-        selectedPiece: null
+        selectedPiece: posClicked
       })
     }
   }
 
+  latestBoard(): ChessBoard {
+    return this.state.game.getLatest().board
+  }
+
+  viewingBoard(): ChessBoard {
+    return this.state.game.getMove(this.state.viewingMove).board
+  }
+
   handleMoveClick(posClicked: Vector): void {
-    let newBoard: ChessBoard | null = null
-    let moveType: string | null = null
+    if (this.state.viewingMove === this.state.game.getMoveCount()) {
+      let newBoard: ChessBoard | null = null
+      let moveType: string | null = null
 
-    const selectedPiecePos = Object.assign({}, this.state.selectedPiece)
+      const selectedPiecePos = Object.assign({}, this.state.selectedPiece)
 
-    let selectedPiece: PieceAtPos = null
-    if (selectedPiecePos)
-      selectedPiece = this.state.currentBoard.getPos(selectedPiecePos)
-    for (let i = 0; i < this.state.validMoves.length; i++) {
-      const checkMove = this.state.validMoves[i]
-      if (checkMove.move.x === posClicked.x && checkMove.move.y === posClicked.y) {
-        newBoard = checkMove.board
-        moveType = checkMove.moveType
+      let selectedPiece: PieceAtPos = null
+      if (selectedPiecePos)
+        selectedPiece = this.latestBoard().getPos(selectedPiecePos)
+      for (let i = 0; i < this.state.validMoves.length; i++) {
+        const checkMove = this.state.validMoves[i]
+        if (checkMove.move.x === posClicked.x && checkMove.move.y === posClicked.y) {
+          newBoard = checkMove.board
+          moveType = checkMove.moveType
+        }
       }
-    }
 
-    let isPromotion = false
-    if (selectedPiece && selectedPiecePos) {
-      if (moveType && moveType.includes('promote')) {
-        isPromotion = true
-        this.setState({
-          promotionSelector: {
-            team: selectedPiece.team,
-            moveType: moveType,
-            pos: {
-              start: selectedPiecePos,
-              end: posClicked,
+      newBoard = newBoard as ChessBoard
+
+      let isPromotion = false
+      if (selectedPiece && selectedPiecePos) {
+        if (moveType && moveType.includes('promote')) {
+          isPromotion = true
+          this.setState({
+            promotionSelector: {
+              team: selectedPiece.team,
+              moveType: moveType,
+              board: newBoard,
+              pos: {
+                start: selectedPiecePos,
+                end: posClicked,
+              }
             }
-          }
-        })
+          })
+        }
       }
-    }
-    else
-      console.warn("The selected piece was undefined")
+      else
+        console.warn("The selected piece was undefined")
 
-    // newBoard = new ChessBoard(this.state.currentBoard)
-    // console.log(newBoard)
-    if (newBoard) {
       this.setState({
-        "currentBoard": newBoard,
-        "selectedPiece": null,
-        "validMoves": []
+        selectedPiece: null,
+        validMoves: []
       })
       if (!isPromotion) {
-        let history = this.state.history.slice()
-        history.push({
-          board: newBoard.getFen(),
+        this.state.game.newMove({
+          board: newBoard,
           text: convertToChessNotation(selectedPiecePos) + convertToChessNotation(posClicked),
           move: {
             start: selectedPiecePos,
@@ -369,11 +374,11 @@ class Game extends React.Component<{}, GameState> {
           }
         })
         this.setState({
-          history: history,
-          turn: (this.state.turn === 'white') ? 'black' : 'white'
+          game: this.state.game,
+          viewingMove: this.state.viewingMove + 1
         })
       }
-    }
+    } else console.warn("Error - Wrong turn / not latest game")
   }
 
   render() {
@@ -398,8 +403,8 @@ class Game extends React.Component<{}, GameState> {
 
     let moveRows: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>[] = []
     let currentRow: React.DetailedHTMLProps<React.TdHTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement>[] = []
-    for (let i = 1; i < this.state.history.length; i++) {
-      const move = this.state.history[i]
+    for (let i = 1; i <= this.state.game.getMoveCount(); i++) {
+      const move = this.state.game.getMove(i)
       if (i !== 1 && i % 2 === 1) // is white's turn and is not the first turn
       {
         moveRows.push(
@@ -412,7 +417,7 @@ class Game extends React.Component<{}, GameState> {
       )
     }
     if (currentRow.length > 0) moveRows.push(
-      <tr key={this.state.history.length}><th scope='row'><p>{Math.floor(this.state.history.length / 2)}</p></th>{currentRow}</tr>
+      <tr key={this.state.game.getMoveCount() + 1}><th scope='row'><p>{Math.floor((this.state.game.getMoveCount() + 1) / 2)}</p></th>{currentRow}</tr>
     )
 
     return (
@@ -420,7 +425,7 @@ class Game extends React.Component<{}, GameState> {
         <div className='horizontal'>
           <div id='board-wrapper'>
             <Board
-              board={this.state.currentBoard}
+              board={this.viewingBoard()}
               validMoves={this.state.validMoves}
               selectedPiece={this.state.selectedPiece}
               notFlipped={this.state.notFlipped}
@@ -451,7 +456,7 @@ class Game extends React.Component<{}, GameState> {
 
         <div id="game-info">
           <div id="current-board">
-            <p>{this.state.currentBoard.getFen()}</p>
+            <p>{this.viewingBoard().getFen()}</p>
           </div>
         </div>
         <div id="game-controls">

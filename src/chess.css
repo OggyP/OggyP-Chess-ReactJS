@@ -59,6 +59,10 @@
     cursor: pointer;
 }
 
+.piece .animation {
+    transition: all 500ms;
+}
+
 .square {
     width: 12.5%;
     height: 12.5%;

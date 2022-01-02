@@ -423,7 +423,6 @@ interface CastleInfoOfTeam {
 
 class Board {
     private _squares: Array<Array<PieceAtPos>>;
-    turn: Teams;
     enPassant: Vector | null = null;
     halfMoveNumber: number;
     halfMovesSinceCaptureOrPawnMove: number;
@@ -440,7 +439,6 @@ class Board {
         if (input instanceof Board) {
             for (let i = 0; i < 8; i++)
                 this._squares[i] = Object.assign([], input._squares[i])
-            this.turn = input.turn
             this.halfMoveNumber = input.halfMoveNumber
             this.halfMovesSinceCaptureOrPawnMove = input.halfMovesSinceCaptureOrPawnMove
             this.castleInfo.white = Object.assign({}, input.castleInfo.white)
@@ -452,8 +450,7 @@ class Board {
             if (FENparts.length !== 6)
                 throw new Error("Invalid FEN, There should be 6 segments.")
 
-            // Set Turn
-            this.turn = (FENparts[1] === 'w') ? "white" : "black"
+            let turn = (FENparts[1] === 'w') ? "white" : "black"
 
             // Set Castling
             for (let i = 0; i < FENparts[2].length; i++) {
@@ -471,7 +468,7 @@ class Board {
 
             this.halfMovesSinceCaptureOrPawnMove = Number(FENparts[4])
             this.halfMoveNumber = (Number(FENparts[5]) - 1) * 2
-            if (this.turn === "black") this.halfMoveNumber++
+            if (turn === "black") this.halfMoveNumber++
 
             // Set Pieces
             let rows = FENparts[0].split('/')
@@ -519,6 +516,15 @@ class Board {
         this.setPos(pos, new pieceCodeClasses[pieceCode](promoteTeam, this._pieceId))
     }
 
+    // prev is the move that has just been played
+    // next is whose turn it is to be done now
+    getTurn(type: "prev" | "next"): Teams {
+        if (type === 'prev')
+            return (this.halfMoveNumber % 2) ? "white" : "black"
+        else
+            return (this.halfMoveNumber % 2) ? "black" : "white"
+    }
+
     getFen(): string {
         let FEN = ""
         for (let i = 0; i < 8; i++) {
@@ -542,7 +548,7 @@ class Board {
             FEN += "/"
         }
         FEN = FEN.slice(0, -1) // Remove excess '/'
-        FEN += ` ${this.turn[0]}`
+        FEN += ` ${this.getTurn('next')[0]}`
         let castlingToAdd = ''
         if (this.castleInfo.white.kingSide) castlingToAdd += 'K'
         if (this.castleInfo.white.queenSide) castlingToAdd += 'Q'
@@ -681,18 +687,48 @@ interface GameConstuctorInput {
     pgn?: string
 }
 
-// class Game {
-//     this.history = 
+interface History {
+    board: Board
+    text: string
+    move: {
+        start: Vector
+        end: Vector
+        type: string
+    } | null
+}
 
-//     constructor(input: GameConstuctorInput) {
-//         if (input.pgn) {
+class Game {
+    private _history: History[] = []
+    constructor(input: GameConstuctorInput) {
+        if (input.pgn) {
 
-//         }
-//         else if (input.fen) {
+        }
+        else if (input.fen) {
+            this._history = [{
+                board: new Board(input.fen),
+                text: "Starting Position",
+                move: null
+            }]
+        }
+    }
 
-//         }
-//     }
-// }
+    getMoveCount(): number {
+        return this._history.length - 1
+    }
+
+    getMove(moveNum: number): History {
+        return this._history[moveNum]
+    }
+
+    getLatest(): History {
+        return this._history[this.getMoveCount()]
+    }
+
+    newMove(move: History) {
+        this._history.push(move)
+    }
+
+}
 
 function convertToChessNotation(position: Vector): string {
     return String.fromCharCode(97 + position.x) + (8 - position.y);
@@ -702,4 +738,4 @@ function convertToPosition(notation: string): Vector {
     return { "x": parseInt(notation[0], 36) - 10, "y": 8 - Number(notation[1]) };
 }
 
-export { Board as ChessBoard, ChessPiece, King, Queen, Rook, Bishop, Knight, Pawn, convertToChessNotation }
+export { Board as ChessBoard, Game as ChessGame, ChessPiece, King, Queen, Rook, Bishop, Knight, Pawn, convertToChessNotation }
