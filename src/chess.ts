@@ -274,20 +274,7 @@ class Pawn extends ChessPiece {
             }
         }
 
-        // Double Move
-        if (!hasMoved) {
-            vectorToCheck = addVectorsAndCheckPos(pos, { "x": 0, "y": 2 * yMoveVal })
-            if (vectorToCheck && !board.getPos(vectorToCheck)) {
-                const newBoard = new Board(board)
-                newBoard.doMove(pos, vectorToCheck)
-                newBoard.enPassant = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
-                moves.push({
-                    "move": vectorToCheck,
-                    "board": newBoard,
-                    "moveType": "normal"
-                })
-            }
-        }
+
 
         // Single Move
         vectorToCheck = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
@@ -299,6 +286,21 @@ class Pawn extends ChessPiece {
                 "board": newBoard,
                 "moveType": "normal"
             })
+
+            // Double Move
+            if (!hasMoved) {
+                vectorToCheck = addVectorsAndCheckPos(pos, { "x": 0, "y": 2 * yMoveVal })
+                if (vectorToCheck && !board.getPos(vectorToCheck)) {
+                    const newBoard = new Board(board)
+                    newBoard.doMove(pos, vectorToCheck)
+                    newBoard.enPassant = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
+                    moves.push({
+                        "move": vectorToCheck,
+                        "board": newBoard,
+                        "moveType": "normal"
+                    })
+                }
+            }
         }
         if (((this.team === "white") ? 1 : 6) === pos.y)
             return moves.filter(legal, this).map((item, index) => {

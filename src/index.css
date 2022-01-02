@@ -50,6 +50,10 @@ ul {
     /* overflow: hidden; */
 }
 
+#previous-moves .current-move {
+    background-color: lightcoral;
+}
+
 
 /* table {
     height: auto;
