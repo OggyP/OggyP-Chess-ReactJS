@@ -417,7 +417,7 @@ class Game extends React.Component<{}, GameState> {
     let promotionSelector
     const promotionSelectorVal = this.state.promotionSelector
     if (promotionSelectorVal) {
-      const promotionChoices: PieceCodes[] = ['q', 'n', 'r', 'b', 'k', 'p']
+      const promotionChoices: PieceCodes[] = ['q', 'n', 'r', 'b']
       const promotionOptionsDisplay = promotionChoices.map((item, index) => {
         const x = promotionSelectorVal.pos.end.x
         const y = (promotionSelectorVal.team === 'white') ? index : (7 - index)
