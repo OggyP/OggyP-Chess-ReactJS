@@ -5,6 +5,7 @@ import './chess.css';
 import './assets.css'
 import { ChessBoard, ChessGame, ChessPiece, convertToChessNotation } from './chess'
 
+console.info("OggyP is cool!")
 type Teams = "white" | "black"
 type PieceCodes = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
 type PieceAtPos = ChessPiece | null
@@ -47,16 +48,6 @@ function PromotePiece(props: PromotePieceProps) {
   )
 }
 
-interface HistorySideBarProps {
-  text: string
-  onClick: React.MouseEventHandler<HTMLTableCellElement>
-}
-function prevMove(props: HistorySideBarProps) {
-  return (
-    <td onClick={props.onClick}>{props.text}</td>
-  )
-}
-
 interface ValidMoveProps {
   x: number
   y: number
@@ -95,20 +86,22 @@ interface BoardState {
 }
 
 class Board extends React.Component<BoardProps, BoardState> {
+  mousePos: Vector;
   constructor(props: BoardProps) {
     super(props)
     this.state = {
       pieceBeingDragged: null,
       mousePos: { "x": 0, "y": 0 }
     }
+    this.mousePos = { "x": 0, "y": 0 }
   }
 
   mouseDown() {
     let posSelected: Vector;
     if (this.props.notFlipped)
-      posSelected = { "x": Math.floor(this.state.mousePos.x / 100), "y": Math.floor(this.state.mousePos.y / 100) }
+      posSelected = { "x": Math.floor(this.mousePos.x / 100), "y": Math.floor(this.mousePos.y / 100) }
     else
-      posSelected = { "x": 7 - Math.floor(this.state.mousePos.x / 100), "y": 7 - Math.floor(this.state.mousePos.y / 100) }
+      posSelected = { "x": 7 - Math.floor(this.mousePos.x / 100), "y": 7 - Math.floor(this.mousePos.y / 100) }
     if (this.props.selectedPiece) {
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
@@ -117,7 +110,7 @@ class Board extends React.Component<BoardProps, BoardState> {
           return
         }
       }
-
+      this.props.deselectPiece()
     }
 
     if (this.props.board.getPos(posSelected)) {
@@ -132,9 +125,9 @@ class Board extends React.Component<BoardProps, BoardState> {
     if (this.state.pieceBeingDragged) {
       let posSelected: Vector;
       if (this.props.notFlipped)
-        posSelected = { "x": Math.floor(this.state.mousePos.x / 100), "y": Math.floor(this.state.mousePos.y / 100) }
+        posSelected = { "x": Math.floor(this.mousePos.x / 100), "y": Math.floor(this.mousePos.y / 100) }
       else
-        posSelected = { "x": 7 - Math.floor(this.state.mousePos.x / 100), "y": 7 - Math.floor(this.state.mousePos.y / 100) }
+        posSelected = { "x": 7 - Math.floor(this.mousePos.x / 100), "y": 7 - Math.floor(this.mousePos.y / 100) }
 
       if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y)
         this.props.deselectPiece()
@@ -157,9 +150,12 @@ class Board extends React.Component<BoardProps, BoardState> {
     const mainBoard = document.getElementById("main-board")
     if (mainBoard) {
       var bounds = mainBoard.getBoundingClientRect();
-      this.setState({
-        mousePos: { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
-      })
+      let mousePos = { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
+      this.mousePos = mousePos
+      if (this.state.pieceBeingDragged)
+        this.setState({
+          mousePos: { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
+        })
     }
   }
 
@@ -174,18 +170,17 @@ class Board extends React.Component<BoardProps, BoardState> {
     const pieceBeingDragged = this.state.pieceBeingDragged
     let unsortedPieces: [JSX.Element, number][] = pieces.map((item, index) => {
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
+        const mousePos = (this.mousePos.x === this.state.mousePos.x && this.mousePos.y === this.state.mousePos.y) ? this.state.mousePos : this.mousePos
         return [<Piece key={item.piece.key}
-          text={item.piece.key}
           type={item.piece.code}
           team={item.piece.team}
-          x={this.state.mousePos.x - 50}
-          y={this.state.mousePos.y - 50}
+          x={mousePos.x - 50}
+          y={mousePos.y - 50}
           showAnimation={false}
           isGhost={false}
         />, item.piece.key]
       } else
         return [<Piece key={item.piece.key}
-          text={item.piece.key}
           type={item.piece.code}
           team={item.piece.team}
           x={100 * ((this.props.notFlipped) ? item.pos.x : 7 - item.pos.x)}
@@ -194,7 +189,7 @@ class Board extends React.Component<BoardProps, BoardState> {
           isGhost={false}
         />, item.piece.key]
     })
-    unsortedPieces.sort(function(a, b){return a[1]-b[1]})
+    unsortedPieces.sort(function (a, b) { return a[1] - b[1] })
     const piecesToDisplay = unsortedPieces.map((item, index) => {
       return item[0]
     })
@@ -265,18 +260,6 @@ interface GameState {
     }
   } | null
 }
-
-interface History {
-  board: Board
-  text: string
-  move: {
-    start: Vector
-    end: Vector
-    type: string
-    team: Teams
-  } | null
-}
-
 
 class Game extends React.Component<{}, GameState> {
   constructor(props: BoardProps) {
