@@ -1,3 +1,5 @@
+import { start } from "repl";
+
 type PieceCodes = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
 type Teams = 'white' | 'black';
 
@@ -36,7 +38,7 @@ interface Vector {
 interface MovesAndBoard {
     "move": Vector,
     "board": Board,
-    "moveType": string
+    "moveType": string[]
 }
 
 class Queen extends ChessPiece {
@@ -105,7 +107,7 @@ class King extends ChessPiece {
                                 moves.push({
                                     "move": vectorToDisplay,
                                     "board": newBoard,
-                                    "moveType": "castle"
+                                    "moveType": ["castleKingSide"]
                                 })
                             }
                         }
@@ -132,7 +134,7 @@ class King extends ChessPiece {
                                 moves.push({
                                     "move": vectorToDisplay,
                                     "board": newBoard,
-                                    "moveType": "castle"
+                                    "moveType": ["castleQueenSide"]
                                 })
                             }
                         }
@@ -232,7 +234,7 @@ class Pawn extends ChessPiece {
                 moves.push({
                     "move": vectorToCheck,
                     "board": newBoard,
-                    "moveType": "enpassant capture"
+                    "moveType": ["enpassant", "capture"]
                 })
             } else {
                 let takeRightPos = board.getPos(vectorToCheck)
@@ -242,7 +244,7 @@ class Pawn extends ChessPiece {
                     moves.push({
                         "move": vectorToCheck,
                         "board": newBoard,
-                        "moveType": "capture"
+                        "moveType": ["capture"]
                     })
                 }
             }
@@ -258,7 +260,7 @@ class Pawn extends ChessPiece {
                 moves.push({
                     "move": vectorToCheck,
                     "board": newBoard,
-                    "moveType": "enpassant capture"
+                    "moveType": ["enpassant", "capture"]
                 })
             } else {
                 let takeLeftPos = board.getPos(vectorToCheck)
@@ -268,7 +270,7 @@ class Pawn extends ChessPiece {
                     moves.push({
                         "move": vectorToCheck,
                         "board": newBoard,
-                        "moveType": "capture"
+                        "moveType": ["capture"]
                     })
                 }
             }
@@ -284,7 +286,7 @@ class Pawn extends ChessPiece {
             moves.push({
                 "move": vectorToCheck,
                 "board": newBoard,
-                "moveType": "normal"
+                "moveType": []
             })
 
             // Double Move
@@ -297,14 +299,14 @@ class Pawn extends ChessPiece {
                     moves.push({
                         "move": vectorToCheck,
                         "board": newBoard,
-                        "moveType": "normal"
+                        "moveType": []
                     })
                 }
             }
         }
         if (((this.team === "white") ? 1 : 6) === pos.y)
             return moves.filter(legal, this).map((item, index) => {
-                item.moveType += ' promote'
+                item.moveType.push('promote')
                 return item
             })
         else
@@ -356,7 +358,7 @@ function getRayCastVectors(board: Board, vectors: Vector[], position: Vector, te
                 validVectors.push({
                     "move": Object.assign({}, currentCoords),
                     "board": newBoard,
-                    "moveType": "normal"
+                    "moveType": []
                 })
             } else if (currentPiece.team === team) {
                 vectorValid = false;
@@ -367,7 +369,7 @@ function getRayCastVectors(board: Board, vectors: Vector[], position: Vector, te
                 validVectors.push({
                     "move": Object.assign({}, currentCoords),
                     "board": newBoard,
-                    "moveType": "capture"
+                    "moveType": ["capture"]
                 })
                 vectorValid = false;
             }
@@ -398,7 +400,7 @@ function getVectors(board: Board, vectors: Vector[], position: Vector, team: Tea
                 validVectors.push({
                     "move": Object.assign({}, currentCoords),
                     "board": newBoard,
-                    "moveType": "normal"
+                    "moveType": []
                 })
             } else if (currentPiece.team !== team) {
                 collidedPieces.push(currentPiece)
@@ -407,7 +409,7 @@ function getVectors(board: Board, vectors: Vector[], position: Vector, team: Tea
                 validVectors.push({
                     "move": Object.assign({}, currentCoords),
                     "board": newBoard,
-                    "moveType": "capture"
+                    "moveType": ["capture"]
                 })
             }
         }
@@ -422,6 +424,12 @@ interface CastleInfoOfTeam {
     kingSide: boolean;
     queenSide: boolean;
 }
+
+type gameOverRespone = {
+    winner: Teams | "draw"
+    by: string
+    extraInfo?: string
+} | false
 
 class Board {
     private _squares: Array<Array<PieceAtPos>>;
@@ -525,6 +533,30 @@ class Board {
             return (this.halfMoveNumber % 2) ? "white" : "black"
         else
             return (this.halfMoveNumber % 2) ? "black" : "white"
+    }
+
+
+    isGameOverFor(team: Teams): gameOverRespone {
+        let legalMoves = false
+        let pos: Vector = { "x": 0, "y": 0 }
+        for (pos.x = 0; pos.x < 8 && !legalMoves; pos.x++)
+            for (pos.y = 0; pos.y < 8 && !legalMoves; pos.y++) {
+                let piece = this.getPos(pos)
+                if (piece && piece.team === team)
+                    legalMoves = piece.getMoves(pos, this).length > 0
+            }
+
+        if (legalMoves) {
+            if (this.halfMovesSinceCaptureOrPawnMove >= 100)
+                return { by: '50 move rule', winner: "draw" }
+            console.log(JSON.stringify(this._squares))
+            return false
+        } else {
+            if (this.inCheck(team))
+                return { by: "checkmate", winner: (team === 'white') ? "black" : "white" }
+            else
+                return { by: "stalemate", extraInfo: team + " in stalemate", winner: "draw" }
+        }
     }
 
     getFen(): string {
@@ -682,6 +714,59 @@ class Board {
     setPos(position: Vector, piece: PieceAtPos): void {
         this._squares[position.y][position.x] = piece
     }
+
+    static getShortNotation(startPos: Vector, endPos: Vector, moveType: string[], startBoard: Board, append: string, promotionChoice?: PieceCodes): string {
+        const startingPiece = startBoard.getPos(startPos)
+        let text = ''
+        if (startingPiece) {
+            if (startingPiece instanceof Pawn) {
+                if (moveType.includes('capture'))
+                    text += convertToChessNotation(startPos.x, 'x') + 'x'
+                text += convertToChessNotation(endPos)
+                if (promotionChoice)
+                    text += '=' + promotionChoice.toUpperCase()
+            } else {
+                if (moveType.includes('castleKingSide'))
+                    text = "O-O"
+                else if (moveType.includes('castleQueenSide'))
+                    text = "O-O-O"
+                else {
+                    let sameX = false
+                    let sameY = false
+                    let pos: Vector = { "x": 0, "y": 0 }
+                    for (pos.x = 0; pos.x < 8; pos.x++)
+                        for (pos.y = 0; pos.y < 8; pos.y++)
+                            if (pos.x !== startPos.x || pos.y !== startPos.y) {
+                                const piece = startBoard.getPos(pos)
+                                if (piece && piece.team === startingPiece.team && piece.code === startingPiece.code) {
+                                    const pieceMoves = piece.getMoves(pos, startBoard)
+                                    for (let i = 0; i < pieceMoves.length; i++) {
+                                        const currentMove = pieceMoves[i]
+                                        if (currentMove.move.x === endPos.x && currentMove.move.y === endPos.y) {
+                                            console.log(pos)
+                                            if (pos.x === startPos.x)
+                                                sameX = true
+                                            else if (pos.y === startPos.y)
+                                                sameY = true
+                                            else
+                                                sameY = true
+                                        }
+                                    }
+                                }
+                            }
+                    text += startingPiece.code.toUpperCase()
+                    if (sameY)
+                        text += convertToChessNotation(startPos.x, 'x')
+                    if (sameX)
+                        text += convertToChessNotation(startPos.y, 'y')
+                    if (moveType.includes('capture'))
+                        text += 'x'
+                    text += convertToChessNotation(endPos)
+                }
+            }
+        }
+        return text + append
+    }
 }
 
 interface GameConstuctorInput {
@@ -695,7 +780,7 @@ interface History {
     move: {
         start: Vector
         end: Vector
-        type: string
+        type: string[]
     } | null
 }
 
@@ -729,11 +814,19 @@ class Game {
     newMove(move: History) {
         this._history.push(move)
     }
-
 }
 
-function convertToChessNotation(position: Vector): string {
-    return String.fromCharCode(97 + position.x) + (8 - position.y);
+function convertToChessNotation(position: Vector | number, coord?: 'x' | 'y'): string {
+    if (coord) {
+        if (coord === 'x') {
+            return String.fromCharCode(97 + (position as number))
+        } else {
+            return (8 - (position as number)).toString()
+        }
+    } else {
+        position = position as Vector
+        return String.fromCharCode(97 + position.x) + (8 - position.y);
+    }
 }
 
 function convertToPosition(notation: string): Vector {

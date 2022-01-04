@@ -1,11 +1,11 @@
-import React, { FC, ReactElement, ReactNode } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import './chess.css';
-import './assets.css'
+import './css/index.css';
+import './css/chess.css';
+import './svg/assets.css'
 import { ChessBoard, ChessGame, ChessPiece, convertToChessNotation } from './chess'
 
-console.info("OggyP is cool!")
+console.info("OggyP is awesome!")
 type Teams = "white" | "black"
 type PieceCodes = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
 type PieceAtPos = ChessPiece | null
@@ -71,13 +71,14 @@ interface BoardProps {
   validMoves: {
     "move": { "x": number, "y": number },
     "board": ChessBoard,
-    "moveType": string
+    "moveType": string[]
   }[]
   selectedPiece: { "x": number, "y": number } | null
   notFlipped: boolean
   onPieceClick: Function
   onValidMoveClick: Function
   deselectPiece: Function
+  ownTeam: Teams | "any"
 }
 
 interface BoardState {
@@ -113,7 +114,9 @@ class Board extends React.Component<BoardProps, BoardState> {
       this.props.deselectPiece()
     }
 
-    if (this.props.board.getPos(posSelected)) {
+    const piece = this.props.board.getPos(posSelected)
+
+    if (piece && piece.team === this.props.board.getTurn('next') && (this.props.ownTeam === 'any' || piece.team === this.props.ownTeam)) {
       this.props.onPieceClick(posSelected)
       this.setState({
         pieceBeingDragged: posSelected
@@ -168,7 +171,12 @@ class Board extends React.Component<BoardProps, BoardState> {
           pieces.push({ "piece": boardSquare, "pos": { "x": x, "y": y } })
       }
     const pieceBeingDragged = this.state.pieceBeingDragged
+    const currentTurn = this.props.board.getTurn('next')
+    const inCheck = this.props.board.inCheck(currentTurn)
+    let inCheckPos: Vector | React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> | null = null
     let unsortedPieces: [JSX.Element, number][] = pieces.map((item, index) => {
+      if (inCheck && item.piece.code === 'k' && item.piece.team === currentTurn)
+        inCheckPos = item.pos
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
         const mousePos = (this.mousePos.x === this.state.mousePos.x && this.mousePos.y === this.state.mousePos.y) ? this.state.mousePos : this.mousePos
         return [<Piece key={item.piece.key}
@@ -217,12 +225,18 @@ class Board extends React.Component<BoardProps, BoardState> {
         />;
     }
 
+    if (inCheckPos) {
+      inCheckPos = inCheckPos as Vector
+      inCheckPos = <div className='square check' style={{ "top": ((this.props.notFlipped) ? 12.5 * inCheckPos.y : 12.5 * (7 - inCheckPos.y)) + "%", "left": ((this.props.notFlipped) ? 12.5 * inCheckPos.x : 12.5 * (7 - inCheckPos.x)) + "%" }}></div>
+    }
+
     console.log("Render Board")
 
     return (
       <div id='main-board' onMouseMove={this._onMouseMove.bind(this)} onMouseDown={() => this.mouseDown()} onMouseUp={() => this.mouseUp()} onMouseLeave={() => this.mouseUp()}>
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
+          {inCheckPos}
         </div>
         <div id='pieces-layer'>
           {piecesToDisplay}
@@ -233,11 +247,6 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 }
 
-interface GameState {
-  // history: { squares: string | null }[],
-  // turn: Teams
-}
-
 interface Vector { "x": number, "y": number }
 
 interface GameState {
@@ -246,13 +255,18 @@ interface GameState {
   validMoves: {
     "move": Vector,
     "board": ChessBoard,
-    "moveType": string
+    "moveType": string[]
   }[]
+  gameOver: {
+    winner: Teams | "draw"
+    by: string
+    extraInfo?: string
+  } | false
   selectedPiece: Vector | null
   notFlipped: boolean
   promotionSelector: {
     team: Teams
-    moveType: string
+    moveType: string[]
     board: ChessBoard
     pos: {
       start: Vector
@@ -261,17 +275,22 @@ interface GameState {
   } | null
 }
 
-class Game extends React.Component<{}, GameState> {
-  constructor(props: BoardProps) {
+interface GameProps {
+  startingPosition: string
+  team: Teams | "any"
+}
+
+class Game extends React.Component<GameProps, GameState> {
+  constructor(props: GameProps) {
     super(props)
-    const startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     this.state = {
-      game: new ChessGame({ fen: startingFEN }),
+      game: new ChessGame({ fen: this.props.startingPosition }),
       viewingMove: 0,
       validMoves: [],
       notFlipped: true,
       selectedPiece: null,
       promotionSelector: null,
+      gameOver: false
     }
   }
 
@@ -281,20 +300,21 @@ class Game extends React.Component<{}, GameState> {
     })
   }
 
-  handlePromotionClick(piece: PieceCodes): void {
+  handlePromotionClick(piece: PieceCodes, teams: Teams): void {
     const info = this.state.promotionSelector
-    if (info && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
+    if (info && !this.state.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
       const newBoard = new ChessBoard(info.board)
-      newBoard.promote(info.pos.end, piece, info.team)
-      if (!newBoard.inCheck(info.team)) {
+      newBoard.promote(info.pos.end, piece, teams)
+      if (!newBoard.inCheck(teams)) {
         console.log("update game prom")
+        const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
         this.state.game.newMove({
           board: newBoard,
-          text: convertToChessNotation(info.pos.start) + convertToChessNotation(info.pos.end) + piece,
+          text: ChessBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece),
           move: {
             start: info.pos.start,
             end: info.pos.end,
-            type: this.state.promotionSelector?.moveType as string,
+            type: this.state.promotionSelector?.moveType as string[],
           }
         })
         console.log(this.state.game.getMoveCount())
@@ -303,7 +323,8 @@ class Game extends React.Component<{}, GameState> {
           selectedPiece: null,
           validMoves: [],
           promotionSelector: null,
-          viewingMove: this.state.viewingMove + 1
+          viewingMove: this.state.viewingMove + 1,
+          gameOver: isGameOver,
         })
       }
       else
@@ -320,7 +341,7 @@ class Game extends React.Component<{}, GameState> {
   }
 
   handlePieceClick(posClicked: Vector): void {
-    if (this.state.viewingMove === this.state.game.getMoveCount() && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next')) {
+    if (!this.state.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next') && (this.props.team === 'any' || this.latestBoard().getTurn('next') === this.props.team)) {
       const newValidMoves = this.latestBoard().getPos(posClicked)?.getMoves(posClicked, this.latestBoard())
       if (newValidMoves)
         this.setState({
@@ -330,7 +351,7 @@ class Game extends React.Component<{}, GameState> {
     } else {
       this.setState({
         validMoves: [],
-        selectedPiece: posClicked
+        selectedPiece: null
       })
     }
   }
@@ -344,9 +365,9 @@ class Game extends React.Component<{}, GameState> {
   }
 
   handleMoveClick(posClicked: Vector): void {
-    if (this.state.viewingMove === this.state.game.getMoveCount()) {
+    if (!this.state.gameOver && this.state.viewingMove === this.state.game.getMoveCount()) {
       let newBoard: ChessBoard | null = null
-      let moveType: string | null = null
+      let moveType: string[] | null = null
 
       const selectedPiecePos = Object.assign({}, this.state.selectedPiece)
 
@@ -388,17 +409,19 @@ class Game extends React.Component<{}, GameState> {
         validMoves: []
       })
       if (!isPromotion) {
+        const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
         this.state.game.newMove({
           board: newBoard,
-          text: convertToChessNotation(selectedPiecePos) + convertToChessNotation(posClicked),
+          text: ChessBoard.getShortNotation(selectedPiecePos, posClicked, moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : ''))),
           move: {
             start: selectedPiecePos,
             end: posClicked,
-            type: moveType as string
+            type: moveType as string[]
           }
         })
         this.setState({
           game: this.state.game,
+          gameOver: isGameOver,
           viewingMove: this.state.viewingMove + 1
         })
       }
@@ -406,18 +429,19 @@ class Game extends React.Component<{}, GameState> {
   }
 
   goToMove(moveNum: number): void {
-    this.setState({
-      viewingMove: moveNum,
-      validMoves: [],
-      selectedPiece: null
-    })
+    if (!this.state.promotionSelector)
+      this.setState({
+        viewingMove: moveNum,
+        validMoves: [],
+        selectedPiece: null
+      })
   }
 
   render() {
     let promotionSelector
     const promotionSelectorVal = this.state.promotionSelector
     if (promotionSelectorVal) {
-      const promotionChoices: PieceCodes[] = ['q', 'n', 'r', 'b']
+      const promotionChoices: PieceCodes[] = ['q', 'n', 'b', 'r', 'k', 'p']
       const promotionOptionsDisplay = promotionChoices.map((item, index) => {
         const x = promotionSelectorVal.pos.end.x
         const y = (promotionSelectorVal.team === 'white') ? index : (7 - index)
@@ -427,10 +451,22 @@ class Game extends React.Component<{}, GameState> {
           x={(this.state.notFlipped) ? x * 12.5 : (7 - x) * 12.5}
           y={(this.state.notFlipped) ? y * 12.5 : (7 - y) * 12.5}
           type={item}
-          onClick={() => this.handlePromotionClick(item)}
+          onClick={() => this.handlePromotionClick(item, promotionSelectorVal.team)}
         />
       })
-      promotionSelector = <div id="promotion-choice">{promotionOptionsDisplay}</div>
+      const promotionOptionsDisplay2 = promotionChoices.map((item, index) => {
+        const x = promotionSelectorVal.pos.end.x
+        const y = (promotionSelectorVal.team === 'white') ? (index + promotionChoices.length) : (7 - index + promotionChoices.length)
+        return <PromotePiece
+          key={index}
+          team={(promotionSelectorVal.team === 'white') ? 'black' : "white"}
+          x={(this.state.notFlipped) ? x * 12.5 : (7 - x) * 12.5}
+          y={(this.state.notFlipped) ? y * 12.5 : (7 - y) * 12.5}
+          type={item}
+          onClick={() => this.handlePromotionClick(item, (promotionSelectorVal.team === 'white') ? 'black' : "white")}
+        />
+      })
+      promotionSelector = <div id="promotion-choice">{promotionOptionsDisplay}{promotionOptionsDisplay2}</div>
     }
 
     let moveRows: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>[] = []
@@ -458,6 +494,20 @@ class Game extends React.Component<{}, GameState> {
         viewingMove: this.state.game.getMoveCount()
       })}>Resume</button>
 
+
+    let gameOverDisplay = null
+    if (this.state.gameOver) {
+      const winner = {
+        "white": "White wins by",
+        "draw": "Draw by",
+        "black": "Black wins by"
+      }
+      gameOverDisplay = <tr>
+        <th scope='row'>End</th>
+        <td colSpan={2}>{`${winner[this.state.gameOver.winner]} ${this.state.gameOver.by}`}</td>
+      </tr>
+    }
+
     return (
       <div className="game">
         <div className='horizontal'>
@@ -470,6 +520,7 @@ class Game extends React.Component<{}, GameState> {
               onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
               onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
               deselectPiece={() => this.deselectPiece()}
+              ownTeam={this.props.team}
             />
             {promotionSelector}
           </div>
@@ -488,6 +539,7 @@ class Game extends React.Component<{}, GameState> {
                   <td colSpan={2} onClick={() => this.goToMove(0)} className={(this.state.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
                 </tr>
                 {moveRows}
+                {gameOverDisplay}
               </tbody>
             </table>
           </div>
@@ -511,6 +563,9 @@ class Game extends React.Component<{}, GameState> {
 // ========================================
 
 ReactDOM.render(
-  <Game />,
+  <Game
+    startingPosition='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+    team='any'
+  />,
   document.getElementById('root')
 );
