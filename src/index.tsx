@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import './css/index.css';
-import './css/chess.css';
+import './css/index.scss';
+import './css/chess.scss';
 import './svg/assets.css'
-import { ChessBoard, ChessGame, ChessPiece, convertToChessNotation } from './chess'
+import { ChessBoard, ChessGame, ChessPiece } from './chess'
+import { fromEvent } from 'rxjs'
+import { map, throttleTime } from 'rxjs/operators'
 
 console.info("OggyP is awesome!")
 type Teams = "white" | "black"
@@ -25,6 +27,54 @@ function Piece(props: PieceProps) {
   return (
     <div className={classes} style={{
       "transform": `translate(${props.x}px, ${props.y}px)`,
+    }}>
+      {props.text}
+    </div>
+  )
+}
+
+interface SquareProps {
+  pos: Vector,
+  classes: string[]
+}
+function Square(props: SquareProps) {
+  return <div className={'square ' + props.classes.join(' ')} style={{
+    "top": props.pos.y * 12.5 + "%",
+    "left": props.pos.x * 12.5 + "%",
+  }}></div>
+}
+
+interface DragProps {
+  type: string
+  team: Teams
+  startingMousePos: Vector
+  text?: number
+}
+
+function DraggedPiece(props: DragProps) {
+  const [position, setPosition] = useState({ "x": props.startingMousePos.x - 50, "y": props.startingMousePos.y - 50 })
+
+  const mainBoard = document.getElementById("main-board")
+  const bounds = (mainBoard as HTMLElement).getBoundingClientRect();
+
+  useEffect(() => {
+    const sub = fromEvent(document, 'mousemove').pipe(
+      throttleTime(10), // Only respond to a mousemove event every 100ms
+      map((event: any) => [event.clientX - bounds.left, event.clientY - bounds.top])
+    )
+      .subscribe(([newX, newY]) => {
+        setPosition({ "x": newX - 50, "y": newY - 50 })
+      })
+
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [])
+
+  const classes = `piece ${(props.team === 'white') ? "l" : "d"} ${props.type}`;
+  return (
+    <div className={classes} style={{
+      "transform": `translate(${position.x}px, ${position.y}px)`,
     }}>
       {props.text}
     </div>
@@ -79,20 +129,21 @@ interface BoardProps {
   onValidMoveClick: Function
   deselectPiece: Function
   ownTeam: Teams | "any"
+  moveInfo: {
+    start: Vector
+    end: Vector
+    type: string[]
+  } | null
 }
-
 interface BoardState {
   pieceBeingDragged: Vector | null
-  mousePos: Vector
 }
-
 class Board extends React.Component<BoardProps, BoardState> {
   mousePos: Vector;
   constructor(props: BoardProps) {
     super(props)
     this.state = {
       pieceBeingDragged: null,
-      mousePos: { "x": 0, "y": 0 }
     }
     this.mousePos = { "x": 0, "y": 0 }
   }
@@ -152,13 +203,8 @@ class Board extends React.Component<BoardProps, BoardState> {
   private _onMouseMove(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const mainBoard = document.getElementById("main-board")
     if (mainBoard) {
-      var bounds = mainBoard.getBoundingClientRect();
-      let mousePos = { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
-      this.mousePos = mousePos
-      if (this.state.pieceBeingDragged)
-        this.setState({
-          mousePos: { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
-        })
+      const bounds = mainBoard.getBoundingClientRect();
+      this.mousePos = { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
     }
   }
 
@@ -172,20 +218,17 @@ class Board extends React.Component<BoardProps, BoardState> {
       }
     const pieceBeingDragged = this.state.pieceBeingDragged
     const currentTurn = this.props.board.getTurn('next')
+    const prevTurnInReferenceToSelf = (this.props.ownTeam === 'any') ? (this.props.board.getTurn('prev') === 'white') ? "self" : "other" : (this.props.ownTeam === this.props.board.getTurn('prev')) ? "self" : "other"
     const inCheck = this.props.board.inCheck(currentTurn)
     let inCheckPos: Vector | React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> | null = null
     let unsortedPieces: [JSX.Element, number][] = pieces.map((item, index) => {
       if (inCheck && item.piece.code === 'k' && item.piece.team === currentTurn)
         inCheckPos = item.pos
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
-        const mousePos = (this.mousePos.x === this.state.mousePos.x && this.mousePos.y === this.state.mousePos.y) ? this.state.mousePos : this.mousePos
-        return [<Piece key={item.piece.key}
+        return [<DraggedPiece key={item.piece.key}
           type={item.piece.code}
           team={item.piece.team}
-          x={mousePos.x - 50}
-          y={mousePos.y - 50}
-          showAnimation={false}
-          isGhost={false}
+          startingMousePos={this.mousePos}
         />, item.piece.key]
       } else
         return [<Piece key={item.piece.key}
@@ -230,6 +273,22 @@ class Board extends React.Component<BoardProps, BoardState> {
       inCheckPos = <div className='square check' style={{ "top": ((this.props.notFlipped) ? 12.5 * inCheckPos.y : 12.5 * (7 - inCheckPos.y)) + "%", "left": ((this.props.notFlipped) ? 12.5 * inCheckPos.x : 12.5 * (7 - inCheckPos.x)) + "%" }}></div>
     }
 
+    let squares: JSX.Element[] | null = null
+    if (this.props.moveInfo)
+      squares = [
+        <Square
+          key={"start"}
+          pos={(this.props.notFlipped) ? this.props.moveInfo.start : { "x": 7 - this.props.moveInfo.start.x, "y": 7 - this.props.moveInfo.start.y }}
+          classes={[prevTurnInReferenceToSelf, "prevMove", "start"]}
+        ></Square>,
+        <Square
+          key={"end"}
+          pos={(this.props.notFlipped) ? this.props.moveInfo.end : { "x": 7 - this.props.moveInfo.end.x, "y": 7 - this.props.moveInfo.end.y }}
+          classes={[prevTurnInReferenceToSelf, "prevMove", "end"]}
+        ></Square>
+      ]
+
+
     console.log("Render Board")
 
     return (
@@ -237,6 +296,7 @@ class Board extends React.Component<BoardProps, BoardState> {
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
           {inCheckPos}
+          {squares}
         </div>
         <div id='pieces-layer'>
           {piecesToDisplay}
@@ -300,12 +360,12 @@ class Game extends React.Component<GameProps, GameState> {
     })
   }
 
-  handlePromotionClick(piece: PieceCodes, teams: Teams): void {
+  handlePromotionClick(piece: PieceCodes): void {
     const info = this.state.promotionSelector
     if (info && !this.state.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
       const newBoard = new ChessBoard(info.board)
-      newBoard.promote(info.pos.end, piece, teams)
-      if (!newBoard.inCheck(teams)) {
+      newBoard.promote(info.pos.end, piece, info.team)
+      if (!newBoard.inCheck(info.team)) {
         console.log("update game prom")
         const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
         this.state.game.newMove({
@@ -441,7 +501,7 @@ class Game extends React.Component<GameProps, GameState> {
     let promotionSelector
     const promotionSelectorVal = this.state.promotionSelector
     if (promotionSelectorVal) {
-      const promotionChoices: PieceCodes[] = ['q', 'n', 'b', 'r', 'k', 'p']
+      const promotionChoices: PieceCodes[] = ['q', 'n', 'b', 'r']
       const promotionOptionsDisplay = promotionChoices.map((item, index) => {
         const x = promotionSelectorVal.pos.end.x
         const y = (promotionSelectorVal.team === 'white') ? index : (7 - index)
@@ -451,22 +511,10 @@ class Game extends React.Component<GameProps, GameState> {
           x={(this.state.notFlipped) ? x * 12.5 : (7 - x) * 12.5}
           y={(this.state.notFlipped) ? y * 12.5 : (7 - y) * 12.5}
           type={item}
-          onClick={() => this.handlePromotionClick(item, promotionSelectorVal.team)}
+          onClick={() => this.handlePromotionClick(item)}
         />
       })
-      const promotionOptionsDisplay2 = promotionChoices.map((item, index) => {
-        const x = promotionSelectorVal.pos.end.x
-        const y = (promotionSelectorVal.team === 'white') ? (index + promotionChoices.length) : (7 - index + promotionChoices.length)
-        return <PromotePiece
-          key={index}
-          team={(promotionSelectorVal.team === 'white') ? 'black' : "white"}
-          x={(this.state.notFlipped) ? x * 12.5 : (7 - x) * 12.5}
-          y={(this.state.notFlipped) ? y * 12.5 : (7 - y) * 12.5}
-          type={item}
-          onClick={() => this.handlePromotionClick(item, (promotionSelectorVal.team === 'white') ? 'black' : "white")}
-        />
-      })
-      promotionSelector = <div id="promotion-choice">{promotionOptionsDisplay}{promotionOptionsDisplay2}</div>
+      promotionSelector = <div id="promotion-choice">{promotionOptionsDisplay}</div>
     }
 
     let moveRows: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>[] = []
@@ -521,6 +569,7 @@ class Game extends React.Component<GameProps, GameState> {
               onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
               deselectPiece={() => this.deselectPiece()}
               ownTeam={this.props.team}
+              moveInfo={this.state.game.getMove(this.state.viewingMove).move}
             />
             {promotionSelector}
           </div>
