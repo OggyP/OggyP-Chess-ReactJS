@@ -134,18 +134,21 @@ interface BoardProps {
     end: Vector
     type: string[]
   } | null
+  showingPromotionSelector: boolean
 }
 interface BoardState {
   pieceBeingDragged: Vector | null
 }
 class Board extends React.Component<BoardProps, BoardState> {
   mousePos: Vector;
+  posSelected: Vector | null;
   constructor(props: BoardProps) {
     super(props)
     this.state = {
       pieceBeingDragged: null,
     }
     this.mousePos = { "x": 0, "y": 0 }
+    this.posSelected = { "x": 0, "y": 0 }
   }
 
   mouseDown() {
@@ -168,7 +171,8 @@ class Board extends React.Component<BoardProps, BoardState> {
     const piece = this.props.board.getPos(posSelected)
 
     if (piece && piece.team === this.props.board.getTurn('next') && (this.props.ownTeam === 'any' || piece.team === this.props.ownTeam)) {
-      this.props.onPieceClick(posSelected)
+      if (!this.posSelected || (this.posSelected.x !== posSelected.x || this.posSelected.y !== posSelected.y))
+        this.props.onPieceClick(posSelected)
       this.setState({
         pieceBeingDragged: posSelected
       })
@@ -183,8 +187,10 @@ class Board extends React.Component<BoardProps, BoardState> {
       else
         posSelected = { "x": 7 - Math.floor(this.mousePos.x / 100), "y": 7 - Math.floor(this.mousePos.y / 100) }
 
-      if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y)
+      if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
         this.props.deselectPiece()
+        this.posSelected = null
+      }
 
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
@@ -221,10 +227,12 @@ class Board extends React.Component<BoardProps, BoardState> {
     const prevTurnInReferenceToSelf = (this.props.ownTeam === 'any') ? (this.props.board.getTurn('prev') === 'white') ? "self" : "other" : (this.props.ownTeam === this.props.board.getTurn('prev')) ? "self" : "other"
     const inCheck = this.props.board.inCheck(currentTurn)
     let inCheckPos: Vector | React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> | null = null
-    let unsortedPieces: [JSX.Element, number][] = pieces.map((item, index) => {
+    let unsortedPieces: ([JSX.Element, number] | [null, number])[] = pieces.map((item, index) => {
       if (inCheck && item.piece.code === 'k' && item.piece.team === currentTurn)
         inCheckPos = item.pos
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
+        if (this.props.showingPromotionSelector)
+          return [null, 1000]
         return [<DraggedPiece key={item.piece.key}
           type={item.piece.code}
           team={item.piece.team}
@@ -570,6 +578,7 @@ class Game extends React.Component<GameProps, GameState> {
               deselectPiece={() => this.deselectPiece()}
               ownTeam={this.props.team}
               moveInfo={this.state.game.getMove(this.state.viewingMove).move}
+              showingPromotionSelector={!!this.state.promotionSelector}
             />
             {promotionSelector}
           </div>

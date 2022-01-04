@@ -34,7 +34,7 @@
     will-change: transform;
     z-index: 2;
     &.capture {
-        background: radial-gradient(transparent 0%, transparent 79%, rgba(20, 85, 0, 0.3) 80%);
+        background: radial-gradient(transparent 0%, transparent 79%, rgba(20, 85, 0, 0.5) 80%);
     }
     &:hover {
         background: rgba(20, 85, 30, 0.3);
@@ -66,9 +66,6 @@
         transition: all 200ms !important;
         z-index: 4;
     }
-    &.check {
-        background: radial-gradient(ellipse at center, red 0%, #e70000 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);
-    }
 }
 
 .square {
@@ -82,20 +79,23 @@
     &.prevMove {
         &.start {
             &.self {
-                background-color: rgba(131, 131, 225, 0.7);
+                background-color: rgba(131, 131, 225, 0.5);
             }
             &.other {
-                background-color: rgba(225, 131, 131, 0.7);
+                background-color: rgba(225, 131, 131, 0.5);
             }
         }
         &.end {
             &.self {
-                background-color: rgba(46, 46, 228, 0.7);
+                background-color: rgba(46, 46, 228, 0.5);
             }
             &.other {
-                background-color: rgba(228, 46, 46, 0.7);
+                background-color: rgba(228, 46, 46, 0.5);
             }
         }
+    }
+    &.check {
+        background: radial-gradient(ellipse at center, red 0%, #e70000 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);
     }
 }
 
