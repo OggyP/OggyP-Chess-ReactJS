@@ -1,3 +1,11 @@
+# OggyP Chess in React JS
+
+This is [OggyP Chess](https://chess.oggyp.com) being recreated in React JS. This will repalce OggyP Chess when it has caught up in design and features. 
+
+## Credit
+
+(Stockfish WASM nmrugg/stockfish.js/)[https://github.com/nmrugg/stockfish.js/]
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
