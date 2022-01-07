@@ -75,7 +75,7 @@ class UCIengine {
   //     if (infoTypes.includes(word)) {
   //       currentInfoType = word
   //       continue
-  //     }
+  //     } 
   //     if (info.hasOwnProperty(currentInfoType)) {
   //       let wordToAdd = word
   //       if (currentInfoType === 'score' && !turn)
