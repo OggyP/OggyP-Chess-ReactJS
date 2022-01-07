@@ -1,7 +1,15 @@
 import React from 'react';
-import { ChessBoard, ChessGame, PieceCodes, Teams, Vector, PieceAtPos } from './chessLogic'
+import { ChessBoard, ChessGame, PieceCodes, Teams, Vector, PieceAtPos, convertToChessNotation } from './chessLogic'
 import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
+
+import UCIengine from './engine'
+
+let stockfish = new UCIengine('stockfish/stockfish.js', [
+  "setoption name Use NNUE value true",
+  "isready",
+  "ucinewgame"
+])
 
 interface GameState {
   game: ChessGame
@@ -46,12 +54,18 @@ class Game extends React.Component<GameProps, GameState> {
       promotionSelector: null,
       gameOver: false
     }
+    this.boardMoveChanged(0)
   }
 
   flipBoard(): void {
     this.setState({
       "notFlipped": !this.state.notFlipped
     })
+  }
+
+  boardMoveChanged(moveNum: number) {
+    console.log("Viewing: " + this.state.viewingMove)
+    stockfish.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
   }
 
   handlePromotionClick(piece: PieceCodes): void {
@@ -62,24 +76,31 @@ class Game extends React.Component<GameProps, GameState> {
       if (!newBoard.inCheck(info.team)) {
         console.log("update game prom")
         const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
+        const shortNotation = ChessBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
         this.state.game.newMove({
           board: newBoard,
-          text: ChessBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece),
+          text: shortNotation,
           move: {
             start: info.pos.start,
             end: info.pos.end,
             type: this.state.promotionSelector?.moveType as string[],
+            notation: {
+              short: shortNotation,
+              long: convertToChessNotation(info.pos.start) + convertToChessNotation(info.pos.end) + piece
+            }
           }
         })
         console.log(this.state.game.getMoveCount())
+        const newViewNum = this.state.viewingMove + 1
         this.setState({
           game: this.state.game,
           selectedPiece: null,
           validMoves: [],
           promotionSelector: null,
-          viewingMove: this.state.viewingMove + 1,
+          viewingMove: newViewNum,
           gameOver: isGameOver,
         })
+        this.boardMoveChanged(newViewNum)
       }
       else
         alert("L, you can't do that because you will be in check!")
@@ -162,33 +183,40 @@ class Game extends React.Component<GameProps, GameState> {
         selectedPiece: null,
         validMoves: []
       })
-      if (!isPromotion) {
-        const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-        this.state.game.newMove({
-          board: newBoard,
-          text: ChessBoard.getShortNotation(selectedPiecePos, posClicked, moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : ''))),
-          move: {
-            start: selectedPiecePos,
-            end: posClicked,
-            type: moveType as string[]
+      if (isPromotion) return
+      const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
+      const shortNotation = ChessBoard.getShortNotation(selectedPiecePos, posClicked, moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
+      this.state.game.newMove({
+        board: newBoard,
+        text: shortNotation,
+        move: {
+          start: selectedPiecePos,
+          end: posClicked,
+          type: moveType as string[],
+          notation: {
+            short: shortNotation,
+            long: convertToChessNotation(selectedPiecePos) + convertToChessNotation(posClicked)
           }
-        })
-        this.setState({
-          game: this.state.game,
-          gameOver: isGameOver,
-          viewingMove: this.state.viewingMove + 1
-        })
-      }
+        }
+      })
+      const newViewNum = this.state.viewingMove + 1
+      this.setState({
+        game: this.state.game,
+        gameOver: isGameOver,
+        viewingMove: newViewNum
+      })
+      this.boardMoveChanged(newViewNum)
     } else console.warn("Error - Wrong turn / not latest game")
   }
 
   goToMove(moveNum: number): void {
-    if (!this.state.promotionSelector)
-      this.setState({
-        viewingMove: moveNum,
-        validMoves: [],
-        selectedPiece: null
-      })
+    if (this.state.promotionSelector) return
+    this.setState({
+      viewingMove: moveNum,
+      validMoves: [],
+      selectedPiece: null
+    })
+    this.boardMoveChanged(moveNum)
   }
 
   render() {

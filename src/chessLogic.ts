@@ -15,14 +15,19 @@ interface History {
         start: Vector
         end: Vector
         type: string[]
+        notation: {
+            short: string
+            long: string
+        }
     } | null
 }
 
 class Game {
     private _history: History[] = []
+    public startingFEN: string;
     constructor(input: GameConstuctorInput) {
         if (input.pgn) {
-
+            this.startingFEN = ''
         }
         else if (input.fen) {
             this._history = [{
@@ -30,7 +35,9 @@ class Game {
                 text: "Starting Position",
                 move: null
             }]
-        }
+            this.startingFEN = input.fen
+        } else
+            throw (new Error("You must specify either a FEN or PGN to track game history."))
     }
 
     getMoveCount(): number {
@@ -47,6 +54,17 @@ class Game {
 
     newMove(move: History) {
         this._history.push(move)
+    }
+
+    // Returns the moves in long notation from the starting position
+    getMovesTo(halfMoveNum: number): string[] {
+        let moves: string[] = []
+        for (let i = 0; i <= halfMoveNum; i++) {
+            const move = this._history[i].move
+            if (move)
+                moves.push(move.notation.long)
+        }
+        return moves
     }
 }
 

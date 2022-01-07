@@ -100,6 +100,18 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
   }
 
+  offScreen() {
+    if (this.state.pieceBeingDragged) {
+
+      this.props.deselectPiece()
+      this.posSelected = null
+
+      this.setState({
+        pieceBeingDragged: null
+      })
+    }
+  }
+
   private _onMouseMove(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const mainBoard = document.getElementById("main-board")
     if (mainBoard) {
@@ -194,7 +206,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     console.log("Render Board")
 
     return (
-      <div id='main-board' onMouseMove={this._onMouseMove.bind(this)} onMouseDown={() => this.mouseDown()} onMouseUp={() => this.mouseUp()} onMouseLeave={() => this.mouseUp()}>
+      <div id='main-board' onMouseMove={this._onMouseMove.bind(this)} onMouseDown={() => this.mouseDown()} onMouseUp={() => this.mouseUp()} onMouseLeave={() => this.offScreen()}>
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
           {inCheckPos}

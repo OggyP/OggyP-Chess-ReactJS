@@ -140,7 +140,7 @@ class Board {
       if (legalMoves) {
           if (this.halfMovesSinceCaptureOrPawnMove >= 100)
               return { by: '50 move rule', winner: "draw" }
-          console.log(JSON.stringify(this._squares))
+        //   console.log(JSON.stringify(this._squares))
           return false
       } else {
           if (this.inCheck(team))
@@ -334,7 +334,6 @@ class Board {
                                   for (let i = 0; i < pieceMoves.length; i++) {
                                       const currentMove = pieceMoves[i]
                                       if (currentMove.move.x === endPos.x && currentMove.move.y === endPos.y) {
-                                          console.log(pos)
                                           if (pos.x === startPos.x)
                                               sameX = true
                                           else if (pos.y === startPos.y)
