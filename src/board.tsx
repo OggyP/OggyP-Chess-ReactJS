@@ -2,6 +2,7 @@ import Piece from './tsxAssets/piece'
 import DraggedPiece from './tsxAssets/draggingPiece'
 import Square from './tsxAssets/square'
 import ValidMove from './tsxAssets/validMove'
+import Coords from './tsxAssets/coords'
 import { ChessBoard, ChessPiece, Teams, Vector } from './chessLogic'
 import React from 'react';
 
@@ -28,6 +29,7 @@ interface BoardProps {
     end: Vector
     type: string[]
   } | null
+  boxSize: number
   showingPromotionSelector: boolean
 }
 interface BoardState {
@@ -48,9 +50,9 @@ class Board extends React.Component<BoardProps, BoardState> {
   mouseDown() {
     let posSelected: Vector;
     if (this.props.notFlipped)
-      posSelected = { "x": Math.floor(this.mousePos.x / 100), "y": Math.floor(this.mousePos.y / 100) }
+      posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
     else
-      posSelected = { "x": 7 - Math.floor(this.mousePos.x / 100), "y": 7 - Math.floor(this.mousePos.y / 100) }
+      posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
     if (this.props.selectedPiece) {
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
@@ -77,9 +79,9 @@ class Board extends React.Component<BoardProps, BoardState> {
     if (this.state.pieceBeingDragged) {
       let posSelected: Vector;
       if (this.props.notFlipped)
-        posSelected = { "x": Math.floor(this.mousePos.x / 100), "y": Math.floor(this.mousePos.y / 100) }
+        posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
       else
-        posSelected = { "x": 7 - Math.floor(this.mousePos.x / 100), "y": 7 - Math.floor(this.mousePos.y / 100) }
+        posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
 
       if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
         this.props.deselectPiece()
@@ -143,13 +145,14 @@ class Board extends React.Component<BoardProps, BoardState> {
           type={item.piece.code}
           team={item.piece.team}
           startingMousePos={this.mousePos}
+          halfBoxSize={this.props.boxSize / 2}
         />, item.piece.key]
       } else
         return [<Piece key={item.piece.key}
           type={item.piece.code}
           team={item.piece.team}
-          x={100 * ((this.props.notFlipped) ? item.pos.x : 7 - item.pos.x)}
-          y={100 * ((this.props.notFlipped) ? item.pos.y : 7 - item.pos.y)}
+          x={this.props.boxSize * ((this.props.notFlipped) ? item.pos.x : 7 - item.pos.x)}
+          y={this.props.boxSize * ((this.props.notFlipped) ? item.pos.y : 7 - item.pos.y)}
           showAnimation={true}
           isGhost={false}
         />, item.piece.key]
@@ -165,6 +168,7 @@ class Board extends React.Component<BoardProps, BoardState> {
         isCapture={(item.moveType.includes('capture'))}
         x={(this.props.notFlipped) ? item.move.x : 7 - item.move.x}
         y={(this.props.notFlipped) ? item.move.y : 7 - item.move.y}
+        boxSize={this.props.boxSize}
       />;
     })
 
@@ -175,8 +179,8 @@ class Board extends React.Component<BoardProps, BoardState> {
         ghostPiece = <Piece
           type={piece.code}
           team={piece.team}
-          x={100 * ((this.props.notFlipped) ? this.props.selectedPiece.x : 7 - this.props.selectedPiece.x)}
-          y={100 * ((this.props.notFlipped) ? this.props.selectedPiece.y : 7 - this.props.selectedPiece.y)}
+          x={this.props.boxSize * ((this.props.notFlipped) ? this.props.selectedPiece.x : 7 - this.props.selectedPiece.x)}
+          y={this.props.boxSize * ((this.props.notFlipped) ? this.props.selectedPiece.y : 7 - this.props.selectedPiece.y)}
           showAnimation={false}
           isGhost={true}
         />;
@@ -216,6 +220,9 @@ class Board extends React.Component<BoardProps, BoardState> {
           {piecesToDisplay}
           {ghostPiece}
         </div>
+        <Coords 
+          notFlipped={this.props.notFlipped}
+        />
       </div>
     );
   }

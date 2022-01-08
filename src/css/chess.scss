@@ -1,7 +1,7 @@
 #board-wrapper {
     width: 800px;
     height: 800px;
-    aspect-ratio: 1 !important;
+    // aspect-ratio: 1 !important;
 }
 
 #main-board {
@@ -128,4 +128,90 @@
         transition: all 150ms;
         transform: scale(0.8)
     }
+}
+
+.coords {
+    position: absolute;
+    display: flex;
+    pointer-events: none;
+    opacity: 0.8;
+    font-family: Arial;
+    font-size: small;
+    &.ranks {
+        right: 2px;
+        top: 0;
+        flex-flow: column-reverse;
+        height: 100%;
+        width: 12px;
+        &.black {
+            flex-flow: column;
+            p {
+                &:nth-child(2n) {
+                    color: rgba(72, 72, 72, 0.8);
+                }
+                &:nth-child(2n+1) {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+            }
+        }
+        &.left {
+            left: -15px;
+            align-items: flex-end;
+        }
+        p {
+            &:nth-child(2n) {
+                color: rgba(255, 255, 255, 0.8);
+            }
+            &:nth-child(2n+1) {
+                color: rgba(72, 72, 72, 0.8);
+            }
+            transform: translateY(-10%);
+        }
+    }
+    &.files {
+        bottom: -1.4%;
+        left: 0;
+        flex-flow: row;
+        width: 100%;
+        // height: 16px;
+        text-transform: uppercase;
+        text-align: center;
+        &.black {
+            flex-flow: row-reverse;
+            p {
+                &:nth-child(2n) {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+                &:nth-child(2n+1) {
+                    color: rgba(72, 72, 72, 0.8);
+                }
+            }
+        }
+        p {
+            &:nth-child(2n) {
+                color: rgba(72, 72, 72, 0.8);
+            }
+            &:nth-child(2n+1) {
+                color: rgba(255, 255, 255, 0.8);
+            }
+            transform: translateX(-40%);
+        }
+    }
+    p {
+        flex: 1 1 auto;
+    }
+}
+
+.cg-wrap.orientation-white coords.ranks coord:nth-child(2n),
+.cg-wrap.orientation-white coords.files coord:nth-child(2n),
+.cg-wrap.orientation-black coords.ranks coord:nth-child(2n+1),
+.cg-wrap.orientation-black coords.files coord:nth-child(2n+1) {
+    color: rgba(72, 72, 72, 0.8);
+}
+
+.cg-wrap.orientation-black coords.ranks coord:nth-child(2n),
+.cg-wrap.orientation-black coords.files coord:nth-child(2n),
+.cg-wrap.orientation-white coords.ranks coord:nth-child(2n+1),
+.cg-wrap.orientation-white coords.files coord:nth-child(2n+1) {
+    color: rgba(255, 255, 255, 0.8);
 }

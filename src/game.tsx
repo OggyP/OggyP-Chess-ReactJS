@@ -4,6 +4,7 @@ import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
+import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
 
 let stockfish = new UCIengine('stockfish/stockfish.js', [
   "setoption name Use NNUE value true",
@@ -26,6 +27,7 @@ interface GameState {
   } | false
   selectedPiece: Vector | null
   notFlipped: boolean
+  boxSize: number
   promotionSelector: {
     team: Teams
     moveType: string[]
@@ -45,6 +47,10 @@ interface GameProps {
 class Game extends React.Component<GameProps, GameState> {
   constructor(props: GameProps) {
     super(props)
+    const windowSize = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
     this.state = {
       game: new ChessGame({ fen: this.props.startingPosition }),
       viewingMove: 0,
@@ -52,7 +58,8 @@ class Game extends React.Component<GameProps, GameState> {
       notFlipped: true,
       selectedPiece: null,
       promotionSelector: null,
-      gameOver: false
+      gameOver: false,
+      boxSize: Math.floor(Math.min(windowSize.height, windowSize.width) * 0.9 / 8)
     }
     this.boardMoveChanged(0)
   }
@@ -219,6 +226,27 @@ class Game extends React.Component<GameProps, GameState> {
     this.boardMoveChanged(moveNum)
   }
 
+  handleResize = (_: any) => {
+    const windowSize = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+    const newBoxSize = Math.floor(Math.min(windowSize.height, windowSize.width) * 0.9 / 8)
+    if (newBoxSize !== this.state.boxSize)
+      this.setState({
+        boxSize: newBoxSize
+      })
+  };
+
+
+  componentDidMount() {
+    window.addEventListener("resize", this.handleResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
   render() {
     let promotionSelector
     const promotionSelectorVal = this.state.promotionSelector
@@ -281,7 +309,10 @@ class Game extends React.Component<GameProps, GameState> {
     return (
       <div className="game">
         <div className='horizontal'>
-          <div id='board-wrapper'>
+          <div id='board-wrapper' style={{
+            width: 8 * this.state.boxSize,
+            height: 8 * this.state.boxSize
+          }}>
             <Board
               board={this.viewingBoard()}
               validMoves={this.state.validMoves}
@@ -293,6 +324,7 @@ class Game extends React.Component<GameProps, GameState> {
               ownTeam={this.props.team}
               moveInfo={this.state.game.getMove(this.state.viewingMove).move}
               showingPromotionSelector={!!this.state.promotionSelector}
+              boxSize={this.state.boxSize}
             />
             {promotionSelector}
           </div>
