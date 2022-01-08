@@ -3,9 +3,12 @@ body {
     margin: 20px;
 }
 
-ol,
-ul {
-    padding-left: 30px;
+table {
+    margin: 10px;
+    ol,
+    ul {
+        padding-left: 30px;
+    }
 }
 
 .board-row:after {
@@ -58,7 +61,22 @@ ul {
     }
 }
 
-
-/* table {
-  height: auto;
-} */
+.engine-info {
+    h3 {
+        margin: 3px;
+        font-size: x-large;
+    }
+    h4 {
+        margin: 3px;
+        font-size: medium;
+    }
+    p {
+        margin: 2px;
+        font-size: small;
+    }
+    color: white;
+    background: purple;
+    padding: 10px;
+    border-radius: 15px;
+    margin: 10px;
+}

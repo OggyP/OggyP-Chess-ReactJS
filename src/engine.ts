@@ -12,6 +12,7 @@ class UCIengine {
     this._commandsQueue = initConfigCommands
     console.log(this._commandsQueue)
     this._engine.postMessage('uci')
+    window.onbeforeunload = () => {this._engine.postMessage('quit')}
   }
 
   analyse(startingFEN: string, longNotationMoves: string[]) {
@@ -55,6 +56,17 @@ class UCIengine {
 
     console.log(`Receive: ${line}`)
 
+    if (line.startsWith('info')) {
+      const lineInfo = UCIengine.parseInfoLine(line, this._analyseFromTeam)
+      if (lineInfo.score) {
+        const event = new CustomEvent("engine", {
+          detail: lineInfo
+        })
+        document.dispatchEvent(event);
+        console.log("SEND EVENT")
+      }
+    }
+
     if (['uciok', 'readyok'].includes(line))
       this._isready = true
 
@@ -64,29 +76,29 @@ class UCIengine {
     }
   }
 
-  // static parseInfoLine(line: string, turn: Teams) {
-  //   const infoTypes = ['depth', 'seldepth', 'multipv', 'score', 'nodes', 'nps', 'hashfull', 'tbhits', 'time', 'pv', 'string']
-  //   let info = {}
-  //   let currentInfoType = ''
-  //   let words = line.split(' ')
-  //   for (let i = 0; i < words.length; i++) {
-  //     let word = words[i]
-  //     if (word === 'info') continue
-  //     if (infoTypes.includes(word)) {
-  //       currentInfoType = word
-  //       continue
-  //     } 
-  //     if (info.hasOwnProperty(currentInfoType)) {
-  //       let wordToAdd = word
-  //       if (currentInfoType === 'score' && !turn)
-  //         if (!isNaN(wordToAdd)) wordToAdd = -Number(wordToAdd)
-  //       info[currentInfoType] += ' ' + wordToAdd
-  //     } else {
-  //       info[currentInfoType] = word
-  //     }
-  //   }
-  //   return info
-  // }
+  static parseInfoLine(line: string, turn: Teams) {
+    const infoTypes = ['depth', 'seldepth', 'multipv', 'score', 'nodes', 'nps', 'hashfull', 'tbhits', 'time', 'pv', 'string']
+    let info: any = {}
+    let currentInfoType = ''
+    let words = line.split(' ')
+    for (let i = 0; i < words.length; i++) {
+      let word = words[i]
+      if (word === 'info') continue
+      if (infoTypes.includes(word)) {
+        currentInfoType = word
+        continue
+      }
+      if (info.hasOwnProperty(currentInfoType)) {
+        let wordToAdd: string | number = word
+        if (currentInfoType === 'score' && turn === 'black')
+          if (!isNaN(Number(wordToAdd))) wordToAdd = -Number(wordToAdd)
+        info[currentInfoType] += ' ' + wordToAdd
+      } else {
+        info[currentInfoType] = word
+      }
+    }
+    return info
+  }
 }
 
 export default UCIengine

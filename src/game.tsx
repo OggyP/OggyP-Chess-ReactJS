@@ -2,7 +2,7 @@ import React from 'react';
 import { ChessBoard, ChessGame, PieceCodes, Teams, Vector, PieceAtPos, convertToChessNotation } from './chessLogic'
 import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
-
+import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
 
 let stockfish = new UCIengine('stockfish/stockfish.js', [
@@ -297,6 +297,7 @@ class Game extends React.Component<GameProps, GameState> {
             {promotionSelector}
           </div>
           <div id="previous-moves-wrapper">
+            <EngineInfo />
             <table id="previous-moves">
               <thead>
                 <tr>
