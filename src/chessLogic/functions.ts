@@ -112,8 +112,14 @@ function convertToChessNotation(position: Vector | number, coord?: 'x' | 'y'): s
   }
 }
 
-function convertToPosition(notation: string): Vector {
-  return { "x": parseInt(notation[0], 36) - 10, "y": 8 - Number(notation[1]) };
+function convertToPosition(notation: string, coord?: 'x' | 'y'): Vector | number {
+  if (!coord)
+    return { "x": parseInt(notation[0], 36) - 10, "y": 8 - Number(notation[1]) };
+  else
+    if (coord === 'x')
+      return parseInt(notation, 36) - 10
+    else
+      return 8 - Number(notation[1])
 }
 
 

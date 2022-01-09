@@ -39,7 +39,8 @@ interface GameState {
 }
 
 interface GameProps {
-  startingPosition: string
+  fen?: string
+  pgn?: string
   team: Teams | "any"
 }
 
@@ -50,9 +51,10 @@ class Game extends React.Component<GameProps, GameState> {
       width: window.innerWidth,
       height: window.innerHeight
     }
+    let game = new ChessGame((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
     this.state = {
-      game: new ChessGame({ fen: { val: this.props.startingPosition } }),
-      viewingMove: 0,
+      game: game,
+      viewingMove: 0, // make it `game.getMoveCount()` to go to the lastest move
       validMoves: [],
       notFlipped: true,
       selectedPiece: null,

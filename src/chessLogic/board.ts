@@ -1,15 +1,6 @@
 import { PieceCodes, Teams, Vector, PieceAtPos } from './types'
 import { getRayCastVectors, getVectors, convertToPosition, convertToChessNotation } from './functions'
-import { Queen, Rook, Bishop, Knight, King, Pawn} from './pieces'
-
-const pieceCodeClasses = {
-  "q": Queen,
-  "k": King,
-  "b": Bishop,
-  "n": Knight,
-  "r": Rook,
-  "p": Pawn
-}
+import { Queen, Rook, Bishop, Knight, King, Pawn, pieceCodeClasses} from './pieces'
 
 interface CastleInfoOfTeam {
   kingSide: boolean;
@@ -65,7 +56,7 @@ class Board {
 
           // Set Enpassant
           if (FENparts[3] !== '-')
-              this.enPassant = convertToPosition(FENparts[3]);
+              this.enPassant = convertToPosition(FENparts[3]) as Vector;
 
           this.halfMovesSinceCaptureOrPawnMove = Number(FENparts[4])
           this.halfMoveNumber = (Number(FENparts[5]) - 1) * 2

@@ -299,4 +299,13 @@ class King extends ChessPiece {
   }
 }
 
-export { ChessPiece, Queen, Rook, Bishop, Knight, Pawn, King }
+const pieceCodeClasses = {
+  "q": Queen,
+  "k": King,
+  "b": Bishop,
+  "n": Knight,
+  "r": Rook,
+  "p": Pawn
+}
+
+export { ChessPiece, Queen, Rook, Bishop, Knight, Pawn, King, pieceCodeClasses }
