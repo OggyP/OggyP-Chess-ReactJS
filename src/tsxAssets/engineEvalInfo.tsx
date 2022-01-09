@@ -4,7 +4,6 @@ function EngineInfo() {
   const [info, setInfo] = useState<any>(null);
 
   const handleEngineOutput = (event: any) => {
-    console.log(event.detail)
     setInfo(event.detail)
   };
 

@@ -4,7 +4,6 @@ import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
-import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
 
 let stockfish = new UCIengine('stockfish/stockfish.js', [
   "setoption name Use NNUE value true",
@@ -52,7 +51,7 @@ class Game extends React.Component<GameProps, GameState> {
       height: window.innerHeight
     }
     this.state = {
-      game: new ChessGame({ fen: this.props.startingPosition }),
+      game: new ChessGame({ fen: { val: this.props.startingPosition } }),
       viewingMove: 0,
       validMoves: [],
       notFlipped: true,
@@ -238,13 +237,33 @@ class Game extends React.Component<GameProps, GameState> {
       })
   };
 
+  handleKeyPressed = (event: KeyboardEvent) => {
+    event.preventDefault()
+
+    switch (event.key) {
+      case "ArrowLeft":
+        if (this.state.viewingMove > 0) this.goToMove(this.state.viewingMove - 1)
+        break;
+      case "ArrowRight":
+        if (this.state.viewingMove < this.state.game.getMoveCount()) this.goToMove(this.state.viewingMove + 1)
+        break;
+      case "ArrowUp":
+        if (this.state.viewingMove !== this.state.game.getMoveCount()) this.goToMove(this.state.game.getMoveCount())
+        break;
+      case "ArrowDown":
+        if (this.state.viewingMove !== 0) this.goToMove(0)
+        break;
+    }
+  }
 
   componentDidMount() {
     window.addEventListener("resize", this.handleResize);
+    window.addEventListener("keydown", this.handleKeyPressed);
   }
 
   componentWillUnmount() {
     window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("keydown", this.handleKeyPressed);
   }
 
   render() {
@@ -352,17 +371,31 @@ class Game extends React.Component<GameProps, GameState> {
 
         <div id="game-info">
           <div id="current-board">
+            <p className='opening'><span className='eco'>{this.state.game.opening.ECO}</span>{this.state.game.opening.Name}</p>
             <p>{this.viewingBoard().getFen()}</p>
           </div>
         </div>
         <div id="game-controls">
+          <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
           <button onClick={() => this.flipBoard()}>Flip Board</button>
           {resumeButton}
         </div>
-
       </div>
     );
   }
+}
+
+function download(filename: string, text: string): void {
+  let element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
 }
 
 export default Game

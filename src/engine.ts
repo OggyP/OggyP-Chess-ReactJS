@@ -10,7 +10,6 @@ class UCIengine {
     this._engine.onmessage = (event) => { this.onMessage(event) }
     this._isready = false;
     this._commandsQueue = initConfigCommands
-    console.log(this._commandsQueue)
     this._engine.postMessage('uci')
     window.onbeforeunload = () => {this._engine.postMessage('quit')}
   }
@@ -19,18 +18,18 @@ class UCIengine {
     let startingTeam: Teams = (startingFEN.split(' ')[1] === 'w') ? "white" : "black"
     if (longNotationMoves.length % 2 === 1) this._analyseFromTeam = (startingTeam === 'white') ? "black" : "white"
     else this._analyseFromTeam = startingTeam
-    console.log(this._analyseFromTeam + longNotationMoves.length)
     this.addToQueueAndSend('stop')
     this.addToQueueAndSend('isready')
     this.addToQueueAndSend(`position fen ${startingFEN} moves ${longNotationMoves.join(' ')}`)
-    this.addToQueueAndSend('go movetime 3000')
+    this.addToQueueAndSend('go movetime 10000')
   }
 
   addToQueueAndSend(cmd: string) {
     this._commandsQueue.push(cmd)
     if (this._isready) {
-      this._engine.postMessage(this._commandsQueue.shift() as string);
-      console.log(`SendQUE: ${cmd}`)
+      const cmdToSend = this._commandsQueue.shift() as string
+      // console.log("SendC " + cmdToSend)
+      this._engine.postMessage(cmdToSend);
     }
     if (['uci', 'isready'].includes(cmd))
       this._isready = false
@@ -38,8 +37,8 @@ class UCIengine {
 
   sendCmd(cmd: string) {
     if (this._isready) {
-      console.log(`SendCMD: ${cmd}`)
       this._engine.postMessage(cmd);
+      // console.log("SendD " + cmd)
       if (['uci', 'isready'].includes(cmd))
         this._isready = false
     } else
@@ -54,7 +53,7 @@ class UCIengine {
       line = event;
     }
 
-    console.log(`Receive: ${line}`)
+    // console.log(`Receive: ${line}`)
 
     if (line.startsWith('info')) {
       const lineInfo = UCIengine.parseInfoLine(line, this._analyseFromTeam)
@@ -63,7 +62,6 @@ class UCIengine {
           detail: lineInfo
         })
         document.dispatchEvent(event);
-        console.log("SEND EVENT")
       }
     }
 

@@ -28,7 +28,6 @@ table {
 .horizontal {
     display: flex;
     flex-direction: row;
-    height: 800px;
 }
 
 #game-controls {
@@ -79,4 +78,12 @@ table {
     padding: 10px;
     border-radius: 15px;
     margin: 10px;
+}
+
+.opening {
+    color: black;
+    .eco {
+        margin-right: 5px;
+        color: grey;
+    }
 }
