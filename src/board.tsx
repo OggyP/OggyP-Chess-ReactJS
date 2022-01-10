@@ -47,7 +47,20 @@ class Board extends React.Component<BoardProps, BoardState> {
     this.posSelected = { "x": 0, "y": 0 }
   }
 
+  componentDidMount() {
+    window.addEventListener("mousedown", this.mouseDown.bind(this), false);
+    window.addEventListener("mouseup", this.mouseUp.bind(this), false);
+    window.addEventListener("mousemove", this._onMouseMove.bind(this), false);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("mousedown", this.mouseDown.bind(this), false);
+    window.removeEventListener("mouseup", this.mouseUp.bind(this), false);
+    window.removeEventListener("mousemove", this._onMouseMove.bind(this), false);
+  }
+
   mouseDown() {
+    console.log("Mouse Down")
     let posSelected: Vector;
     if (this.props.notFlipped)
       posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
@@ -114,7 +127,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
   }
 
-  private _onMouseMove(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  private _onMouseMove(event: MouseEvent) {
     const mainBoard = document.getElementById("main-board")
     if (mainBoard) {
       const bounds = mainBoard.getBoundingClientRect();
@@ -210,7 +223,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     console.log("Render Board")
 
     return (
-      <div id='main-board' onMouseMove={this._onMouseMove.bind(this)} onMouseDown={() => this.mouseDown()} onMouseUp={() => this.mouseUp()} onMouseLeave={() => this.offScreen()}>
+      <div id='main-board' onMouseLeave={() => this.offScreen()}>
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
           {inCheckPos}

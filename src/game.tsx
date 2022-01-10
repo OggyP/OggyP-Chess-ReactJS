@@ -5,12 +5,6 @@ import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
 
-let stockfish = new UCIengine('stockfish/stockfish.js', [
-  "setoption name Use NNUE value true",
-  "isready",
-  "ucinewgame"
-])
-
 interface GameState {
   game: ChessGame
   viewingMove: number
@@ -45,8 +39,15 @@ interface GameProps {
 }
 
 class Game extends React.Component<GameProps, GameState> {
+  engine: UCIengine
+
   constructor(props: GameProps) {
     super(props)
+    this.engine = new UCIengine('/stockfish/stockfish.js', [
+      "setoption name Use NNUE value true",
+      "isready",
+      "ucinewgame"
+    ])
     const windowSize = {
       width: window.innerWidth,
       height: window.innerHeight
@@ -73,7 +74,7 @@ class Game extends React.Component<GameProps, GameState> {
 
   boardMoveChanged(moveNum: number) {
     console.log("Viewing: " + this.state.viewingMove)
-    stockfish.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
+    this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
   }
 
   handlePromotionClick(piece: PieceCodes): void {
@@ -240,19 +241,21 @@ class Game extends React.Component<GameProps, GameState> {
   };
 
   handleKeyPressed = (event: KeyboardEvent) => {
-    event.preventDefault()
-
     switch (event.key) {
       case "ArrowLeft":
+        event.preventDefault()
         if (this.state.viewingMove > 0) this.goToMove(this.state.viewingMove - 1)
         break;
       case "ArrowRight":
+        event.preventDefault()
         if (this.state.viewingMove < this.state.game.getMoveCount()) this.goToMove(this.state.viewingMove + 1)
         break;
       case "ArrowUp":
+        event.preventDefault()
         if (this.state.viewingMove !== this.state.game.getMoveCount()) this.goToMove(this.state.game.getMoveCount())
         break;
       case "ArrowDown":
+        event.preventDefault()
         if (this.state.viewingMove !== 0) this.goToMove(0)
         break;
     }
@@ -329,7 +332,9 @@ class Game extends React.Component<GameProps, GameState> {
 
     return (
       <div className="game">
-        <div className='horizontal'>
+        <div className='horizontal' style={{
+          height: 8 * this.state.boxSize
+        }}>
           <div id='board-wrapper' style={{
             width: 8 * this.state.boxSize,
             height: 8 * this.state.boxSize

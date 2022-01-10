@@ -119,7 +119,7 @@ function convertToPosition(notation: string, coord?: 'x' | 'y'): Vector | number
     if (coord === 'x')
       return parseInt(notation, 36) - 10
     else
-      return 8 - Number(notation[1])
+      return 8 - Number(notation)
 }
 
 

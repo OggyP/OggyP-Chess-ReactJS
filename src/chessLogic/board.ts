@@ -40,7 +40,7 @@ class Board {
       } else {
           let FENparts = input.split(' ')
           if (FENparts.length !== 6)
-              throw new Error("Invalid FEN, There should be 6 segments.")
+              throw new Error("Invalid FEN, There should be 6 segments. The input FEN was " + input) 
 
           let turn = (FENparts[1] === 'w') ? "white" : "black"
 

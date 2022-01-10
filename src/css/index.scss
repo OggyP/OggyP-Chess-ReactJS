@@ -61,6 +61,10 @@ table {
 }
 
 .engine-info {
+    position: -webkit-sticky;
+    /* Safari */
+    position: sticky;
+    top: 0;
     h3 {
         margin: 3px;
         font-size: x-large;
@@ -76,7 +80,7 @@ table {
     color: white;
     background: purple;
     padding: 10px;
-    border-radius: 15px;
+    border-radius: 20px;
     margin: 10px;
 }
 

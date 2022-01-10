@@ -9,12 +9,14 @@
     width: inherit;
     height: inherit;
     position: absolute;
+    pointer-events: none;
 }
 
 #legal-moves-layer {
     position: absolute;
     width: inherit;
     height: inherit;
+    pointer-events: none;
 }
 
 #pieces-layer {
@@ -69,6 +71,7 @@
 }
 
 .square {
+    pointer-events: none;
     width: 12.5%;
     height: 12.5%;
     margin: auto;
@@ -131,6 +134,7 @@
 }
 
 .coords {
+    pointer-events: none;
     position: absolute;
     display: flex;
     pointer-events: none;
