@@ -26,11 +26,14 @@ function EngineInfo() {
         evalText = `${(info.score.split(' ')[1][0] === '-') ? '-' : '+'}M ${Math.abs(Number(info.score.split(' ')[1]))}`
       }
     } else {
-      // Show in points
-      if (Number(info.score.split(' ')[1]) > 0) evalText += "+"
-      evalText += (Number(info.score.split(' ')[1]) / 100).toString()
+      if (info.raw === 'info depth 0 score cp 0') evalText = 'Stalemate'
+      else {
+        // Show in points
+        if (Number(info.score.split(' ')[1]) > 0) evalText += "+"
+        evalText += (Number(info.score.split(' ')[1]) / 100).toString()
+      }
     }
-    if (evalText !== 'Checkmate')
+    if (evalText !== 'Checkmate' && evalText !== 'Stalemate')
       return <div className='engine-info'>
         <h3>Depth: {info.depth} | Eval: {evalText}</h3>
         <p>Nodes: {info.nodes} | Nps: {info.nps}</p>
@@ -38,7 +41,7 @@ function EngineInfo() {
       </div>
     else
       return <div className='engine-info'>
-        <h3>Checkmate</h3>
+        <h3>{evalText}</h3>
       </div>
   }
   else

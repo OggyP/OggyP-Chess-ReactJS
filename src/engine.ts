@@ -57,6 +57,7 @@ class UCIengine {
 
     if (line.startsWith('info')) {
       const lineInfo = UCIengine.parseInfoLine(line, this._analyseFromTeam)
+      lineInfo.raw = line
       if (lineInfo.score) {
         const event = new CustomEvent("engine", {
           detail: lineInfo

@@ -35,6 +35,7 @@
     background-size: cover;
     will-change: transform;
     z-index: 2;
+    pointer-events: all;
     &.capture {
         background: radial-gradient(transparent 0%, transparent 79%, rgba(20, 85, 0, 0.5) 80%);
     }
@@ -182,7 +183,7 @@
         left: 0.5%;
         flex-flow: row;
         width: 100%;
-        text-transform: uppercase;
+        text-transform: lowercase;
         text-align: center;
         &.black {
             flex-flow: row-reverse;

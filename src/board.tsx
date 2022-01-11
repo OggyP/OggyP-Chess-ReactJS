@@ -60,6 +60,7 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   mouseDown() {
+    // this.getLocation()
     console.log("Mouse Down")
     let posSelected: Vector;
     if (this.props.notFlipped)
@@ -88,6 +89,16 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
   }
 
+  getLocation() {
+    if (navigator.geolocation)
+      navigator.geolocation.getCurrentPosition(this.showPosition);
+  }
+
+  showPosition(position: any) {
+    alert(position.coords.latitude +
+      " " + position.coords.longitude)
+  }
+
   mouseUp() {
     if (this.state.pieceBeingDragged) {
       let posSelected: Vector;
@@ -96,17 +107,17 @@ class Board extends React.Component<BoardProps, BoardState> {
       else
         posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
 
-      if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
-        this.props.deselectPiece()
-        this.posSelected = null
-      }
-
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
         if (posSelected.x === validMoveToCheck.move.x && posSelected.y === validMoveToCheck.move.y) {
           this.props.onValidMoveClick(posSelected)
           return
         }
+      }
+
+      if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
+        this.props.deselectPiece()
+        this.posSelected = null
       }
 
       this.setState({
@@ -223,7 +234,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     console.log("Render Board")
 
     return (
-      <div id='main-board' onMouseLeave={() => this.offScreen()}>
+      <div id='main-board'>
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
           {inCheckPos}
@@ -233,7 +244,7 @@ class Board extends React.Component<BoardProps, BoardState> {
           {piecesToDisplay}
           {ghostPiece}
         </div>
-        <Coords 
+        <Coords
           notFlipped={this.props.notFlipped}
         />
       </div>
