@@ -29,8 +29,6 @@ class Login extends React.Component<LoginProps, LoginState>{
     const loginError = queryParams.get('error');
     console.log(loginError)
 
-
-
     let error: null | string = null
 
     if (loginError && loginErrors.has(loginError)) {
@@ -54,6 +52,10 @@ class Login extends React.Component<LoginProps, LoginState>{
         if (event.data.status === 'success') {
           if (event.data.token)
             setCookie("token", event.data.token + "|" + event.data.userId, 7)
+            const ref = queryParams.get('ref')
+            if (ref) 
+            document.location.href = ref
+            else
           document.location.href = '/home';
         } else {
           this.setState({

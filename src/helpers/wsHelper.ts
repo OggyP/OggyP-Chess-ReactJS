@@ -16,8 +16,7 @@ function sendToWs(ws: WebSocket, eventType: string, data: any) {
   } else {
     wsMsg.data = data
   }
-  if (eventType !== "login")
-    console.log(JSON.stringify(wsMsg))
+  console.log(JSON.stringify(wsMsg))
   ws.send(JSON.stringify(wsMsg))
 }
 

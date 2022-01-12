@@ -4,6 +4,7 @@ import '../css/chess.scss';
 import '../svg/assets.css'
 import Game from '../game'
 import { sendToWs } from '../helpers/wsHelper'
+import { Teams } from '../chessLogic';
 
 interface ViewGameProps {
   url: string
@@ -17,6 +18,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
 
   ws = new WebSocket(this.props.url)
   gameId: Number;
+  urlParams = new URLSearchParams(window.location.search);
 
   constructor(props: ViewGameProps) {
     super(props)
@@ -50,10 +52,14 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
   }
 
   render() {
+    let viewAs: Teams | 'any' = 'any'
+    const viewAsFromURL = this.urlParams.get('viewAs')
+    if (viewAsFromURL === 'white' || viewAsFromURL === 'black' || viewAsFromURL === 'any')
+      viewAs = viewAsFromURL
     if (this.state.PGN)
       return <Game
         pgn={this.state.PGN}
-        team='any'
+        team={viewAs}
       />
     else
       return <div>

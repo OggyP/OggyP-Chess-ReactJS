@@ -4,6 +4,7 @@ import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
+import { sendToWs } from './helpers/wsHelper';
 
 interface GameState {
   game: ChessGame
@@ -35,19 +36,22 @@ interface GameState {
 interface GameProps {
   fen?: string
   pgn?: string
+  multiplayerWs?: WebSocket
   team: Teams | "any"
+  onMounted?: Function
 }
 
 class Game extends React.Component<GameProps, GameState> {
-  engine: UCIengine
+  engine: UCIengine | null = null
 
   constructor(props: GameProps) {
     super(props)
-    this.engine = new UCIengine('/stockfish/stockfish.js', [
-      "setoption name Use NNUE value true",
-      "isready",
-      "ucinewgame"
-    ])
+    if (!this.props.multiplayerWs)
+      this.engine = new UCIengine('/stockfish/stockfish.js', [
+        "setoption name Use NNUE value true",
+        "isready",
+        "ucinewgame"
+      ])
     const windowSize = {
       width: window.innerWidth,
       height: window.innerHeight
@@ -57,7 +61,7 @@ class Game extends React.Component<GameProps, GameState> {
       game: game,
       viewingMove: 0, // make it `game.getMoveCount()` to go to the lastest move
       validMoves: [],
-      notFlipped: true,
+      notFlipped: (props.team === 'any' || props.team === 'white'),
       selectedPiece: null,
       promotionSelector: null,
       gameOver: false,
@@ -74,7 +78,8 @@ class Game extends React.Component<GameProps, GameState> {
 
   boardMoveChanged(moveNum: number) {
     console.log("Viewing: " + this.state.viewingMove)
-    this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
+    if (this.engine)
+      this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
   }
 
   handlePromotionClick(piece: PieceCodes): void {
@@ -110,6 +115,12 @@ class Game extends React.Component<GameProps, GameState> {
           gameOver: isGameOver,
         })
         this.boardMoveChanged(newViewNum)
+        if (this.props.multiplayerWs)
+          sendToWs(this.props.multiplayerWs, 'move', {
+            startingPos: [info.pos.start.x, info.pos.start.y],
+            endingPos: [info.pos.end.x, info.pos.end.y],
+            promote: piece + ((info.team === 'white') ? 'l' : 'd')
+          })
       }
       else
         alert("L, you can't do that because you will be in check!")
@@ -122,6 +133,43 @@ class Game extends React.Component<GameProps, GameState> {
       validMoves: [],
       selectedPiece: null
     })
+  }
+
+  doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) {
+    const piece = this.latestBoard().getPos(startPos)
+    if (!piece) return
+    if (piece.team === this.props.team) return
+    const moves = piece.getMoves(startPos, this.latestBoard())
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i]
+      if (move.move.x !== endPos.x || move.move.y !== endPos.y) continue
+      const newBoard = new ChessBoard(move.board)
+      if (promotion) {
+        newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
+      }
+      const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
+      const shortNotation = ChessBoard.getShortNotation(startPos, endPos, move.moveType, this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
+      this.state.game.newMove({
+        board: newBoard,
+        text: shortNotation,
+        move: {
+          start: startPos,
+          end: endPos,
+          type: move.moveType,
+          notation: {
+            short: shortNotation,
+            long: convertToChessNotation(startPos) + convertToChessNotation(endPos) + ((promotion) ? promotion : '')
+          }
+        }
+      })
+      const newViewNum = this.state.viewingMove + 1
+      this.setState({
+        game: this.state.game,
+        gameOver: isGameOver,
+        viewingMove: newViewNum
+      })
+      this.boardMoveChanged(newViewNum)
+    }
   }
 
   handlePieceClick(posClicked: Vector): void {
@@ -215,6 +263,14 @@ class Game extends React.Component<GameProps, GameState> {
         viewingMove: newViewNum
       })
       this.boardMoveChanged(newViewNum)
+      console.log('before')
+      console.log(this.props.multiplayerWs)
+      if (!this.props.multiplayerWs) return
+      console.log('after')
+      sendToWs(this.props.multiplayerWs, 'move', {
+        startingPos: [selectedPiecePos.x, selectedPiecePos.y],
+        endingPos: [posClicked.x, posClicked.y],
+      })
     } else console.warn("Error - Wrong turn / not latest game")
   }
 
@@ -262,6 +318,13 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   componentDidMount() {
+    console.log("Game Mounted")
+    console.log(this.props.onMounted)
+    if (this.props.onMounted) {
+      this.props.onMounted({
+        doMove: (startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) => this.doMove(startPos, endPos, promotion)
+      });
+    }
     window.addEventListener("resize", this.handleResize);
     window.addEventListener("keydown", this.handleKeyPressed);
   }
@@ -330,6 +393,10 @@ class Game extends React.Component<GameProps, GameState> {
       </tr>
     }
 
+    let engineInfo = null
+    if (this.engine)
+     engineInfo = <EngineInfo />
+
     return (
       <div className="game">
         <div className='horizontal' style={{
@@ -355,7 +422,7 @@ class Game extends React.Component<GameProps, GameState> {
             {promotionSelector}
           </div>
           <div id="previous-moves-wrapper">
-            <EngineInfo />
+            {engineInfo}
             <table id="previous-moves">
               <thead>
                 <tr>

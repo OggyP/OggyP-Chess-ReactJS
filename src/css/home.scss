@@ -1,0 +1,22 @@
+.user-id {
+    color: grey;
+    font-size: small;
+}
+
+.horizontal {
+    display: flex;
+    flex-direction: row;
+    .left {
+        width: 50%;
+    }
+}
+
+.mode-selector,
+.time-selector {
+    width: 50%;
+    display: flex;
+    flex-direction: row;
+    label {
+        width: 100%;
+    }
+}

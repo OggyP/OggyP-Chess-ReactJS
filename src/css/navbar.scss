@@ -1,0 +1,29 @@
+#navbar {
+    // height: 3%;
+    .item {
+        // margin: 10px;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        &:hover {
+            background-color: grey;
+        }
+        padding-left: 6px;
+        text-align: center;
+    }
+    img {
+        // height: 3%;
+        width: 2%;
+        padding: 0px;
+        margin: 0;
+        &:hover {
+            background-color: grey;
+        }
+    }
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    background-color: rgb(201, 201, 201);
+    // margin: 10px;
+}
