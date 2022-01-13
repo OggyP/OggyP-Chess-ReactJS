@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { Vector } from '../chessLogic/types';
 import { convertToPosition } from '../chessLogic/functions';
 
-function EngineBestMove() {
+function EngineBestMove(props: { notFlipped: boolean }) {
   const [bestMove, setBestMove] = useState<{
     startingPos: Vector
     endingPos: Vector
@@ -52,10 +52,12 @@ function EngineBestMove() {
       <Square
         classes={['from']}
         pos={bestMove.startingPos}
-      />
+        notFlipped={props.notFlipped}
+        />
       <Square
         classes={['to']}
         pos={bestMove.endingPos}
+        notFlipped={props.notFlipped}
       />
     </div>
   }

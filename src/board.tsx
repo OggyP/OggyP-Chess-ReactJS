@@ -221,13 +221,15 @@ class Board extends React.Component<BoardProps, BoardState> {
       squares = [
         <Square
           key={"start"}
-          pos={(this.props.notFlipped) ? this.props.moveInfo.start : { "x": 7 - this.props.moveInfo.start.x, "y": 7 - this.props.moveInfo.start.y }}
+          pos={this.props.moveInfo.start}
           classes={[prevTurnInReferenceToSelf, "prevMove", "start"]}
+          notFlipped={this.props.notFlipped}
         ></Square>,
         <Square
           key={"end"}
-          pos={(this.props.notFlipped) ? this.props.moveInfo.end : { "x": 7 - this.props.moveInfo.end.x, "y": 7 - this.props.moveInfo.end.y }}
+          pos={this.props.moveInfo.end}
           classes={[prevTurnInReferenceToSelf, "prevMove", "end"]}
+          notFlipped={this.props.notFlipped}
         ></Square>
       ]
 
@@ -245,7 +247,8 @@ class Board extends React.Component<BoardProps, BoardState> {
           {piecesToDisplay}
           {ghostPiece}
         </div>
-        {(this.props.haveEngine) ? <EngineBestMove /> : null}
+
+        {(this.props.haveEngine) ? <EngineBestMove notFlipped={this.props.notFlipped} /> : null}
         <Coords
           notFlipped={this.props.notFlipped}
         />

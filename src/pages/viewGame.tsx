@@ -5,6 +5,7 @@ import '../svg/assets.css'
 import Game from '../game'
 import { sendToWs } from '../helpers/wsHelper'
 import { Teams } from '../chessLogic';
+import ErrorPage from './Error';
 
 interface ViewGameProps {
   url: string
@@ -12,12 +13,13 @@ interface ViewGameProps {
 
 interface ViewGameState {
   PGN: string | null
+  error: null | JSX.Element
 }
 
 class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
 
   ws = new WebSocket(this.props.url)
-  gameId: Number;
+  gameId: number;
   urlParams = new URLSearchParams(window.location.search);
 
   constructor(props: ViewGameProps) {
@@ -25,17 +27,29 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
 
     this.gameId = Number(window.location.pathname.split('/')[2]);
 
+    if (isNaN(this.gameId)) window.location.href = '/home'
+
     this.state = {
-      PGN: null
+      PGN: null,
+      error: null
     }
 
     this.ws.onmessage = (message) => {
       const event = JSON.parse(message.data)
-      console.log(event)
-      console.log(event.data.pgn)
-      this.setState({
-        PGN: event.data.pgn
-      })
+      if (event.type === 'error') {
+        this.setState({
+          error: <ErrorPage
+            title='Unknown Game'
+            description={message.data}
+          />
+        })
+      } else {
+        console.log(event)
+        console.log(event.data.pgn)
+        this.setState({
+          PGN: event.data.pgn
+        })
+      }
     }
 
     this.ws.onclose = function () {
@@ -64,6 +78,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
     else
       return <div>
         <h1>Loading Game | ID: {this.gameId}</h1>
+        <p>If this persists, this game may not exist.</p>
       </div>
   }
 }
