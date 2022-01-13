@@ -4,7 +4,8 @@ function EngineInfo() {
   const [info, setInfo] = useState<any>(null);
 
   const handleEngineOutput = (event: any) => {
-    setInfo(event.detail)
+    if (event.detail.score)
+      setInfo(event.detail)
   };
 
   React.useEffect(() => {

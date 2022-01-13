@@ -1,4 +1,5 @@
-import { Teams } from "./chessLogic/types";
+import { convertToPosition } from "./chessLogic/functions";
+import { Teams, Vector } from "./chessLogic/types";
 
 class UCIengine {
   private _engine: Worker;
@@ -54,6 +55,27 @@ class UCIengine {
     }
 
     // console.log(`Receive: ${line}`)
+
+    if (line.startsWith('bestmove')) {
+      const move = line.split(' ')[1]
+      const bestMove: {
+        startingPos: Vector
+        endingPos: Vector
+      } = {
+        startingPos: {
+          'x': convertToPosition(move[0], 'x') as number,
+          'y': convertToPosition(move[1], 'y') as number
+        },
+        endingPos: {
+          'x': convertToPosition(move[2], 'x') as number,
+          'y': convertToPosition(move[3], 'y') as number
+        }
+      }
+      const event = new CustomEvent("engine", {
+        detail: bestMove
+      })
+      document.dispatchEvent(event);
+    }
 
     if (line.startsWith('info')) {
       const lineInfo = UCIengine.parseInfoLine(line, this._analyseFromTeam)

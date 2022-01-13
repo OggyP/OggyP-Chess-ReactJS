@@ -12,6 +12,7 @@
     pointer-events: none;
 }
 
+#best-move,
 #legal-moves-layer {
     position: absolute;
     width: inherit;
@@ -100,6 +101,18 @@
     }
     &.check {
         background: radial-gradient(ellipse at center, red 0%, #e70000 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);
+    }
+}
+
+#best-move {
+    .square {
+        background-color: purple;
+        &.from {
+            opacity: 0.6;
+        }
+        &.to {
+            opacity: 0.3;
+        }
     }
 }
 

@@ -5,6 +5,7 @@ import ValidMove from './tsxAssets/validMove'
 import Coords from './tsxAssets/coords'
 import { ChessBoard, ChessPiece, Teams, Vector } from './chessLogic'
 import React from 'react';
+import EngineBestMove from './tsxAssets/engineBestMove'
 
 interface piecesArray {
   piece: ChessPiece
@@ -35,6 +36,7 @@ interface BoardProps {
 }
 interface BoardState {
   pieceBeingDragged: Vector | null
+  beingDraggedPieceKey: number | null
 }
 class Board extends React.Component<BoardProps, BoardState> {
   mousePos: Vector;
@@ -43,6 +45,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     super(props)
     this.state = {
       pieceBeingDragged: null,
+      beingDraggedPieceKey: null
     }
     this.mousePos = { "x": 0, "y": 0 }
     this.posSelected = { "x": 0, "y": 0 }
@@ -85,19 +88,10 @@ class Board extends React.Component<BoardProps, BoardState> {
       if (!this.posSelected || (this.posSelected.x !== posSelected.x || this.posSelected.y !== posSelected.y))
         this.props.onPieceClick(posSelected)
       this.setState({
-        pieceBeingDragged: posSelected
+        pieceBeingDragged: posSelected,
+        beingDraggedPieceKey: piece.key
       })
     }
-  }
-
-  getLocation() {
-    if (navigator.geolocation)
-      navigator.geolocation.getCurrentPosition(this.showPosition);
-  }
-
-  showPosition(position: any) {
-    alert(position.coords.latitude +
-      " " + position.coords.longitude)
   }
 
   mouseUp() {
@@ -112,6 +106,10 @@ class Board extends React.Component<BoardProps, BoardState> {
         const validMoveToCheck = this.props.validMoves[i]
         if (posSelected.x === validMoveToCheck.move.x && posSelected.y === validMoveToCheck.move.y) {
           this.props.onValidMoveClick(posSelected)
+          this.setState({
+            pieceBeingDragged: null,
+            beingDraggedPieceKey: null
+          })
           return
         }
       }
@@ -122,7 +120,8 @@ class Board extends React.Component<BoardProps, BoardState> {
       }
 
       this.setState({
-        pieceBeingDragged: null
+        pieceBeingDragged: null,
+        beingDraggedPieceKey: null
       })
     }
   }
@@ -134,7 +133,8 @@ class Board extends React.Component<BoardProps, BoardState> {
       this.posSelected = null
 
       this.setState({
-        pieceBeingDragged: null
+        pieceBeingDragged: null,
+        beingDraggedPieceKey: null
       })
     }
   }
@@ -245,6 +245,7 @@ class Board extends React.Component<BoardProps, BoardState> {
           {piecesToDisplay}
           {ghostPiece}
         </div>
+        {(this.props.haveEngine) ? <EngineBestMove /> : null}
         <Coords
           notFlipped={this.props.notFlipped}
         />
