@@ -31,6 +31,7 @@ interface BoardProps {
   } | null
   boxSize: number
   showingPromotionSelector: boolean
+  haveEngine: boolean
 }
 interface BoardState {
   pieceBeingDragged: Vector | null

@@ -13,7 +13,7 @@ function App() {
     <Router>
       <NavBar/>
       <Routes>
-        {/* <Route exact-path='/' exact-element={<Home />} /> */}
+        {/* <Route exact-path='/' exact-element={<Welcome />} /> */}
         <Route path='/analysis' element={<Analysis />} />
         <Route path='/viewGame/*' element={<ViewGame url={wsURL}/>} />
         <Route path='/login' element={<Login url={wsURL}/>} />

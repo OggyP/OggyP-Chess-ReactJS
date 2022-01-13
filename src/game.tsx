@@ -5,6 +5,20 @@ import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
 import { sendToWs } from './helpers/wsHelper';
+import UserInfoDisplay from './tsxAssets/UserInfo'
+
+interface TimerInfo {
+  startTime: number; // UNIX Time
+  countingDown: boolean
+  time: number
+}
+
+interface PlayerInfo {
+  username: string
+  rating: number
+  ratingChange?: number
+  title?: string
+}
 
 interface GameState {
   game: ChessGame
@@ -31,6 +45,15 @@ interface GameState {
       end: Vector
     }
   } | null
+  moveRightSection: boolean
+  players: {
+    white: PlayerInfo
+    black: PlayerInfo
+  } | null
+  timers?: {
+    white: TimerInfo
+    black: TimerInfo
+  }
 }
 
 interface GameProps {
@@ -39,6 +62,10 @@ interface GameProps {
   multiplayerWs?: WebSocket
   team: Teams | "any"
   onMounted?: Function
+  players?: {
+    white: PlayerInfo
+    black: PlayerInfo
+  }
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -65,7 +92,9 @@ class Game extends React.Component<GameProps, GameState> {
       selectedPiece: null,
       promotionSelector: null,
       gameOver: false,
-      boxSize: Math.floor(Math.min(windowSize.height, windowSize.width) * 0.9 / 8)
+      boxSize: Math.floor(Math.min(windowSize.height * 0.7, windowSize.width) / 8),
+      moveRightSection: false,
+      players: (props.players || null)
     }
     this.boardMoveChanged(0)
   }
@@ -80,6 +109,16 @@ class Game extends React.Component<GameProps, GameState> {
     console.log("Viewing: " + this.state.viewingMove)
     if (this.engine)
       this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
+  }
+
+  customGameOver(winner: Teams | 'draw', by: string, extraInfo?: string) {
+    this.setState({
+      gameOver: {
+        winner: winner,
+        by: by,
+        extraInfo: extraInfo
+      }
+    })
   }
 
   handlePromotionClick(piece: PieceCodes): void {
@@ -289,7 +328,7 @@ class Game extends React.Component<GameProps, GameState> {
       width: window.innerWidth,
       height: window.innerHeight
     }
-    const newBoxSize = Math.floor(Math.min(windowSize.height, windowSize.width) * 0.9 / 8)
+    const newBoxSize = Math.floor(Math.min(windowSize.height * 0.7, windowSize.width) / 8)
     if (newBoxSize !== this.state.boxSize)
       this.setState({
         boxSize: newBoxSize
@@ -317,12 +356,24 @@ class Game extends React.Component<GameProps, GameState> {
     }
   }
 
+  updateTimer(white: TimerInfo, black: TimerInfo) {
+    console.log('Updating Timer', white, black)
+    this.setState({
+      timers: {
+        white: white,
+        black: black
+      }
+    })
+  }
+
   componentDidMount() {
     console.log("Game Mounted")
     console.log(this.props.onMounted)
     if (this.props.onMounted) {
       this.props.onMounted({
-        doMove: (startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) => this.doMove(startPos, endPos, promotion)
+        doMove: (startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) => this.doMove(startPos, endPos, promotion),
+        gameOver: (winner: Teams | 'draw', by: string, extraInfo?: string) => this.customGameOver(winner, by, extraInfo),
+        updateTimer: (white: TimerInfo, black: TimerInfo) => this.updateTimer(white, black)
       });
     }
     window.addEventListener("resize", this.handleResize);
@@ -395,31 +446,64 @@ class Game extends React.Component<GameProps, GameState> {
 
     let engineInfo = null
     if (this.engine)
-     engineInfo = <EngineInfo />
+      engineInfo = <EngineInfo />
+
+    let players: {
+      white: JSX.Element | null,
+      black: JSX.Element | null
+    } = {
+      white: null,
+      black: null
+    }
+
+    const currentTurn = this.latestBoard().getTurn('next')
+
+    if (this.state.players) {
+      players.white = <UserInfoDisplay
+        team='white'
+        username={this.state.players.white.username}
+        rating={this.state.players.white.rating}
+        timer={this.state.timers?.white}
+        isTurn={(currentTurn === 'white')}
+        />
+        players.black = <UserInfoDisplay
+        team='black'
+        username={this.state.players.black.username}
+        rating={this.state.players.black.rating}
+        timer={this.state.timers?.black}
+        isTurn={(currentTurn === 'black')}
+      />
+    }
+    console.log(this.state.timers, 'Timer state')
 
     return (
       <div className="game">
         <div className='horizontal' style={{
-          height: 8 * this.state.boxSize
+          // height: 8 * this.state.boxSize
         }}>
-          <div id='board-wrapper' style={{
-            width: 8 * this.state.boxSize,
-            height: 8 * this.state.boxSize
-          }}>
-            <Board
-              board={this.viewingBoard()}
-              validMoves={this.state.validMoves}
-              selectedPiece={this.state.selectedPiece}
-              notFlipped={this.state.notFlipped}
-              onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
-              onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
-              deselectPiece={() => this.deselectPiece()}
-              ownTeam={this.props.team}
-              moveInfo={this.state.game.getMove(this.state.viewingMove).move}
-              showingPromotionSelector={!!this.state.promotionSelector}
-              boxSize={this.state.boxSize}
-            />
-            {promotionSelector}
+          <div className='board-and-players'>
+            {(this.state.notFlipped) ? players.black : players.white}
+            <div id='board-wrapper' style={{
+              width: 8 * this.state.boxSize,
+              height: 8 * this.state.boxSize
+            }}>
+              <Board
+                board={this.viewingBoard()}
+                validMoves={this.state.validMoves}
+                selectedPiece={this.state.selectedPiece}
+                notFlipped={this.state.notFlipped}
+                onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
+                onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
+                deselectPiece={() => this.deselectPiece()}
+                ownTeam={this.props.team}
+                moveInfo={this.state.game.getMove(this.state.viewingMove).move}
+                showingPromotionSelector={!!this.state.promotionSelector}
+                boxSize={this.state.boxSize}
+                haveEngine={!!this.engine}
+              />
+              {promotionSelector}
+            </div>
+            {(!this.state.notFlipped) ? players.black : players.white}
           </div>
           <div id="previous-moves-wrapper">
             {engineInfo}

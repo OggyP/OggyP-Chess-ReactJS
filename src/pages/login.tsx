@@ -42,7 +42,11 @@ class Login extends React.Component<LoginProps, LoginState>{
     }
 
     if (this.token) {
-      document.location.href = '/home';
+      const ref = queryParams.get('ref')
+      if (ref)
+        document.location.href = ref
+      else
+        document.location.href = '/home';
       return
     }
 
@@ -52,11 +56,11 @@ class Login extends React.Component<LoginProps, LoginState>{
         if (event.data.status === 'success') {
           if (event.data.token)
             setCookie("token", event.data.token + "|" + event.data.userId, 7)
-            const ref = queryParams.get('ref')
-            if (ref) 
+          const ref = queryParams.get('ref')
+          if (ref)
             document.location.href = ref
-            else
-          document.location.href = '/home';
+          else
+            document.location.href = '/home';
         } else {
           this.setState({
             loginError: event.data.error

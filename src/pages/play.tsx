@@ -6,6 +6,7 @@ import '../css/login.scss'
 import { checkForToken, tokenType } from '../helpers/getToken';
 import Game from '../game';
 import { Teams } from '../chessLogic/types';
+import { rawListeners } from 'process';
 
 interface PlayGameProps {
   url: string
@@ -26,6 +27,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
   token = checkForToken()
   doMove: Function | null = null
   ownTeam: Teams | null = null
+  updateTimer: Function | null = null
 
   constructor(props: PlayGameProps) {
     super(props)
@@ -40,7 +42,11 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
       game: null
     }
 
-    if (!this.token || !queueMode) {
+    if (!this.token) {
+      document.location.href = '/login/?ref=' + document.location.pathname + document.location.search;
+      return
+    }
+    else if (!queueMode) {
       document.location.href = '/home';
       return
     }
@@ -64,6 +70,17 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
               fen={data.board[1]}
               multiplayerWs={this.ws}
               onMounted={(callbacks: Function) => this.gameMounted(callbacks)}
+              players={{
+                white: {
+                  username: data.white[0],
+                  rating: data.white[1]
+                },
+                black: {
+                  username: data.black[0],
+                  rating: data.black[1]
+                }
+              }
+              }
             />
           })
           break;
@@ -79,13 +96,43 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
         case 'move':
           if (!this.state.game) throw new Error("Recieved move before game start");
           if (!this.doMove) throw new Error("Do move function is null");
-          const startingPos = {'x': data.startingPos[0], 'y': data.startingPos[1]}
-          const endingPos = {'x': data.endingPos[0], 'y': data.endingPos[1]}
+          const startingPos = { 'x': data.startingPos[0], 'y': data.startingPos[1] }
+          const endingPos = { 'x': data.endingPos[0], 'y': data.endingPos[1] }
           if (!data.promote)
             this.doMove(startingPos, endingPos)
           else
             this.doMove(startingPos, endingPos, data.promote[0])
+          if (this.updateTimer && data.timer) {
+            console.log(this.updateTimer, 'Move update timer')
+            this.updateTimer(
+              { // white
+                startTime: (new Date()).getTime(),
+                time: data.timer.whiteTimer.time,
+                countingDown: data.timer.whiteTimer.isCountingDown
+              },
+              { // black
+                startTime: (new Date()).getTime(),
+                time: data.timer.blackTimer.time,
+                countingDown: data.timer.blackTimer.isCountingDown
+              }
+            )
+          }
           break;
+        case 'timerUpdate':
+          console.log(this.updateTimer, 'Update Timer Message From Server')
+          if (this.updateTimer)
+            this.updateTimer(
+              {
+                startTime: (new Date()).getTime(),
+                time: data.whiteTimer.time,
+                countingDown: data.whiteTimer.isCountingDown
+              },
+              {
+                startTime: (new Date()).getTime(),
+                time: data.blackTimer.time,
+                countingDown: data.blackTimer.isCountingDown
+              }
+            )
       }
       console.log("PLAY TSX")
     }
@@ -108,6 +155,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
   gameMounted(callbacks: any) {
     console.log("Game Mounted")
     this.doMove = callbacks.doMove
+    this.updateTimer = callbacks.updateTimer
     console.log(this.doMove)
   }
 
