@@ -62,6 +62,7 @@ interface GameProps {
     black: PlayerInfo
   }
   termination?: string
+  canSharePGN?: boolean
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -176,6 +177,7 @@ class Game extends React.Component<GameProps, GameState> {
             endingPos: [info.pos.end.x, info.pos.end.y],
             promote: piece + ((info.team === 'white') ? 'l' : 'd')
           })
+        if (this.props.canSharePGN) this.updateURLtoHavePGN()
       }
       else
         alert("L, you can't do that because you will be in check!")
@@ -225,6 +227,10 @@ class Game extends React.Component<GameProps, GameState> {
       })
       this.boardMoveChanged(newViewNum)
     }
+  }
+
+  updateURLtoHavePGN() {
+    window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/?pgn=' + encodeURIComponent(this.state.game.shortNotationMoves));
   }
 
   handlePieceClick(posClicked: Vector): void {
@@ -318,6 +324,7 @@ class Game extends React.Component<GameProps, GameState> {
         viewingMove: newViewNum
       })
       this.boardMoveChanged(newViewNum)
+      if (this.props.canSharePGN) this.updateURLtoHavePGN()
       if (!this.props.multiplayerWs) return
       sendToWs(this.props.multiplayerWs, 'move', {
         startingPos: [selectedPiecePos.x, selectedPiecePos.y],
@@ -441,16 +448,23 @@ class Game extends React.Component<GameProps, GameState> {
       })}>Resume</button>
 
 
-    let gameOverDisplay = null
+    let gameOverDisplay: (JSX.Element | null)[] = [null, null]
     if (this.state.game.gameOver) {
       const winner = {
         "white": "White wins by",
         "draw": "Draw by",
         "black": "Black wins by"
       }
-      gameOverDisplay = <tr className='game-over'>
-        <th scope='row'>End</th>
-        <td colSpan={2}>{`${winner[this.state.game.gameOver.winner]} ${this.state.game.gameOver.by}`}</td>
+      const scoreVal = {
+        'white': '1-0',
+        'draw': '1/2-1/2',
+        'black': '0-1'
+      }
+      gameOverDisplay[0] = <tr className='game-over'>
+        <th scope='row' rowSpan={2}>End</th>
+        <td colSpan={2} rowSpan={2}>{`${scoreVal[this.state.game.gameOver.winner]}`}<br/>{`${winner[this.state.game.gameOver.winner]} ${this.state.game.gameOver.by}`}</td>
+      </tr>
+      gameOverDisplay[1] = <tr className='game-over'>
       </tr>
     }
 
@@ -530,7 +544,8 @@ class Game extends React.Component<GameProps, GameState> {
                   <td colSpan={2} onClick={() => this.goToMove(0)} className={(this.state.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
                 </tr>
                 {moveRows}
-                {gameOverDisplay}
+                {gameOverDisplay[0]}
+                {gameOverDisplay[1]}
               </tbody>
             </table>
           </div>

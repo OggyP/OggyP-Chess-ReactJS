@@ -12,7 +12,8 @@ interface HomeState {
   gameInfo: gameInfo[]
   start: number | null,
   inc: number | null,
-  mode: string | null
+  mode: string | null,
+  pgnInput: string
 }
 
 interface userInfo {
@@ -46,7 +47,8 @@ class Home extends React.Component<HomeProps, HomeState>{
       gameInfo: [],
       start: null,
       inc: null,
-      mode: null
+      mode: null,
+      pgnInput: ''
     }
 
     if (!this.token) {
@@ -181,6 +183,15 @@ class Home extends React.Component<HomeProps, HomeState>{
             </div>
             <hr />
             {playButton}
+          </div>
+          <div id='pgn-input-wrapper'>
+            <label htmlFor='pgn-input'><h3>PGN Input</h3></label>
+            <textarea id='pgn-input' onChange={(event) => this.setState({ pgnInput: event.target.value })}></textarea>
+            {
+              (this.state.pgnInput) ?
+                <button onClick={() => { window.location.href = '/analysis/?pgn=' + encodeURIComponent(this.state.pgnInput) }}>Import</button>
+                : null
+            }
           </div>
         </div>
         <table>

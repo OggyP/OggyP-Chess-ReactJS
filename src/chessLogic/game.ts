@@ -1,5 +1,6 @@
 import Board from './board'
 import { convertToPosition, convertToChessNotation } from './functions';
+import { Pawn } from './pieces';
 import { Vector, Teams, PieceCodes } from './types'
 
 async function getJSON(path: string, callback: Function) {
@@ -47,7 +48,7 @@ interface Opening {
 class Game {
   static openings: any;
   private _history: History[] = [];
-  private _shortNotationMoves: string = ''
+  public shortNotationMoves: string = ''
   public gameOver: GameOverType = false
   public startingFEN: string;
   public metaValues: Map<string, string>;
@@ -60,6 +61,7 @@ class Game {
     getJSON('/assets/openings.json', (data: object) => { Game.openings = data; this.checkForOpening() })
     if (input.pgn) {
       // Parse PGN
+      console.log(input.pgn)
       this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
       this.metaValues = new Map<string, string>()
 
@@ -90,8 +92,25 @@ class Game {
       let turn: Teams = 'white'
       for (let i = 0; i < moves.length; i++) {
         const originalPGNmove = moves[i]
+        console.log('Before ' + originalPGNmove + ' ' + board.getFen())
         let move = moves[i].replace('+', '').replace('#', '')
-        if (!isNaN(Number(move[0]))) continue
+        if (!isNaN(Number(move[0]))) {
+          if (i === moves.length - 1) {
+            const gameOverScoreToWinner = new Map([
+              ['1-0', 'white',],
+              ['1/2-1/2', 'draw'],
+              ['0-1', 'black']
+            ])
+            const winner = gameOverScoreToWinner.get(move)
+            console.log(winner)
+            if (winner)
+              this.setGameOver({
+                winner: winner as Teams | "draw",
+                by: 'Unknown'
+              })
+          }
+          continue
+        }
         if (move === 'O-O-O' || move === '0-0-0' || move === 'O-O' || move === '0-0') { // O and 0 just to be sure 
           const kingPos = {
             'x': 4,
@@ -123,6 +142,7 @@ class Game {
             }
           }
         } else if (move[0] === move[0].toLowerCase()) {
+          console.log('Pawn Move ' + originalPGNmove + '|' + move)
           // pawn move
           let startingPos: Vector = { 'x': convertToPosition(move[0], 'x') as number, 'y': -1 }
           let endingPos: Vector
@@ -135,7 +155,7 @@ class Game {
             if (y === startingPos.y) continue
             startingPos.y = y
             const piece = board.getPos(startingPos)
-            if (piece && piece.team === turn) {
+            if (piece && piece instanceof Pawn && piece.team === turn) {
               let moves = piece.getMoves(startingPos, board)
               for (let i = 0; i < moves.length; i++) {
                 const checkMove = moves[i]
@@ -259,7 +279,7 @@ class Game {
 
   checkForOpening(): void {
     if (!Game.openings) return
-    const moves = this._shortNotationMoves.split(' ')
+    const moves = this.shortNotationMoves.split(' ')
     for (let i = 0; i < moves.length; i++) {
       const opening = Game.openings[moves.slice(0, i).join(' ')]
       if (!opening) continue
@@ -335,13 +355,13 @@ class Game {
     const moveInfo = move.move
     if (moveInfo) {
       if (i % 2 === 1) {
-        this._shortNotationMoves += ((i !== 1) ? ' ' : '') + ((i - 1) / 2 + 1) + '.'
+        this.shortNotationMoves += ((i !== 1) ? ' ' : '') + ((i - 1) / 2 + 1) + '.'
       }
-      this._shortNotationMoves += ' ' + moveInfo.notation.short
+      this.shortNotationMoves += ' ' + moveInfo.notation.short
     }
 
     if (!Game.openings) return
-    const opening: { Name: string, ECO: string } = Game.openings[this._shortNotationMoves]
+    const opening: { Name: string, ECO: string } = Game.openings[this.shortNotationMoves]
     if (this.getMoveCount() < 25 && opening) {
       this.metaValues.set('Opening', opening.Name)
       this.metaValues.set('ECO', opening.ECO)
@@ -355,7 +375,7 @@ class Game {
     this.metaValuesOrder.forEach(value => {
       pgn += `[${value} "${this.metaValues.get(value)}"]\n`
     })
-    pgn += '\n' + this._shortNotationMoves
+    pgn += '\n' + this.shortNotationMoves
     const gameOverWinTypes = {
       'white': '1-0',
       'draw': '1/2-1/2',

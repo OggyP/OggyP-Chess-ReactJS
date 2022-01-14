@@ -6,8 +6,17 @@ import Game from '../game'
 console.info("OggyP is awesome!")
 
 function AnalysisPage() {
+
+  const urlParams = new URLSearchParams(window.location.search);
+
+  let pgn: string | undefined = undefined
+  if (urlParams.has('pgn'))
+    pgn = urlParams.get('pgn') as string
+
   return <Game
     team='any'
+    pgn={pgn}
+    canSharePGN={true}
   />
 }
 
