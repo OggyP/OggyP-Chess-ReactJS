@@ -65,7 +65,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 
   mouseDown() {
     // this.getLocation()
-    console.log("Mouse Down")
     let posSelected: Vector;
     if (this.props.notFlipped)
       posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
@@ -232,9 +231,6 @@ class Board extends React.Component<BoardProps, BoardState> {
           notFlipped={this.props.notFlipped}
         ></Square>
       ]
-
-
-    console.log("Render Board")
 
     return (
       <div id='main-board'>

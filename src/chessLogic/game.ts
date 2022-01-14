@@ -14,6 +14,12 @@ interface GameConstuctorInput {
   pgn?: string
 }
 
+type GameOverType = {
+  winner: Teams | "draw"
+  by: string
+  extraInfo?: string
+} | false
+
 interface History {
   board: Board
   text: string
@@ -28,6 +34,11 @@ interface History {
   } | null
 }
 
+interface PlayerInfo {
+  username: string
+  rating: number
+}
+
 interface Opening {
   Name: string,
   ECO: string | null
@@ -37,6 +48,7 @@ class Game {
   static openings: any;
   private _history: History[] = [];
   private _shortNotationMoves: string = ''
+  public gameOver: GameOverType = false
   public startingFEN: string;
   public metaValues: Map<string, string>;
   public metaValuesOrder: string[];
@@ -45,9 +57,8 @@ class Game {
     "ECO": null
   }
   constructor(input: GameConstuctorInput) {
-    getJSON('/assets/openings.json', (data: object) => { Game.openings = data; console.log(Game.openings); this.checkForOpening() })
+    getJSON('/assets/openings.json', (data: object) => { Game.openings = data; this.checkForOpening() })
     if (input.pgn) {
-      console.log('PGN')
       // Parse PGN
       this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
       this.metaValues = new Map<string, string>()
@@ -68,7 +79,6 @@ class Game {
       if (this.metaValues.has('FEN'))
         this.startingFEN = this.metaValues.get('FEN') as string
 
-      console.log("Starting FEN: " + this.startingFEN)
       let board = new Board(this.startingFEN)
 
       this._history = [{
@@ -109,7 +119,6 @@ class Game {
                   }
                 }
               })
-              console.log("Found Castle")
               break;
             }
           }
@@ -171,20 +180,14 @@ class Game {
             'x': null,
             'y': null,
           }
-          console.log(requirementsOptions)
           for (let j = 0; j < requirementsOptions.length; j++) {
-            console.log(requirementsOptions[j])
             if (isNaN(Number(requirementsOptions[j])))
               // Letter X
               requirements.x = convertToPosition(requirementsOptions[j], 'x') as number
-            else {
+            else
               // Number Y
-              console.log("Y" + requirementsOptions[j])
               requirements.y = convertToPosition(requirementsOptions[j], 'y') as number
-            }
-
           }
-          console.log(requirements)
           let pos: Vector = { "x": 0, "y": 0 }
           let foundMove = false
           for (pos.x = 0; pos.x < 8 && !foundMove; pos.x++)
@@ -221,6 +224,7 @@ class Game {
 
         }
         turn = (turn === 'white') ? 'black' : 'white' // invert team
+        this.gameOver = board.isGameOverFor(turn)
       }
     }
     else if (input.fen) {
@@ -265,6 +269,37 @@ class Game {
     }
   }
 
+  getPlayerInfo(): {
+    white: PlayerInfo
+    black: PlayerInfo
+  } | null {
+    if (this.metaValues.has('White') && this.metaValues.has('Black'))
+      return {
+        white: {
+          username: this.metaValues.get('White') as string,
+          rating: 0
+        },
+        black: {
+          username: this.metaValues.get('Black') as string,
+          rating: 0
+        }
+      }
+    return null
+  }
+
+  setGameOver(gameOver: GameOverType) {
+    this.gameOver = gameOver
+    if (this.gameOver) {
+      const gameOverWinTypes = {
+        'white': '1-0',
+        'draw': '1/2-1/2',
+        'black': '0-1'
+      }
+      if (this.metaValues.has('Result'))
+        this.metaValues.set('Result', gameOverWinTypes[this.gameOver.winner])
+    }
+  }
+
   getMoveCount(): number {
     return this._history.length - 1
   }
@@ -275,6 +310,22 @@ class Game {
 
   getLatest(): History {
     return this._history[this.getMoveCount()]
+  }
+
+  isGameOver(): GameOverType {
+    const gameOverInfo = this.getLatest().board.isGameOverFor(this.getLatest().board.getTurn('next'))
+    if (gameOverInfo) {
+      const gameOverWinTypes = {
+        'white': '1-0',
+        'draw': '1/2-1/2',
+        'black': '0-1'
+      }
+      const gameOverType = gameOverWinTypes[gameOverInfo.winner]
+      if (this.metaValues.has('Result'))
+        this.metaValues.set('Result', gameOverType)
+      this.gameOver = gameOverInfo
+    }
+    return gameOverInfo
   }
 
   newMove(move: History) {
@@ -290,11 +341,8 @@ class Game {
     }
 
     if (!Game.openings) return
-    console.log(this._shortNotationMoves)
     const opening: { Name: string, ECO: string } = Game.openings[this._shortNotationMoves]
-    console.log(opening)
     if (this.getMoveCount() < 25 && opening) {
-      console.log("Update " + opening)
       this.metaValues.set('Opening', opening.Name)
       this.metaValues.set('ECO', opening.ECO)
       this.opening = opening as Opening
@@ -308,6 +356,12 @@ class Game {
       pgn += `[${value} "${this.metaValues.get(value)}"]\n`
     })
     pgn += '\n' + this._shortNotationMoves
+    const gameOverWinTypes = {
+      'white': '1-0',
+      'draw': '1/2-1/2',
+      'black': '0-1'
+    }
+    if (this.gameOver) pgn += ' ' + gameOverWinTypes[this.gameOver.winner]
     return pgn
   }
 

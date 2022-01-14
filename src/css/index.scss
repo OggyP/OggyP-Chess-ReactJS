@@ -6,29 +6,14 @@ body {
 
 table {
     margin: 10px;
-    ol,
-    ul {
-        padding-left: 30px;
-    }
 }
 
-.board-row:after {
-    clear: both;
-    content: "";
-    display: table;
-}
-
-.status {
-    margin-bottom: 10px;
-}
-
-.kbd-navigation .square:focus {
-    background: #ddd;
-}
-
-.horizontal {
+.horizontal-game-wrapper {
     display: flex;
     flex-direction: row;
+    width: max-content;
+    margin: 0;
+    align-items: center;
 }
 
 #game-controls {
@@ -41,12 +26,22 @@ table {
 
 #previous-moves-wrapper {
     overflow-y: auto;
+    max-height: inherit;
+    height: 800px;
 }
 
 #previous-moves {
     th,
-    tr {
+    tr,
+    td {
         padding: 5px;
+        border-radius: 5px;
+    }
+    .game-over {
+        td {
+            background-color: green;
+            color: white;
+        }
     }
     margin: 5px,
     0;

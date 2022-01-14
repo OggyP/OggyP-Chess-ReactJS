@@ -147,8 +147,9 @@ class Home extends React.Component<HomeProps, HomeState>{
     }
 
     let playButton = null
-    if (this.state.mode && this.state.inc && this.state.start)
+    if (this.state.mode !== null && this.state.inc !== null && this.state.start !== null)
       playButton = <button onClick={() => this.playGame()}>Play {(this.state.mode) ? fullChessModeNames[this.state.mode as 'standard' | '960'] : null} {this.state.start}+{this.state.inc}</button>
+    else console.log(this.state)
 
     return <div className='home-wrapper'>
       <div className='horizontal'>

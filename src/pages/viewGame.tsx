@@ -14,6 +14,7 @@ interface ViewGameProps {
 interface ViewGameState {
   PGN: string | null
   error: null | JSX.Element
+  termination: string
 }
 
 class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
@@ -31,24 +32,29 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
 
     this.state = {
       PGN: null,
-      error: null
+      error: null,
+      termination: 'Unknown'
     }
 
     this.ws.onmessage = (message) => {
       const event = JSON.parse(message.data)
-      if (event.type === 'error') {
-        this.setState({
-          error: <ErrorPage
-            title='Unknown Game'
-            description={message.data}
-          />
-        })
-      } else {
-        console.log(event)
-        console.log(event.data.pgn)
-        this.setState({
-          PGN: event.data.pgn
-        })
+      const data = event.data
+      switch (event.type) {
+        case 'guestView':
+          console.log(data.pgn)
+          this.setState({
+            PGN: data.pgn,
+            termination: data.termination
+          })
+          break
+        case 'error':
+          this.setState({
+            error: <ErrorPage
+              title='Unknown Game'
+              description={message.data}
+            />
+          })
+          break;
       }
     }
 
@@ -74,6 +80,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
       return <Game
         pgn={this.state.PGN}
         team={viewAs}
+        termination={this.state.termination}
       />
     else
       return <div>

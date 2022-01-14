@@ -14,6 +14,7 @@ function EngineBestMove(props: { notFlipped: boolean }) {
   React.useEffect(() => {
     const handleEngineOutput = (event: any) => {
       const info = event.detail
+      console.log(info)
       if (info.score) {
         if (info.pv) {
           const pvMoves = info.pv.split(' ')
@@ -30,13 +31,18 @@ function EngineBestMove(props: { notFlipped: boolean }) {
               }
             })
           }
+        } else {
+          console.log('set to null')
+          setBestMove(null)
         }
-      } else if (!bestMove ||
+      } else if (info.startingPos.x && (!bestMove ||
         info.startingPos.x !== bestMove.startingPos.x ||
         info.startingPos.y !== bestMove.startingPos.y ||
         info.endingPos.x !== bestMove.endingPos.x ||
-        info.endingPos.y !== bestMove.endingPos.y)
+        info.endingPos.y !== bestMove.endingPos.y)) {
+        console.log('set to val non score')
         setBestMove(info)
+      }
     };
 
     document.addEventListener('engine', handleEngineOutput);
@@ -53,7 +59,7 @@ function EngineBestMove(props: { notFlipped: boolean }) {
         classes={['from']}
         pos={bestMove.startingPos}
         notFlipped={props.notFlipped}
-        />
+      />
       <Square
         classes={['to']}
         pos={bestMove.endingPos}

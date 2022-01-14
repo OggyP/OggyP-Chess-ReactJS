@@ -28,11 +28,6 @@ interface GameState {
     "board": ChessBoard,
     "moveType": string[]
   }[]
-  gameOver: {
-    winner: Teams | "draw"
-    by: string
-    extraInfo?: string
-  } | false
   selectedPiece: Vector | null
   notFlipped: boolean
   boxSize: number
@@ -66,6 +61,7 @@ interface GameProps {
     white: PlayerInfo
     black: PlayerInfo
   }
+  termination?: string
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -83,7 +79,29 @@ class Game extends React.Component<GameProps, GameState> {
       width: window.innerWidth,
       height: window.innerHeight
     }
-    let game = new ChessGame((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
+    let playerInfo = null
+    const game = new ChessGame((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
+    if (props.pgn) {
+      playerInfo = game.getPlayerInfo()
+      game.isGameOver()
+      if (props.termination) {
+        const serverGameOverTypes = ['resignation', 'timeout', 'game abandoned']
+        if (serverGameOverTypes.includes(props.termination)) {
+          const gameResult = game.metaValues.get('Result')
+          if (gameResult && gameResult !== '*') {
+            const gameOverScoreToWinner = {
+              '1-0': 'white',
+              '1/2-1/2': 'draw',
+              '0-1': 'black'
+            }
+            game.setGameOver({
+              winner: gameOverScoreToWinner[gameResult as '1-0' | '1/2-1/2' | '0-1'] as Teams | 'draw',
+              by: props.termination,
+            })
+          }
+        }
+      }
+    }
     this.state = {
       game: game,
       viewingMove: 0, // make it `game.getMoveCount()` to go to the lastest move
@@ -91,10 +109,9 @@ class Game extends React.Component<GameProps, GameState> {
       notFlipped: (props.team === 'any' || props.team === 'white'),
       selectedPiece: null,
       promotionSelector: null,
-      gameOver: false,
       boxSize: Math.floor(Math.min(windowSize.height * 0.7, windowSize.width) / 8),
       moveRightSection: false,
-      players: (props.players || null)
+      players: (props.players || playerInfo)
     }
     this.boardMoveChanged(0)
   }
@@ -106,30 +123,30 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   boardMoveChanged(moveNum: number) {
-    console.log("Viewing: " + this.state.viewingMove)
     if (this.engine)
       this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
   }
 
   customGameOver(winner: Teams | 'draw', by: string, extraInfo?: string) {
-    this.setState({
-      gameOver: {
-        winner: winner,
-        by: by,
-        extraInfo: extraInfo
-      }
+    this.state.game.setGameOver({
+      winner: winner,
+      by: by,
+      extraInfo: extraInfo
     })
+    this.setState({
+      game: this.state.game
+    })
+
   }
 
   handlePromotionClick(piece: PieceCodes): void {
     const info = this.state.promotionSelector
-    if (info && !this.state.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
+    if (info && !this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
       const newBoard = new ChessBoard(info.board)
       newBoard.promote(info.pos.end, piece, info.team)
       if (!newBoard.inCheck(info.team)) {
-        console.log("update game prom")
         const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-        const shortNotation = ChessBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
+        const shortNotation = ChessBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
         this.state.game.newMove({
           board: newBoard,
           text: shortNotation,
@@ -143,7 +160,7 @@ class Game extends React.Component<GameProps, GameState> {
             }
           }
         })
-        console.log(this.state.game.getMoveCount())
+        this.state.game.setGameOver(isGameOver)
         const newViewNum = this.state.viewingMove + 1
         this.setState({
           game: this.state.game,
@@ -151,7 +168,6 @@ class Game extends React.Component<GameProps, GameState> {
           validMoves: [],
           promotionSelector: null,
           viewingMove: newViewNum,
-          gameOver: isGameOver,
         })
         this.boardMoveChanged(newViewNum)
         if (this.props.multiplayerWs)
@@ -187,7 +203,7 @@ class Game extends React.Component<GameProps, GameState> {
         newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
       }
       const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-      const shortNotation = ChessBoard.getShortNotation(startPos, endPos, move.moveType, this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
+      const shortNotation = ChessBoard.getShortNotation(startPos, endPos, move.moveType, this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
       this.state.game.newMove({
         board: newBoard,
         text: shortNotation,
@@ -201,10 +217,10 @@ class Game extends React.Component<GameProps, GameState> {
           }
         }
       })
+      this.state.game.setGameOver(isGameOver)
       const newViewNum = this.state.viewingMove + 1
       this.setState({
         game: this.state.game,
-        gameOver: isGameOver,
         viewingMove: newViewNum
       })
       this.boardMoveChanged(newViewNum)
@@ -212,7 +228,7 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   handlePieceClick(posClicked: Vector): void {
-    if (!this.state.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next') && (this.props.team === 'any' || this.latestBoard().getTurn('next') === this.props.team)) {
+    if (!this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next') && (this.props.team === 'any' || this.latestBoard().getTurn('next') === this.props.team)) {
       const newValidMoves = this.latestBoard().getPos(posClicked)?.getMoves(posClicked, this.latestBoard())
       if (newValidMoves)
         this.setState({
@@ -236,7 +252,7 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   handleMoveClick(posClicked: Vector): void {
-    if (!this.state.gameOver && this.state.viewingMove === this.state.game.getMoveCount()) {
+    if (!this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount()) {
       let newBoard: ChessBoard | null = null
       let moveType: string[] | null = null
 
@@ -281,7 +297,7 @@ class Game extends React.Component<GameProps, GameState> {
       })
       if (isPromotion) return
       const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-      const shortNotation = ChessBoard.getShortNotation(selectedPiecePos, posClicked, moveType as string[], this.latestBoard(), (isGameOver) ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
+      const shortNotation = ChessBoard.getShortNotation(selectedPiecePos, posClicked, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
       this.state.game.newMove({
         board: newBoard,
         text: shortNotation,
@@ -295,17 +311,14 @@ class Game extends React.Component<GameProps, GameState> {
           }
         }
       })
+      this.state.game.setGameOver(isGameOver)
       const newViewNum = this.state.viewingMove + 1
       this.setState({
         game: this.state.game,
-        gameOver: isGameOver,
         viewingMove: newViewNum
       })
       this.boardMoveChanged(newViewNum)
-      console.log('before')
-      console.log(this.props.multiplayerWs)
       if (!this.props.multiplayerWs) return
-      console.log('after')
       sendToWs(this.props.multiplayerWs, 'move', {
         startingPos: [selectedPiecePos.x, selectedPiecePos.y],
         endingPos: [posClicked.x, posClicked.y],
@@ -357,7 +370,6 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   updateTimer(white: TimerInfo, black: TimerInfo) {
-    console.log('Updating Timer', white, black)
     this.setState({
       timers: {
         white: white,
@@ -367,8 +379,6 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   componentDidMount() {
-    console.log("Game Mounted")
-    console.log(this.props.onMounted)
     if (this.props.onMounted) {
       this.props.onMounted({
         doMove: (startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) => this.doMove(startPos, endPos, promotion),
@@ -432,15 +442,15 @@ class Game extends React.Component<GameProps, GameState> {
 
 
     let gameOverDisplay = null
-    if (this.state.gameOver) {
+    if (this.state.game.gameOver) {
       const winner = {
         "white": "White wins by",
         "draw": "Draw by",
         "black": "Black wins by"
       }
-      gameOverDisplay = <tr>
+      gameOverDisplay = <tr className='game-over'>
         <th scope='row'>End</th>
-        <td colSpan={2}>{`${winner[this.state.gameOver.winner]} ${this.state.gameOver.by}`}</td>
+        <td colSpan={2}>{`${winner[this.state.game.gameOver.winner]} ${this.state.game.gameOver.by}`}</td>
       </tr>
     }
 
@@ -456,7 +466,7 @@ class Game extends React.Component<GameProps, GameState> {
       black: null
     }
 
-    const currentTurn = this.latestBoard().getTurn('next')
+    const currentTurn = (this.state.game.gameOver) ? 'None' : this.latestBoard().getTurn('next')
 
     if (this.state.players) {
       players.white = <UserInfoDisplay
@@ -465,8 +475,8 @@ class Game extends React.Component<GameProps, GameState> {
         rating={this.state.players.white.rating}
         timer={this.state.timers?.white}
         isTurn={(currentTurn === 'white')}
-        />
-        players.black = <UserInfoDisplay
+      />
+      players.black = <UserInfoDisplay
         team='black'
         username={this.state.players.black.username}
         rating={this.state.players.black.rating}
@@ -474,13 +484,10 @@ class Game extends React.Component<GameProps, GameState> {
         isTurn={(currentTurn === 'black')}
       />
     }
-    console.log(this.state.timers, 'Timer state')
 
     return (
       <div className="game">
-        <div className='horizontal' style={{
-          // height: 8 * this.state.boxSize
-        }}>
+        <div className='horizontal-game-wrapper'>
           <div className='board-and-players'>
             {(this.state.notFlipped) ? players.black : players.white}
             <div id='board-wrapper' style={{
@@ -505,7 +512,9 @@ class Game extends React.Component<GameProps, GameState> {
             </div>
             {(!this.state.notFlipped) ? players.black : players.white}
           </div>
-          <div id="previous-moves-wrapper">
+          <div id="previous-moves-wrapper" style={{
+            height: 8 * this.state.boxSize
+          }}>
             {engineInfo}
             <table id="previous-moves">
               <thead>

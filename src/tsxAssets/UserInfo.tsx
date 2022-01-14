@@ -28,14 +28,11 @@ function UserInfo(props: UserInfoProps) {
   if (props.ratingChange)
     ratingChange = <span className='rating-change'>{props.ratingChange}</span>
 
-  console.log(props.timer)
-
   React.useEffect(() => {
     if (props.timer && props.timer.countingDown)
       Ref.current = setInterval(() => {
         if (props.timer) {
           const newTime = props.timer.time - ((new Date().getTime()) - props.timer.startTime)
-          console.log(newTime, props.team)
           setTime(newTime)
         }
       }, 1000)

@@ -1,12 +1,9 @@
-
-
 import React from 'react';
 import { sendToWs } from '../helpers/wsHelper'
 import '../css/login.scss'
 import { checkForToken, tokenType } from '../helpers/getToken';
 import Game from '../game';
 import { Teams } from '../chessLogic/types';
-import { rawListeners } from 'process';
 
 interface PlayGameProps {
   url: string
@@ -28,6 +25,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
   doMove: Function | null = null
   ownTeam: Teams | null = null
   updateTimer: Function | null = null
+  serverGameOver: Function | null = null
 
   constructor(props: PlayGameProps) {
     super(props)
@@ -35,7 +33,6 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     const queryParams = new URLSearchParams(window.location.search);
 
     const queueMode = queryParams.get('mode')
-    console.log(queueMode)
 
     this.state = {
       queueInfo: null,
@@ -50,6 +47,8 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
       document.location.href = '/home';
       return
     }
+
+    const serverGameOverTypes = ['resignation', 'timeout', 'game abandoned']
 
     this.ws.onmessage = (message) => {
       const event = JSON.parse(message.data)
@@ -103,7 +102,6 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
           else
             this.doMove(startingPos, endingPos, data.promote[0])
           if (this.updateTimer && data.timer) {
-            console.log(this.updateTimer, 'Move update timer')
             this.updateTimer(
               { // white
                 startTime: (new Date()).getTime(),
@@ -118,8 +116,18 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
             )
           }
           break;
+        case 'gameOver':
+          if (serverGameOverTypes.includes(data.info)) {
+            if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
+            const gameOverScoreToWinner = {
+              '1-0': 'white',
+              '1/2-1/2': 'draw',
+              '0-1': 'black'
+            }
+            this.serverGameOver(gameOverScoreToWinner[data.type as '1-0' | '1/2-1/2' | '0-1'], data.info)
+          }
+          break
         case 'timerUpdate':
-          console.log(this.updateTimer, 'Update Timer Message From Server')
           if (this.updateTimer)
             this.updateTimer(
               {
@@ -156,6 +164,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     console.log("Game Mounted")
     this.doMove = callbacks.doMove
     this.updateTimer = callbacks.updateTimer
+    this.serverGameOver = callbacks.gameOver
     console.log(this.doMove)
   }
 
