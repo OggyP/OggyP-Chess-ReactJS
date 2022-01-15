@@ -33,6 +33,10 @@ interface BoardProps {
   boxSize: number
   showingPromotionSelector: boolean
   haveEngine: boolean
+  doPremove: Function
+  isLatestBoard: boolean
+  premoves?: { start: Vector, end: Vector }[]
+  deletePremoves?: Function
 }
 interface BoardState {
   pieceBeingDragged: Vector | null
@@ -83,7 +87,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 
     const piece = this.props.board.getPos(posSelected)
 
-    if (piece && piece.team === this.props.board.getTurn('next') && (this.props.ownTeam === 'any' || piece.team === this.props.ownTeam)) {
+    if (piece && (this.props.ownTeam === 'any' || piece.team === this.props.ownTeam)) {
       if (!this.posSelected || (this.posSelected.x !== posSelected.x || this.posSelected.y !== posSelected.y))
         this.props.onPieceClick(posSelected)
       this.setState({
@@ -104,19 +108,24 @@ class Board extends React.Component<BoardProps, BoardState> {
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
         if (posSelected.x === validMoveToCheck.move.x && posSelected.y === validMoveToCheck.move.y) {
-          this.props.onValidMoveClick(posSelected)
           this.setState({
             pieceBeingDragged: null,
             beingDraggedPieceKey: null
           })
+          this.props.onValidMoveClick(posSelected)
           return
         }
       }
 
       if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
+        if (this.props.isLatestBoard) {
+          // handle pre moves
+          this.props.doPremove(this.state.pieceBeingDragged, posSelected)
+        }
         this.props.deselectPiece()
         this.posSelected = null
-      }
+      } else if (this.props.deletePremoves)
+        this.props.deletePremoves()
 
       this.setState({
         pieceBeingDragged: null,
@@ -163,6 +172,16 @@ class Board extends React.Component<BoardProps, BoardState> {
       if (inCheck && item.piece.code === 'k' && item.piece.team === currentTurn)
         inCheckPos = item.pos
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
+        if (item.piece.key !== this.state.beingDraggedPieceKey) {
+          this.setState({
+            pieceBeingDragged: null,
+            beingDraggedPieceKey: null
+          })
+          return [null, 1000]
+        }
+        if (!this.props.selectedPiece) {
+          this.props.onPieceClick(this.state.pieceBeingDragged)
+        }
         if (this.props.showingPromotionSelector)
           return [null, 1000]
         return [<DraggedPiece key={item.piece.key}
@@ -232,12 +251,36 @@ class Board extends React.Component<BoardProps, BoardState> {
         ></Square>
       ]
 
+    let preMoveSquaresStart: JSX.Element[] | null = null
+    let preMoveSquaresEnd: JSX.Element[] | null = null
+    if (this.props.premoves) {
+      preMoveSquaresStart = this.props.premoves.map((item, index) => {
+        return <Square
+          key={index}
+          pos={item.start}
+          notFlipped={this.props.notFlipped}
+          classes={['premove', 'end']}
+        />
+      })
+
+      preMoveSquaresEnd = this.props.premoves.map((item, index) => {
+        return <Square
+          key={index}
+          pos={item.end}
+          notFlipped={this.props.notFlipped}
+          classes={['premove', 'end']}
+        />
+      })
+    }
+
     return (
       <div id='main-board'>
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
           {inCheckPos}
           {squares}
+          {preMoveSquaresStart}
+          {preMoveSquaresEnd}
         </div>
         <div id='pieces-layer'>
           {piecesToDisplay}

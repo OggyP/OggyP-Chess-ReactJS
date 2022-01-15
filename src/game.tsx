@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChessBoard, ChessGame, PieceCodes, Teams, Vector, PieceAtPos, convertToChessNotation } from './chessLogic'
+import { ChessBoard, ChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector } from './chessLogic'
 import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
@@ -49,6 +49,8 @@ interface GameState {
     white: TimerInfo
     black: TimerInfo
   }
+  premoveBoard: ChessBoard | null
+  premoves: { start: Vector, end: Vector }[]
 }
 
 interface GameProps {
@@ -61,6 +63,8 @@ interface GameProps {
     white: PlayerInfo
     black: PlayerInfo
   }
+  allowMoving: boolean
+  allowPreMoves: boolean
   termination?: string
   canSharePGN?: boolean
 }
@@ -112,9 +116,12 @@ class Game extends React.Component<GameProps, GameState> {
       promotionSelector: null,
       boxSize: Math.floor(Math.min(windowSize.height * 0.7, windowSize.width) / 8),
       moveRightSection: false,
-      players: (props.players || playerInfo)
+      players: (props.players || playerInfo),
+      premoveBoard: null,
+      premoves: [],
     }
     this.boardMoveChanged(0)
+    if (this.props.canSharePGN) this.updateURLtoHavePGN()
   }
 
   flipBoard(): void {
@@ -137,7 +144,6 @@ class Game extends React.Component<GameProps, GameState> {
     this.setState({
       game: this.state.game
     })
-
   }
 
   handlePromotionClick(piece: PieceCodes): void {
@@ -192,45 +198,85 @@ class Game extends React.Component<GameProps, GameState> {
     })
   }
 
+  addPremove(start: Vector, end: Vector): void {
+    if (!this.props.allowPreMoves) return
+    console.log('do premove')
+    const premoveList = this.state.premoves.slice()
+    premoveList.push({
+      start: start,
+      end: end
+    })
+    let preMoveBoard = new ChessBoard(this.state.premoveBoard || this.latestBoard())
+    preMoveBoard.setPos(end, preMoveBoard.getPos(start))
+    preMoveBoard.setPos(start, null)
+    this.setState({
+      premoves: premoveList,
+      premoveBoard: preMoveBoard
+    })
+  }
+
   doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) {
     const piece = this.latestBoard().getPos(startPos)
     if (!piece) return
     if (piece.team === this.props.team) return
-    const moves = piece.getMoves(startPos, this.latestBoard())
-    for (let i = 0; i < moves.length; i++) {
-      const move = moves[i]
-      if (move.move.x !== endPos.x || move.move.y !== endPos.y) continue
-      const newBoard = new ChessBoard(move.board)
-      if (promotion) {
-        newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
-      }
-      const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-      const shortNotation = ChessBoard.getShortNotation(startPos, endPos, move.moveType, this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
-      this.state.game.newMove({
-        board: newBoard,
-        text: shortNotation,
-        move: {
-          start: startPos,
-          end: endPos,
-          type: move.moveType,
-          notation: {
-            short: shortNotation,
-            long: convertToChessNotation(startPos) + convertToChessNotation(endPos) + ((promotion) ? promotion : '')
-          }
+    this.state.game.doMove(startPos, endPos, promotion)
+    const newViewNum = this.state.viewingMove + 1
+    this.setState({
+      game: this.state.game,
+      viewingMove: newViewNum
+    })
+    this.boardMoveChanged(newViewNum)
+
+    // Pre Moves
+    if (this.state.premoves.length > 0) {
+      const premove = this.state.premoves.shift()
+      console.log(premove)
+      if (!premove) throw new Error("premove is undefined");
+      const piece = this.latestBoard().getPos(premove.start)
+      if (!piece) return
+      if (piece.team !== this.props.team) return
+      let premoveError = !this.state.game.doMove(premove.start, premove.end)
+      if (premoveError)
+        this.setState({
+          premoves: [],
+          premoveBoard: null
+        })
+      else if (this.props.multiplayerWs) {
+        const newViewNum = this.state.viewingMove + 1
+        this.setState({
+          game: this.state.game,
+          viewingMove: newViewNum
+        })
+        if (!this.state.premoves.length) {
+          this.setState({
+            premoves: [],
+            premoveBoard: null
+          })
+        } else {
+          // Update Premove board
+          const newBoard = new ChessBoard(this.latestBoard())
+          this.state.premoves.forEach(premove => {
+            newBoard.setPos(premove.end, newBoard.getPos(premove.start))
+            newBoard.setPos(premove.start, null)
+          })
+          this.setState({
+            premoveBoard: newBoard
+          })
         }
-      })
-      this.state.game.setGameOver(isGameOver)
-      const newViewNum = this.state.viewingMove + 1
-      this.setState({
-        game: this.state.game,
-        viewingMove: newViewNum
-      })
-      this.boardMoveChanged(newViewNum)
+        this.boardMoveChanged(newViewNum)
+        sendToWs(this.props.multiplayerWs, 'move', {
+          startingPos: [premove.start.x, premove.start.y],
+          endingPos: [premove.end.x, premove.end.y],
+        })
+      }
     }
   }
 
   updateURLtoHavePGN() {
-    window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/?pgn=' + encodeURIComponent(this.state.game.shortNotationMoves));
+    if (this.state.game.metaValues.get('White') && this.state.game.metaValues.get('White') !== '?')
+      window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/?pgn=' + encodeURIComponent(this.state.game.getPGN().replace(/ /g, '_')));
+    else
+      window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/?pgn=' + encodeURIComponent(this.state.game.shortNotationMoves.replace(/ /g, '_')));
   }
 
   handlePieceClick(posClicked: Vector): void {
@@ -241,7 +287,7 @@ class Game extends React.Component<GameProps, GameState> {
           validMoves: newValidMoves,
           selectedPiece: posClicked
         })
-    } else {
+    } else if (this.state.validMoves.length || this.state.selectedPiece) {
       this.setState({
         validMoves: [],
         selectedPiece: null
@@ -405,6 +451,14 @@ class Game extends React.Component<GameProps, GameState> {
   render() {
     let promotionSelector
     const promotionSelectorVal = this.state.promotionSelector
+
+    if (!this.engine && this.state.game.gameOver)
+      this.engine = new UCIengine('/stockfish/stockfish.js', [
+        "setoption name Use NNUE value true",
+        "isready",
+        "ucinewgame"
+      ])
+
     if (promotionSelectorVal) {
       const promotionChoices: PieceCodes[] = ['q', 'n', 'b', 'r']
       const promotionOptionsDisplay = promotionChoices.map((item, index) => {
@@ -462,7 +516,7 @@ class Game extends React.Component<GameProps, GameState> {
       }
       gameOverDisplay[0] = <tr className='game-over'>
         <th scope='row' rowSpan={2}>End</th>
-        <td colSpan={2} rowSpan={2}>{`${scoreVal[this.state.game.gameOver.winner]}`}<br/>{`${winner[this.state.game.gameOver.winner]} ${this.state.game.gameOver.by}`}</td>
+        <td colSpan={2} rowSpan={2}>{`${scoreVal[this.state.game.gameOver.winner]}`}<br />{`${winner[this.state.game.gameOver.winner]} ${this.state.game.gameOver.by}`}</td>
       </tr>
       gameOverDisplay[1] = <tr className='game-over'>
       </tr>
@@ -499,6 +553,46 @@ class Game extends React.Component<GameProps, GameState> {
       />
     }
 
+    let boardToDisplay: JSX.Element
+    if (!this.state.premoveBoard) {
+      boardToDisplay = <Board
+        board={this.viewingBoard()}
+        validMoves={this.state.validMoves}
+        selectedPiece={this.state.selectedPiece}
+        notFlipped={this.state.notFlipped}
+        onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
+        onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
+        deselectPiece={() => this.deselectPiece()}
+        ownTeam={this.props.team}
+        moveInfo={this.state.game.getMove(this.state.viewingMove).move}
+        showingPromotionSelector={!!this.state.promotionSelector}
+        boxSize={this.state.boxSize}
+        haveEngine={!!this.engine}
+        doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
+        isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
+      />
+    } else {
+      console.log('premove board')
+      boardToDisplay = <Board
+        board={this.state.premoveBoard}
+        validMoves={[]}
+        selectedPiece={this.state.selectedPiece}
+        notFlipped={this.state.notFlipped}
+        onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
+        onValidMoveClick={(posClicked: Vector) => { }}
+        deselectPiece={() => this.deselectPiece()}
+        ownTeam={this.props.team}
+        moveInfo={this.state.game.getMove(this.state.viewingMove).move}
+        showingPromotionSelector={!!this.state.promotionSelector}
+        boxSize={this.state.boxSize}
+        haveEngine={!!this.engine}
+        doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
+        isLatestBoard={true}
+        premoves={this.state.premoves}
+        deletePremoves={() => { this.setState({ premoves: [], premoveBoard: null }) }}
+      />
+    }
+
     return (
       <div className="game">
         <div className='horizontal-game-wrapper'>
@@ -508,20 +602,7 @@ class Game extends React.Component<GameProps, GameState> {
               width: 8 * this.state.boxSize,
               height: 8 * this.state.boxSize
             }}>
-              <Board
-                board={this.viewingBoard()}
-                validMoves={this.state.validMoves}
-                selectedPiece={this.state.selectedPiece}
-                notFlipped={this.state.notFlipped}
-                onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
-                onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
-                deselectPiece={() => this.deselectPiece()}
-                ownTeam={this.props.team}
-                moveInfo={this.state.game.getMove(this.state.viewingMove).move}
-                showingPromotionSelector={!!this.state.promotionSelector}
-                boxSize={this.state.boxSize}
-                haveEngine={!!this.engine}
-              />
+              {boardToDisplay}
               {promotionSelector}
             </div>
             {(!this.state.notFlipped) ? players.black : players.white}

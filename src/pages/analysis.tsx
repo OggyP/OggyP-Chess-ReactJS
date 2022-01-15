@@ -11,10 +11,12 @@ function AnalysisPage() {
 
   let pgn: string | undefined = undefined
   if (urlParams.has('pgn'))
-    pgn = urlParams.get('pgn') as string
+    pgn = (urlParams.get('pgn') as string).replace(/_/g, ' ')
 
   return <Game
     team='any'
+    allowMoving={true}
+    allowPreMoves={false}
     pgn={pgn}
     canSharePGN={true}
   />

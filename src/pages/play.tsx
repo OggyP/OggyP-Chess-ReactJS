@@ -80,6 +80,8 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                 }
               }
               }
+              allowMoving={true}
+              allowPreMoves={true}
             />
           })
           break;

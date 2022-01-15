@@ -81,6 +81,8 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
         pgn={this.state.PGN}
         team={viewAs}
         termination={this.state.termination}
+        allowMoving={false}
+        allowPreMoves={false}
       />
     else
       return <div>

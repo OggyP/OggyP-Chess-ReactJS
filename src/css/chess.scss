@@ -102,6 +102,9 @@
     &.check {
         background: radial-gradient(ellipse at center, red 0%, #e70000 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);
     }
+    &.premove {
+        background-color: rgba(255, 255, 0, 0.5);
+    }
 }
 
 #best-move {

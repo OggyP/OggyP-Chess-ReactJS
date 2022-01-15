@@ -66,7 +66,21 @@ class Game {
       this.metaValues = new Map<string, string>()
 
       let lines = input.pgn.split('\n')
-      const moves = lines.pop()?.split(' ')
+      const lastLine = (lines.pop() as string)?.split('{')
+      let lastLineParsed = lastLine[0]
+      for (let i = 1; i < lastLine?.length; i++) {
+        const splitExtraComment = lastLine[i].split(') ')
+        if (splitExtraComment.length === 2)
+          lastLineParsed += splitExtraComment[1]
+        else
+          lastLineParsed += lastLine[i].split('} ')[1]
+      }
+
+      lastLineParsed = lastLineParsed.replace(/\?(!|)/g, '')
+      lastLineParsed = lastLineParsed.replace(/\.\.\./g, '.')
+      console.log(lastLineParsed)
+
+      const moves = lastLineParsed.split(' ')
       this.metaValuesOrder = []
       if (!moves) return
 
@@ -254,7 +268,7 @@ class Game {
       else {
         const currentDate = new Date()
         this.metaValues = new Map([
-          ['Event', "Online Match"],
+          ['Event', '?'],
           ['Site', 'https://chess.oggyp.com'],
           ['Date', currentDate.getFullYear() + '.' + currentDate.getMonth() + '.' + currentDate.getDate()],
           ['Round', '?'],
@@ -293,17 +307,22 @@ class Game {
     white: PlayerInfo
     black: PlayerInfo
   } | null {
-    if (this.metaValues.has('White') && this.metaValues.has('Black'))
+    if (this.metaValues.has('White') && this.metaValues.has('Black')) {
+      let ratings = {
+        white: (this.metaValues.has('WhiteElo')) ? Number(this.metaValues.get('WhiteElo')) : 0,
+        black: (this.metaValues.has('BlackElo')) ? Number(this.metaValues.get('BlackElo')) : 0
+      }
       return {
         white: {
           username: this.metaValues.get('White') as string,
-          rating: 0
+          rating: ratings.white
         },
         black: {
           username: this.metaValues.get('Black') as string,
-          rating: 0
+          rating: ratings.black
         }
       }
+    }
     return null
   }
 
@@ -347,7 +366,41 @@ class Game {
     }
     return gameOverInfo
   }
-
+  
+  doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined): boolean {
+    const latestBoard = this.getLatest().board
+    const piece = latestBoard.getPos(startPos)
+    if (!piece) return false
+    if (piece.team !== latestBoard.getTurn('next')) return false
+    const moves = piece.getMoves(startPos, latestBoard)
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i]
+      if (move.move.x !== endPos.x || move.move.y !== endPos.y) continue
+      const newBoard = new Board(move.board)
+      if (promotion) {
+        newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
+      }
+      const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
+      const shortNotation = Board.getShortNotation(startPos, endPos, move.moveType, latestBoard, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
+      this.newMove({
+        board: newBoard,
+        text: shortNotation,
+        move: {
+          start: startPos,
+          end: endPos,
+          type: move.moveType,
+          notation: {
+            short: shortNotation,
+            long: convertToChessNotation(startPos) + convertToChessNotation(endPos) + ((promotion) ? promotion : '')
+          }
+        }
+      })
+      this.setGameOver(isGameOver)
+      return true
+    }
+    return false
+  }
+  
   newMove(move: History) {
     this._history.push(move)
 
