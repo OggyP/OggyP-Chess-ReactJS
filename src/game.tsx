@@ -71,10 +71,11 @@ interface GameProps {
 
 class Game extends React.Component<GameProps, GameState> {
   engine: UCIengine | null = null
+  getDraggingPiece: Function | undefined
 
   constructor(props: GameProps) {
     super(props)
-    if (!this.props.multiplayerWs)
+    if (!this.props.multiplayerWs || (this.props.players && ((this.props.players.white.username === 'OggyP' && this.props.team === 'white') || (this.props.players.black.username === 'OggyP' && this.props.team === 'black'))))
       this.engine = new UCIengine('/stockfish/stockfish.js', [
         "setoption name Use NNUE value true",
         "isready",
@@ -122,6 +123,10 @@ class Game extends React.Component<GameProps, GameState> {
     }
     this.boardMoveChanged(0)
     if (this.props.canSharePGN) this.updateURLtoHavePGN()
+  }
+
+  gameBoardMounted(callbacks: any) {
+    this.getDraggingPiece = callbacks.getDraggingPiece
   }
 
   flipBoard(): void {
@@ -200,7 +205,6 @@ class Game extends React.Component<GameProps, GameState> {
 
   addPremove(start: Vector, end: Vector): void {
     if (!this.props.allowPreMoves) return
-    console.log('do premove')
     const premoveList = this.state.premoves.slice()
     premoveList.push({
       start: start,
@@ -230,12 +234,12 @@ class Game extends React.Component<GameProps, GameState> {
     // Pre Moves
     if (this.state.premoves.length > 0) {
       const premove = this.state.premoves.shift()
-      console.log(premove)
       if (!premove) throw new Error("premove is undefined");
       const piece = this.latestBoard().getPos(premove.start)
       if (!piece) return
       if (piece.team !== this.props.team) return
-      let premoveError = !this.state.game.doMove(premove.start, premove.end)
+      let premoveError = !this.state.game.doMove(premove.start, premove.end, undefined, false)
+      console.log('Premove ' + premoveError + ' ' + this.latestBoard().getFen())
       if (premoveError)
         this.setState({
           premoves: [],
@@ -269,6 +273,11 @@ class Game extends React.Component<GameProps, GameState> {
           endingPos: [premove.end.x, premove.end.y],
         })
       }
+    }
+    if (this.getDraggingPiece) {
+      const draggingPiece = this.getDraggingPiece()
+      if (draggingPiece)
+        this.handlePieceClick(draggingPiece as Vector)
     }
   }
 
@@ -570,9 +579,9 @@ class Game extends React.Component<GameProps, GameState> {
         haveEngine={!!this.engine}
         doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
         isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
+        onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
       />
     } else {
-      console.log('premove board')
       boardToDisplay = <Board
         board={this.state.premoveBoard}
         validMoves={[]}
@@ -590,6 +599,7 @@ class Game extends React.Component<GameProps, GameState> {
         isLatestBoard={true}
         premoves={this.state.premoves}
         deletePremoves={() => { this.setState({ premoves: [], premoveBoard: null }) }}
+        onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
       />
     }
 

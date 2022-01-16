@@ -37,6 +37,7 @@ interface BoardProps {
   isLatestBoard: boolean
   premoves?: { start: Vector, end: Vector }[]
   deletePremoves?: Function
+  onMounted?: Function
 }
 interface BoardState {
   pieceBeingDragged: Vector | null
@@ -56,6 +57,11 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   componentDidMount() {
+    if (this.props.onMounted) {
+      this.props.onMounted({
+        getDraggingPiece: () => {return this.state.pieceBeingDragged},
+      });
+    }
     window.addEventListener("mousedown", this.mouseDown.bind(this), false);
     window.addEventListener("mouseup", this.mouseUp.bind(this), false);
     window.addEventListener("mousemove", this._onMouseMove.bind(this), false);
@@ -118,14 +124,16 @@ class Board extends React.Component<BoardProps, BoardState> {
       }
 
       if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
-        if (this.props.isLatestBoard) {
+        if (this.props.isLatestBoard && this.props.board.getTurn('next') !== this.props.ownTeam) {
           // handle pre moves
+          console.log(this.props)
           this.props.doPremove(this.state.pieceBeingDragged, posSelected)
         }
         this.props.deselectPiece()
         this.posSelected = null
-      } else if (this.props.deletePremoves)
+      } else if (this.props.deletePremoves) {
         this.props.deletePremoves()
+      }
 
       this.setState({
         pieceBeingDragged: null,
@@ -172,16 +180,8 @@ class Board extends React.Component<BoardProps, BoardState> {
       if (inCheck && item.piece.code === 'k' && item.piece.team === currentTurn)
         inCheckPos = item.pos
       if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
-        if (item.piece.key !== this.state.beingDraggedPieceKey) {
-          this.setState({
-            pieceBeingDragged: null,
-            beingDraggedPieceKey: null
-          })
+        if (item.piece.key !== this.state.beingDraggedPieceKey)
           return [null, 1000]
-        }
-        if (!this.props.selectedPiece) {
-          this.props.onPieceClick(this.state.pieceBeingDragged)
-        }
         if (this.props.showingPromotionSelector)
           return [null, 1000]
         return [<DraggedPiece key={item.piece.key}
@@ -239,12 +239,14 @@ class Board extends React.Component<BoardProps, BoardState> {
       squares = [
         <Square
           key={"start"}
+          boxSize={this.props.boxSize}
           pos={this.props.moveInfo.start}
           classes={[prevTurnInReferenceToSelf, "prevMove", "start"]}
           notFlipped={this.props.notFlipped}
         ></Square>,
         <Square
           key={"end"}
+          boxSize={this.props.boxSize}
           pos={this.props.moveInfo.end}
           classes={[prevTurnInReferenceToSelf, "prevMove", "end"]}
           notFlipped={this.props.notFlipped}
@@ -257,6 +259,7 @@ class Board extends React.Component<BoardProps, BoardState> {
       preMoveSquaresStart = this.props.premoves.map((item, index) => {
         return <Square
           key={index}
+          boxSize={this.props.boxSize}
           pos={item.start}
           notFlipped={this.props.notFlipped}
           classes={['premove', 'end']}
@@ -266,6 +269,7 @@ class Board extends React.Component<BoardProps, BoardState> {
       preMoveSquaresEnd = this.props.premoves.map((item, index) => {
         return <Square
           key={index}
+          boxSize={this.props.boxSize}
           pos={item.end}
           notFlipped={this.props.notFlipped}
           classes={['premove', 'end']}
@@ -287,7 +291,10 @@ class Board extends React.Component<BoardProps, BoardState> {
           {ghostPiece}
         </div>
 
-        {(this.props.haveEngine) ? <EngineBestMove notFlipped={this.props.notFlipped} /> : null}
+        {(this.props.haveEngine) ? <EngineBestMove
+          notFlipped={this.props.notFlipped}
+          boxSize={this.props.boxSize}
+        /> : null}
         <Coords
           notFlipped={this.props.notFlipped}
         />

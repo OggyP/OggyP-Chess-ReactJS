@@ -367,7 +367,7 @@ class Game {
     return gameOverInfo
   }
   
-  doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined): boolean {
+  doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined, allowPromotion = true): boolean {
     const latestBoard = this.getLatest().board
     const piece = latestBoard.getPos(startPos)
     if (!piece) return false
@@ -375,6 +375,7 @@ class Game {
     const moves = piece.getMoves(startPos, latestBoard)
     for (let i = 0; i < moves.length; i++) {
       const move = moves[i]
+      if (!allowPromotion && move.moveType.includes('promotion')) return false
       if (move.move.x !== endPos.x || move.move.y !== endPos.y) continue
       const newBoard = new Board(move.board)
       if (promotion) {
@@ -400,7 +401,7 @@ class Game {
     }
     return false
   }
-  
+
   newMove(move: History) {
     this._history.push(move)
 

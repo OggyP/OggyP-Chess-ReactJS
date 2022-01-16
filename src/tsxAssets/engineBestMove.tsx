@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { Vector } from '../chessLogic/types';
 import { convertToPosition } from '../chessLogic/functions';
 
-function EngineBestMove(props: { notFlipped: boolean }) {
+function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
   const [bestMove, setBestMove] = useState<{
     startingPos: Vector
     endingPos: Vector
@@ -14,7 +14,6 @@ function EngineBestMove(props: { notFlipped: boolean }) {
   React.useEffect(() => {
     const handleEngineOutput = (event: any) => {
       const info = event.detail
-      console.log(info)
       if (info.score) {
         if (info.pv) {
           const pvMoves = info.pv.split(' ')
@@ -32,7 +31,6 @@ function EngineBestMove(props: { notFlipped: boolean }) {
             })
           }
         } else {
-          console.log('set to null')
           setBestMove(null)
         }
       } else if (info.startingPos.x && (!bestMove ||
@@ -40,7 +38,6 @@ function EngineBestMove(props: { notFlipped: boolean }) {
         info.startingPos.y !== bestMove.startingPos.y ||
         info.endingPos.x !== bestMove.endingPos.x ||
         info.endingPos.y !== bestMove.endingPos.y)) {
-        console.log('set to val non score')
         setBestMove(info)
       }
     };
@@ -57,11 +54,13 @@ function EngineBestMove(props: { notFlipped: boolean }) {
     return <div id="best-move">
       <Square
         classes={['from']}
+        boxSize={props.boxSize}
         pos={bestMove.startingPos}
         notFlipped={props.notFlipped}
       />
       <Square
         classes={['to']}
+        boxSize={props.boxSize}
         pos={bestMove.endingPos}
         notFlipped={props.notFlipped}
       />
