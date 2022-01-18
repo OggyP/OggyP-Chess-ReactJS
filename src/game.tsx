@@ -138,6 +138,11 @@ class Game extends React.Component<GameProps, GameState> {
   boardMoveChanged(moveNum: number) {
     if (this.engine)
       this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
+    if (this.state.game.getMoveCount() !== moveNum)
+      this.setState({
+        premoves: [],
+        premoveBoard: null
+      })
   }
 
   customGameOver(winner: Teams | 'draw', by: string, extraInfo?: string) {
@@ -232,13 +237,15 @@ class Game extends React.Component<GameProps, GameState> {
     this.boardMoveChanged(newViewNum)
 
     // Pre Moves
-    if (this.state.premoves.length > 0) {
+    if (this.state.premoves.length > 0 && !this.state.game.gameOver) {
       const premove = this.state.premoves.shift()
+      console.log(premove)
+      let premoveError = false
       if (!premove) throw new Error("premove is undefined");
       const piece = this.latestBoard().getPos(premove.start)
-      if (!piece) return
-      if (piece.team !== this.props.team) return
-      let premoveError = !this.state.game.doMove(premove.start, premove.end, undefined, false)
+      if (!piece) premoveError = true
+      if (piece && piece.team !== this.props.team) premoveError = true
+      if (!this.state.game.doMove(premove.start, premove.end, undefined, false)) premoveError = true
       console.log('Premove ' + premoveError + ' ' + this.latestBoard().getFen())
       if (premoveError)
         this.setState({

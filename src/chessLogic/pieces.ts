@@ -40,7 +40,7 @@ class Queen extends ChessPiece {
       { "x": -1, "y": 0 },
       { "x": -1, "y": 1 },
     ]
-    let moves = getRayCastVectors(board, vectors, pos, super.getTeam()).vectors
+    let moves = getRayCastVectors(board, vectors, pos, this.team).vectors
 
     return moves.filter(legal, this)
   }
@@ -59,7 +59,7 @@ class Bishop extends ChessPiece {
       { "x": -1, "y": -1 },
       { "x": -1, "y": 1 },
     ]
-    let moves = getRayCastVectors(board, vectors, pos, super.getTeam()).vectors
+    let moves = getRayCastVectors(board, vectors, pos, this.team).vectors
 
     return moves.filter(legal, this)
   }
@@ -81,7 +81,7 @@ class Knight extends ChessPiece {
       { "x": -2, "y": 1 },
       { "x": -1, "y": 2 }
     ]
-    let moves = getVectors(board, vectors, pos, super.getTeam()).vectors
+    let moves = getVectors(board, vectors, pos, this.team).vectors
 
     return moves.filter(legal, this)
   }
@@ -99,7 +99,7 @@ class Rook extends ChessPiece {
       { "x": 0, "y": -1 },
       { "x": -1, "y": 0 },
     ]
-    let moves = getRayCastVectors(board, vectors, pos, super.getTeam()).vectors
+    let moves = getRayCastVectors(board, vectors, pos, this.team).vectors
     const isAtBackRow = (pos.y === ((this.team === 'white') ? 7 : 0))
     if (isAtBackRow)
       for (let i = 0; i < moves.length; i++) {
@@ -121,7 +121,7 @@ class Pawn extends ChessPiece {
   }
 
   getMoves(pos: Vector, board: Board): MovesAndBoard[] {
-    const ownTeam = super.getTeam()
+    const ownTeam = this.team
     let hasMoved = (((ownTeam === 'white') ? 6 : 1) !== pos.y) // Piece is at the starting row of pawns for it's team
     let moves: MovesAndBoard[] = []
 
@@ -232,7 +232,7 @@ class King extends ChessPiece {
       { "x": -1, "y": 0 },
       { "x": -1, "y": 1 },
     ]
-    let moves = getVectors(board, vectors, pos, super.getTeam()).vectors
+    let moves = getVectors(board, vectors, pos, this.team).vectors
     for (let i = 0; i < moves.length; i++) {
       moves[i].board.castleInfo[this.team].kingSide = false
       moves[i].board.castleInfo[this.team].queenSide = false
