@@ -1,9 +1,3 @@
-body {
-    font: 14px "Century Gothic", Futura, sans-serif;
-    margin: 0;
-    // background-color: #ff0000;
-}
-
 table {
     margin: 10px;
 }
@@ -11,31 +5,60 @@ table {
 .horizontal-game-wrapper {
     display: flex;
     flex-direction: row;
-    width: max-content;
     margin: 0;
-    align-items: center;
+    min-width: 100vw;
+    .game-controls-info {
+        flex-basis: 100%;
+    }
 }
 
-#game-controls {
-    margin-left: 20px;
-    button {
-        padding: 7px;
-        margin: 10px;
+.game-controls-info {
+    display: flex;
+    align-items: center;
+    #game-controls {
+        margin-left: 20px;
+        button {
+            padding: 7px;
+            margin: 10px;
+        }
+    }
+}
+
+.col-down {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#board-and-info {
+    p {
+        margin-top: 5px;
+        width: 100%;
     }
 }
 
 #previous-moves-wrapper {
     overflow-y: auto;
     max-height: inherit;
-    height: 800px;
+    max-height: calc(100vh - 40px);
+    flex-basis: 100%;
 }
 
 #previous-moves {
+    thead tr th {
+        color: white !important;
+        text-align: center;
+    }
+    margin: 5px;
     th,
     tr,
     td {
         padding: 5px;
-        border-radius: 5px;
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0);
+    }
+    th {
+        color: grey;
     }
     .game-over {
         td {
@@ -43,8 +66,9 @@ table {
             color: white;
         }
     }
-    margin: 5px,
-    0;
+    tr.game-over td {
+        border-radius: 5px;
+    }
     p {
         width: 100%;
         height: 100%;
@@ -53,73 +77,75 @@ table {
     }
     .current-move {
         border-radius: 5px;
-        background-color: lightcoral;
+        border-color: red;
+        border-style: solid;
     }
 }
 
 .engine-info {
     position: -webkit-sticky;
-    /* Safari */
+    width: auto;
     position: sticky;
     top: 0;
     h3 {
-        margin: 3px;
         font-size: x-large;
+        margin: 0;
     }
     h4 {
-        margin: 3px;
         font-size: medium;
     }
     p {
         margin: 2px;
+        margin-left: 0;
+        margin-top: 7px;
         font-size: small;
     }
     color: white;
-    background: purple;
-    padding: 10px;
+    background: rgb(100, 0, 100);
+    padding: 13px;
     border-radius: 20px;
     margin: 10px;
 }
 
 .opening {
-    color: black;
     .eco {
-        margin-right: 5px;
+        margin-right: 7px;
         color: grey;
     }
+    overflow: hidden;
+    margin: 0;
 }
 
 .player-info {
     height: auto;
     font-size: medium;
-    padding: 3px;
+    padding: 6px;
     h4 {
         margin: 0;
         .rating {
             text-align: right;
             font-size: small;
             color: grey;
-            // float: right;
         }
         .timer {
             float: right;
+            color: black;
         }
     }
     &.white {
         color: black;
         background-color: white;
-        border-color: white;
     }
     &.black {
         color: white;
-        background-color: black;
-        border-color: black;
+        background: black;
     }
     &.isTurn {
+        border-style: solid;
+        border-width: 3px;
         border-color: green;
         animation: pulseGreen 3000ms linear infinite;
     }
-    border-style: solid;
 }
 
 @keyframes pulseGreen {

@@ -18,5 +18,8 @@
     flex-direction: row;
     label {
         width: 100%;
+        input {
+            width: auto;
+        }
     }
 }

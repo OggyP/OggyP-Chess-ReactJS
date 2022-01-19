@@ -1,0 +1,156 @@
+/********************
+       GENERAL
+********************/
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+/********************
+      HEADINGS
+********************/
+
+h1,
+h2,
+h3 {
+    margin: 0.5em 0;
+    width: auto;
+}
+
+h1 {
+    font-size: 70px;
+}
+
+h2 {
+    font-size: 50px;
+}
+
+h3 {
+    font-size: 25px;
+}
+
+h4 {
+    font-size: 20px;
+}
+
+
+/********************
+   BASIC MARKDOWN
+********************/
+
+u {
+    border-bottom: 1px solid var(--primary);
+    text-decoration: none;
+}
+
+
+/********************
+        LINES
+********************/
+
+hr {
+    border: 1px solid var(--primary);
+}
+
+
+/********************
+       BUTTONS
+********************/
+
+button,
+input+label.button {
+    background: var(--dark);
+    cursor: pointer;
+    border: none;
+    --bdrs: 5px;
+    -webkit-border-radius: var(--bdrs);
+    -moz-border-radius: var(--bdrs);
+    border-radius: var(--bdrs);
+    padding: 0.4em 0.6em;
+    width: auto;
+    height: auto;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-family: var(--font-1);
+    color: var(--txt);
+    -webkit-transition: 50ms;
+    -moz-transition: 50ms;
+    -ms-transition: 50ms;
+    -o-transition: 50ms;
+    transition: 50ms;
+}
+
+button:hover,
+button:focus,
+input+label.button:hover,
+input+label.button:focus {
+    background: var(--grey);
+}
+
+
+/********************
+       INPUTS
+********************/
+
+input {
+    background: none;
+    outline: none;
+    filter: none;
+    margin: 10px;
+    border: none;
+    border-bottom: 1px solid var(--dark);
+    padding: 0.5em;
+    width: 250px;
+    display: inline-block;
+    font-size: 1rem;
+    font-family: var(--font-1);
+    color: var(--txt);
+    --trs: border-bottom-color 50ms;
+    -webkit-transition: var(--trs);
+    -moz-transition: var(--trs);
+    -ms-transition: var(--trs);
+    -o-transition: var(--trs);
+    transition: var(--trs);
+}
+
+input:hover {
+    border-bottom-color: var(--grey);
+}
+
+input:focus {
+    opacity: 1;
+    border-bottom-color: var(--fog);
+}
+
+input[hidden] {
+    display: none;
+}
+
+
+/********************
+       TABLES
+********************/
+
+table {
+    font-size: 20px;
+}
+
+th {
+    text-align: left;
+}
+
+
+/********************
+       LABELS
+********************/
+
+input:checked+label.button {
+    background: var(--primary);
+}

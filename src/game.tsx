@@ -7,6 +7,9 @@ import UCIengine from './engine'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 
+const boardSize = 0.87
+const minAspectRatio = 1.2
+
 interface TimerInfo {
   startTime: number; // UNIX Time
   countingDown: boolean
@@ -51,6 +54,7 @@ interface GameState {
   }
   premoveBoard: ChessBoard | null
   premoves: { start: Vector, end: Vector }[]
+  onMobile: boolean
 }
 
 interface GameProps {
@@ -115,14 +119,17 @@ class Game extends React.Component<GameProps, GameState> {
       notFlipped: (props.team === 'any' || props.team === 'white'),
       selectedPiece: null,
       promotionSelector: null,
-      boxSize: Math.floor(Math.min(windowSize.height * 0.7, windowSize.width) / 8),
+      boxSize: Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8),
       moveRightSection: false,
       players: (props.players || playerInfo),
       premoveBoard: null,
       premoves: [],
+      onMobile: windowSize.height * minAspectRatio > windowSize.width
     }
-    this.boardMoveChanged(0)
+    this.boardMoveChanged(0, true)
     if (this.props.canSharePGN) this.updateURLtoHavePGN()
+
+
   }
 
   gameBoardMounted(callbacks: any) {
@@ -135,10 +142,10 @@ class Game extends React.Component<GameProps, GameState> {
     })
   }
 
-  boardMoveChanged(moveNum: number) {
+  boardMoveChanged(moveNum: number, firstMove: boolean = false) {
     if (this.engine)
       this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
-    if (this.state.game.getMoveCount() !== moveNum)
+    if (this.state.game.getMoveCount() !== moveNum && !firstMove)
       this.setState({
         premoves: [],
         premoveBoard: null
@@ -410,10 +417,12 @@ class Game extends React.Component<GameProps, GameState> {
       width: window.innerWidth,
       height: window.innerHeight
     }
-    const newBoxSize = Math.floor(Math.min(windowSize.height * 0.7, windowSize.width) / 8)
-    if (newBoxSize !== this.state.boxSize)
+    const newBoxSize = Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8)
+    const onMobile = windowSize.height * minAspectRatio > windowSize.width
+    if (newBoxSize !== this.state.boxSize || onMobile !== this.state.onMobile)
       this.setState({
-        boxSize: newBoxSize
+        boxSize: newBoxSize,
+        onMobile: windowSize.height * minAspectRatio > windowSize.width
       })
   };
 
@@ -610,55 +619,64 @@ class Game extends React.Component<GameProps, GameState> {
       />
     }
 
-    return (
-      <div className="game">
-        <div className='horizontal-game-wrapper'>
-          <div className='board-and-players'>
-            {(this.state.notFlipped) ? players.black : players.white}
-            <div id='board-wrapper' style={{
-              width: 8 * this.state.boxSize,
-              height: 8 * this.state.boxSize
-            }}>
-              {boardToDisplay}
-              {promotionSelector}
-            </div>
-            {(!this.state.notFlipped) ? players.black : players.white}
-          </div>
-          <div id="previous-moves-wrapper" style={{
-            height: 8 * this.state.boxSize
-          }}>
-            {engineInfo}
-            <table id="previous-moves">
-              <thead>
-                <tr>
-                  <th scope="col">move #</th>
-                  <th scope="col">White</th>
-                  <th scope="col">Black</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope='row'><p>0</p></th>
-                  <td colSpan={2} onClick={() => this.goToMove(0)} className={(this.state.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
-                </tr>
-                {moveRows}
-                {gameOverDisplay[0]}
-                {gameOverDisplay[1]}
-              </tbody>
-            </table>
-          </div>
-        </div>
+    let boardAndPlayers = <div id='board-and-info'
+      style={{
+        flexBasis: this.state.boxSize * 8 + 'px'
+      }}>
+      <div id='board-wrapper' style={{
+        width: 8 * this.state.boxSize,
+        height: 8 * this.state.boxSize
+      }}>
+        {boardToDisplay}
+        {promotionSelector}
+      </div>
+      {<p className='opening'>{(this.state.game.opening.ECO) ? <span className='eco'>{this.state.game.opening.ECO}</span> : null}{this.state.game.opening.Name}</p>}
+      {(!this.state.onMobile) ? <p>{this.viewingBoard().getFen()}</p> : null}
+    </div>
 
-        <div id="game-info">
-          <div id="current-board">
-            <p className='opening'><span className='eco'>{this.state.game.opening.ECO}</span>{this.state.game.opening.Name}</p>
-            <p>{this.viewingBoard().getFen()}</p>
-          </div>
-        </div>
+    let leftSideInfo = <div className="game-controls-info">
+      <div className='col-down'>
+        {(this.state.notFlipped) ? players.black : players.white}
         <div id="game-controls">
           <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
           <button onClick={() => this.flipBoard()}>Flip Board</button>
           {resumeButton}
+        </div>
+        {(!this.state.notFlipped) ? players.black : players.white}
+      </div>
+    </div>
+
+    let previousMovesList = <div id="previous-moves-wrapper">
+      {(!this.state.onMobile) ? engineInfo : null}
+      <table id="previous-moves">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">White</th>
+            <th scope="col">Black</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope='row'><p>0</p></th>
+            <td colSpan={2} onClick={() => this.goToMove(0)} className={(this.state.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
+          </tr>
+          {moveRows}
+          {gameOverDisplay[0]}
+          {gameOverDisplay[1]}
+        </tbody>
+      </table>
+    </div>
+
+    return (
+      <div className="game">
+        <div className='horizontal-game-wrapper'
+          style={{
+            flexDirection: (this.state.onMobile) ? 'column' : 'row'
+          }}>
+          {(this.state.onMobile) ? boardAndPlayers : leftSideInfo}
+          {(this.state.onMobile) ? leftSideInfo : boardAndPlayers}
+          {previousMovesList}
         </div>
       </div>
     );

@@ -7,7 +7,7 @@ interface PieceProps {
   y: number
   showAnimation: boolean
   isGhost: boolean
-  text?: number
+  text?: string
 }
 function Piece(props: PieceProps) {
   const classes = `piece ${(props.team === 'white') ? "l" : "d"} ${props.type}${(props.showAnimation) ? " ani" : ""}${(props.isGhost) ? " ghost" : ""}`;

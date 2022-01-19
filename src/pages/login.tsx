@@ -107,8 +107,10 @@ class Login extends React.Component<LoginProps, LoginState>{
 
   render() {
     let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
-    if (this.state.loginError) passwordError = <h1 className='login-error'>{this.state.loginError}</h1>
-    return <form onSubmit={this.handleSubmit.bind(this)}>
+    if (this.state.loginError) passwordError = <h2 className='login-error'>{this.state.loginError}</h2>
+    return <form id='login-form' onSubmit={this.handleSubmit.bind(this)}>
+      <img src="/assets/images/favicon-login-bg.png" alt="" className="bg-img" />
+      <h1>Login</h1>
       {passwordError}
       <label htmlFor="username-input">
         Username:
@@ -120,7 +122,7 @@ class Login extends React.Component<LoginProps, LoginState>{
           onChange={this.handleInputChange.bind(this)}
         />
       </label>
-      <br />
+      {/* <br /> */}
       <label htmlFor='password-input'>
         Password:
         <input
@@ -131,7 +133,14 @@ class Login extends React.Component<LoginProps, LoginState>{
           onChange={this.handleInputChange.bind(this)}
         />
       </label>
-      <input type="submit" hidden value='Submit' />
+      <label htmlFor='login-submit'>
+        <button>
+          Login
+          <span className="spacer" style={{ display: 'inline-block', width: '5px' }}></span>
+          <span className="material-icons-round">login</span>
+        </button>
+        <input id='login-submit' type="submit" hidden value='Submit' />
+      </label>
     </form>
   }
 }

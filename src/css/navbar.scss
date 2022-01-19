@@ -1,29 +1,35 @@
 #navbar {
-    // height: 3%;
     .item {
-        // margin: 10px;
-        height: 100%;
-        padding: 0;
-        margin: 0;
-        &:hover {
-            background-color: grey;
-        }
+        display: flex;
+        align-items: center;
+        font-size: large;
         padding-left: 6px;
-        text-align: center;
+        vertical-align: middle;
+        p {
+            margin: 0;
+            text-align: center;
+        }
+        &:hover {
+            background-color: var(--grey);
+        }
+        &.first {
+            padding-left: 0;
+        }
     }
     img {
-        // height: 3%;
-        width: 2%;
-        padding: 0px;
+        height: 40px;
+        // width: min-content;
+        padding: 4px;
         margin: 0;
         &:hover {
-            background-color: grey;
+            background-color: var(--grey);
         }
     }
     height: 40px;
     display: flex;
     flex-direction: row;
     width: 100%;
-    background-color: rgb(201, 201, 201);
-    // margin: 10px;
+    // max-width: 100vh;
+    background-color: var(--bg-2);
+    box-shadow: 0px 0px 15px -10px rgb(255, 255, 255);
 }

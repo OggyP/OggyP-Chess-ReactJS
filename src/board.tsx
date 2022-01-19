@@ -59,7 +59,7 @@ class Board extends React.Component<BoardProps, BoardState> {
   componentDidMount() {
     if (this.props.onMounted) {
       this.props.onMounted({
-        getDraggingPiece: () => {return this.state.pieceBeingDragged},
+        getDraggingPiece: () => { return this.state.pieceBeingDragged },
       });
     }
     window.addEventListener("mousedown", this.mouseDown.bind(this), false);
@@ -198,6 +198,7 @@ class Board extends React.Component<BoardProps, BoardState> {
           y={this.props.boxSize * ((this.props.notFlipped) ? item.pos.y : 7 - item.pos.y)}
           showAnimation={true}
           isGhost={false}
+          // text={item.piece.code + ' ' + item.piece.team}
         />, item.piece.key]
     })
     unsortedPieces.sort(function (a, b) { return a[1] - b[1] })

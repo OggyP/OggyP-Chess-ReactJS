@@ -8,6 +8,9 @@ import PlayGame from './pages/play'
 import ErrorPage from './pages/Error'
 import WelcomePage from './pages/Welcome'
 
+import './css/all.scss'
+import './css/normalise.css'
+
 const wsURL = "wss://chess.oggyp.com:8443"
 
 function App() {

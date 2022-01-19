@@ -57,6 +57,9 @@
     top: 0;
     left: 0;
     transition: all 0ms;
+    -o-background-size: cover;
+    -moz-background-size: cover;
+    -webkit-background-size: cover;
     background-size: cover;
     will-change: transform;
     pointer-events: none;

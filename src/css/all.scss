@@ -1,0 +1,22 @@
+:root {
+    --primary: purple;
+    --secondary: #035bff77;
+    --mignight: #131313;
+    --night: #171717;
+    --evening: #1f1f1f;
+    --dark: #2d2d2d;
+    --grey: #464646;
+    --fog: #bfbfbf;
+    --bg-1: var(--evening);
+    --bg-2: var(--night);
+    --txt: white;
+    --font-1: 'Noto Sans JP', sans-serif;
+}
+
+body {
+    background-color: var(--bg-1);
+    color: var(--txt);
+    font-family: var(--font-1);
+    font-weight: 300;
+    margin: 0;
+}

@@ -1,6 +1,28 @@
-.login-error {
-    background-color: rgb(253, 132, 132);
-    border-style: solid;
-    border-color: red;
-    padding: 10px;
+#login-form {
+    // position: absolute;
+    height: 100%;
+    width: 100%;
+    min-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    h1 {
+        font-size: 70px;
+    }
+    h2.login-error {
+        font-size: large;
+        background-color: rgb(253, 132, 132, 0.2);
+        border-style: solid;
+        border-color: red;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    .bg-img {
+        opacity: 0.5;
+        width: 40%;
+        position: absolute;
+        z-index: -1;
+    }
+    overflow: hidden;
 }
