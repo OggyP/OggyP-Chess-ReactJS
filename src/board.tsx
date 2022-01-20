@@ -1,5 +1,6 @@
 import Piece from './tsxAssets/piece'
 import DraggedPiece from './tsxAssets/draggingPiece'
+import TouchDraggedPiece from './tsxAssets/touchDraggingPiece'
 import Square from './tsxAssets/square'
 import ValidMove from './tsxAssets/validMove'
 import Coords from './tsxAssets/coords'
@@ -42,6 +43,7 @@ interface BoardProps {
 interface BoardState {
   pieceBeingDragged: Vector | null
   beingDraggedPieceKey: number | null
+  dragType: 'mouse' | 'touch' | null
 }
 class Board extends React.Component<BoardProps, BoardState> {
   mousePos: Vector;
@@ -50,7 +52,8 @@ class Board extends React.Component<BoardProps, BoardState> {
     super(props)
     this.state = {
       pieceBeingDragged: null,
-      beingDraggedPieceKey: null
+      beingDraggedPieceKey: null,
+      dragType: null,
     }
     this.mousePos = { "x": 0, "y": 0 }
     this.posSelected = { "x": 0, "y": 0 }
@@ -65,21 +68,56 @@ class Board extends React.Component<BoardProps, BoardState> {
     window.addEventListener("mousedown", this.mouseDown.bind(this), false);
     window.addEventListener("mouseup", this.mouseUp.bind(this), false);
     window.addEventListener("mousemove", this._onMouseMove.bind(this), false);
+    window.addEventListener("touchstart", this._onTouchStart.bind(this), false);
+    window.addEventListener("touchend", this._onTouchEnd.bind(this), false);
   }
 
   componentWillUnmount() {
     window.removeEventListener("mousedown", this.mouseDown.bind(this), false);
     window.removeEventListener("mouseup", this.mouseUp.bind(this), false);
     window.removeEventListener("mousemove", this._onMouseMove.bind(this), false);
+    window.removeEventListener("touchstart", this._onTouchStart.bind(this), false);
+    window.removeEventListener("touchend", this._onTouchEnd.bind(this), false);
+  }
+
+  private _onTouchStart(event: TouchEvent) {
+    const mainBoard = document.getElementById("main-board")
+    if (!mainBoard) return
+    const bounds = mainBoard.getBoundingClientRect();
+    let coordPressed = { "x": event.touches[0].clientX - bounds.left, "y": event.touches[0].clientY - bounds.top }
+    this.mousePos = coordPressed
+    let posSelected: Vector;
+    if (this.props.notFlipped)
+      posSelected = { "x": Math.floor(coordPressed.x / this.props.boxSize), "y": Math.floor(coordPressed.y / this.props.boxSize) }
+    else
+      posSelected = { "x": 7 - Math.floor(coordPressed.x / this.props.boxSize), "y": 7 - Math.floor(coordPressed.y / this.props.boxSize) }
+    this.posClicked(posSelected, 'touch')
+  }
+
+  private _onTouchEnd(event: TouchEvent) {
+    const mainBoard = document.getElementById("main-board")
+    if (!mainBoard) return
+    const bounds = mainBoard.getBoundingClientRect();
+    let coordPressed = { "x": event.changedTouches[0].clientX - bounds.left, "y": event.changedTouches[0].clientY - bounds.top }
+    this.mousePos = coordPressed
+    let posSelected: Vector;
+    if (this.props.notFlipped)
+      posSelected = { "x": Math.floor(coordPressed.x / this.props.boxSize), "y": Math.floor(coordPressed.y / this.props.boxSize) }
+    else
+      posSelected = { "x": 7 - Math.floor(coordPressed.x / this.props.boxSize), "y": 7 - Math.floor(coordPressed.y / this.props.boxSize) }
+    this.posReleased(posSelected)
   }
 
   mouseDown() {
-    // this.getLocation()
     let posSelected: Vector;
     if (this.props.notFlipped)
       posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
     else
       posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
+    this.posClicked(posSelected, 'mouse')
+  }
+
+  posClicked(posSelected: Vector, dragType: 'mouse' | 'touch'): void {
     if (this.props.selectedPiece) {
       for (let i = 0; i < this.props.validMoves.length; i++) {
         const validMoveToCheck = this.props.validMoves[i]
@@ -98,7 +136,8 @@ class Board extends React.Component<BoardProps, BoardState> {
         this.props.onPieceClick(posSelected)
       this.setState({
         pieceBeingDragged: posSelected,
-        beingDraggedPieceKey: piece.key
+        beingDraggedPieceKey: piece.key,
+        dragType: dragType
       })
     }
   }
@@ -111,35 +150,42 @@ class Board extends React.Component<BoardProps, BoardState> {
       else
         posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
 
-      for (let i = 0; i < this.props.validMoves.length; i++) {
-        const validMoveToCheck = this.props.validMoves[i]
-        if (posSelected.x === validMoveToCheck.move.x && posSelected.y === validMoveToCheck.move.y) {
-          this.setState({
-            pieceBeingDragged: null,
-            beingDraggedPieceKey: null
-          })
-          this.props.onValidMoveClick(posSelected)
-          return
-        }
-      }
-
-      if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
-        if (this.props.isLatestBoard && this.props.board.getTurn('next') !== this.props.ownTeam) {
-          // handle pre moves
-          console.log(this.props)
-          this.props.doPremove(this.state.pieceBeingDragged, posSelected)
-        }
-        this.props.deselectPiece()
-        this.posSelected = null
-      } else if (this.props.deletePremoves) {
-        this.props.deletePremoves()
-      }
-
-      this.setState({
-        pieceBeingDragged: null,
-        beingDraggedPieceKey: null
-      })
+      this.posReleased(posSelected)
     }
+  }
+
+  posReleased(posSelected: Vector) {
+    if (!this.state.pieceBeingDragged) return
+    for (let i = 0; i < this.props.validMoves.length; i++) {
+      const validMoveToCheck = this.props.validMoves[i]
+      if (posSelected.x === validMoveToCheck.move.x && posSelected.y === validMoveToCheck.move.y) {
+        this.setState({
+          pieceBeingDragged: null,
+          beingDraggedPieceKey: null,
+          dragType: null
+        })
+        this.props.onValidMoveClick(posSelected)
+        return
+      }
+    }
+
+    if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
+      if (this.props.isLatestBoard && this.props.board.getTurn('next') !== this.props.ownTeam) {
+        // handle pre moves
+        console.log(this.props)
+        this.props.doPremove(this.state.pieceBeingDragged, posSelected)
+      }
+      this.props.deselectPiece()
+      this.posSelected = null
+    } else if (this.props.deletePremoves) {
+      this.props.deletePremoves()
+    }
+
+    this.setState({
+      pieceBeingDragged: null,
+      beingDraggedPieceKey: null,
+      dragType: null
+    })
   }
 
   offScreen() {
@@ -150,7 +196,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 
       this.setState({
         pieceBeingDragged: null,
-        beingDraggedPieceKey: null
+        beingDraggedPieceKey: null,
+        dragType: null
       })
     }
   }
@@ -184,12 +231,20 @@ class Board extends React.Component<BoardProps, BoardState> {
           return [null, 1000]
         if (this.props.showingPromotionSelector)
           return [null, 1000]
-        return [<DraggedPiece key={item.piece.key}
-          type={item.piece.code}
-          team={item.piece.team}
-          startingMousePos={this.mousePos}
-          halfBoxSize={this.props.boxSize / 2}
-        />, item.piece.key]
+        if (this.state.dragType === 'mouse')
+          return [<DraggedPiece key={item.piece.key}
+            type={item.piece.code}
+            team={item.piece.team}
+            startingMousePos={this.mousePos}
+            halfBoxSize={this.props.boxSize / 2}
+          />, item.piece.key]
+        else
+          return [<TouchDraggedPiece key={item.piece.key}
+            type={item.piece.code}
+            team={item.piece.team}
+            startingMousePos={this.mousePos}
+            halfBoxSize={this.props.boxSize / 2}
+          />, item.piece.key]
       } else
         return [<Piece key={item.piece.key}
           type={item.piece.code}
@@ -198,7 +253,7 @@ class Board extends React.Component<BoardProps, BoardState> {
           y={this.props.boxSize * ((this.props.notFlipped) ? item.pos.y : 7 - item.pos.y)}
           showAnimation={true}
           isGhost={false}
-          // text={item.piece.code + ' ' + item.piece.team}
+        // text={item.piece.code + ' ' + item.piece.team}
         />, item.piece.key]
     })
     unsortedPieces.sort(function (a, b) { return a[1] - b[1] })
@@ -279,7 +334,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
 
     return (
-      <div id='main-board'>
+      <div id='main-board' className='chess-board'>
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
           {inCheckPos}

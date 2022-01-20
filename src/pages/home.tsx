@@ -3,6 +3,8 @@ import { sendToWs } from '../helpers/wsHelper'
 import '../css/home.scss'
 import { checkForToken, deleteCookie, tokenType } from '../helpers/getToken';
 
+const minAspectRatio = 1.2
+
 interface HomeProps {
   url: string
 }
@@ -14,6 +16,7 @@ interface HomeState {
   inc: number | null,
   mode: string | null,
   pgnInput: string
+  isMobile: boolean
 }
 
 interface userInfo {
@@ -42,13 +45,19 @@ class Home extends React.Component<HomeProps, HomeState>{
   constructor(props: HomeProps) {
     super(props)
 
+    const windowSize = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
     this.state = {
       userInfo: null,
       gameInfo: [],
       start: null,
       inc: null,
       mode: null,
-      pgnInput: ''
+      pgnInput: '',
+      isMobile: windowSize.height * minAspectRatio > windowSize.width
     }
 
     if (!this.token) {
@@ -105,6 +114,26 @@ class Home extends React.Component<HomeProps, HomeState>{
     document.location.href = `/play/?mode=${this.state.mode} ${this.state.start}|${this.state.inc}`
   }
 
+  handleResize = (_: any) => {
+    const windowSize = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+    const onMobile = windowSize.height * minAspectRatio > windowSize.width
+    if (onMobile !== this.state.isMobile)
+      this.setState({
+        isMobile: onMobile
+      })
+  };
+
+  componentDidMount() {
+    window.addEventListener("resize", this.handleResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
   render() {
     let userInfoPage = <div>
       <h1>Loading User Info</h1>
@@ -154,8 +183,12 @@ class Home extends React.Component<HomeProps, HomeState>{
     else console.log(this.state)
 
     return <div className='home-wrapper'>
-      <div className='horizontal'>
-        <div className='left'>
+      <div className='horizontal' style={{
+        flexDirection: (this.state.isMobile) ? 'column' : 'row'
+      }}>
+        <div className='left' style={{
+          width: (this.state.isMobile) ? '100%' : '50%'
+        }}>
           {userInfoPage}
           <div className='play'>
             <h2>Play</h2>

@@ -55,6 +55,8 @@ interface GameState {
   premoveBoard: ChessBoard | null
   premoves: { start: Vector, end: Vector }[]
   onMobile: boolean
+  piecesStyle: string
+  boardStyle: string
 }
 
 interface GameProps {
@@ -124,7 +126,9 @@ class Game extends React.Component<GameProps, GameState> {
       players: (props.players || playerInfo),
       premoveBoard: null,
       premoves: [],
-      onMobile: windowSize.height * minAspectRatio > windowSize.width
+      onMobile: windowSize.height * minAspectRatio > windowSize.width,
+      piecesStyle: 'normal',
+      boardStyle: 'normal',
     }
     this.boardMoveChanged(0, true)
     if (this.props.canSharePGN) this.updateURLtoHavePGN()
@@ -623,49 +627,79 @@ class Game extends React.Component<GameProps, GameState> {
       style={{
         flexBasis: this.state.boxSize * 8 + 'px'
       }}>
-      <div id='board-wrapper' style={{
-        width: 8 * this.state.boxSize,
-        height: 8 * this.state.boxSize
-      }}>
+      {(this.state.onMobile) ? (this.state.notFlipped) ? players.black : players.white : null}
+      <div
+        id='board-wrapper'
+        className={'board-wrapper ' + this.state.boardStyle}
+        style={{
+          width: 8 * this.state.boxSize,
+          height: 8 * this.state.boxSize
+        }}>
         {boardToDisplay}
         {promotionSelector}
       </div>
+      {(this.state.onMobile) ? (!this.state.notFlipped) ? players.black : players.white : null}
       {<p className='opening'>{(this.state.game.opening.ECO) ? <span className='eco'>{this.state.game.opening.ECO}</span> : null}{this.state.game.opening.Name}</p>}
       {(!this.state.onMobile) ? <p>{this.viewingBoard().getFen()}</p> : null}
     </div>
 
+    const boardStyleSelector = ['normal', 'green', 'dark-green']
+    const piecesStyleSelector = ['normal']
+    const boardSelector = boardStyleSelector.map((item) => {
+      return <button key={item} className='board-style-btn' onClick={() => this.setState({ boardStyle: item })}>{item}</button>
+    })
+
+    let metaValuesDisplay = this.state.game.metaValuesOrder.map((item) => {
+      return <p key={item} className='meta'><span className='name'>{item}</span> | <span className='value'>{this.state.game.metaValues.get(item)}</span></p>
+    })
+
     let leftSideInfo = <div className="game-controls-info">
       <div className='col-down'>
-        {(this.state.notFlipped) ? players.black : players.white}
+        <h3>PGN Meta Values:</h3>
+        <div id='game-meta-display'>
+          {metaValuesDisplay}
+        </div>
+        <br /><hr /><br />
+        <div>
+          <h3>Chess Style Selector</h3>
+          {boardSelector}
+        </div>
+        <br /><hr /><br />
         <div id="game-controls">
+          <h3>Game Controls</h3>
+          {resumeButton}
           <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
           <button onClick={() => this.flipBoard()}>Flip Board</button>
-          {resumeButton}
         </div>
-        {(!this.state.notFlipped) ? players.black : players.white}
       </div>
     </div>
 
     let previousMovesList = <div id="previous-moves-wrapper">
-      {(!this.state.onMobile) ? engineInfo : null}
-      <table id="previous-moves">
-        <thead>
-          <tr>
-            <th scope="col"></th>
-            <th scope="col">White</th>
-            <th scope="col">Black</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope='row'><p>0</p></th>
-            <td colSpan={2} onClick={() => this.goToMove(0)} className={(this.state.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
-          </tr>
-          {moveRows}
-          {gameOverDisplay[0]}
-          {gameOverDisplay[1]}
-        </tbody>
-      </table>
+      <div className='col-down'>
+        {(!this.state.onMobile) ? (this.state.notFlipped) ? players.black : players.white : null}
+        <div className='scollable'>
+          {(!this.state.onMobile) ? engineInfo : null}
+          <table id="previous-moves">
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">White</th>
+                <th scope="col">Black</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope='row'><p>0</p></th>
+                <td colSpan={2} onClick={() => this.goToMove(0)} className={(this.state.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
+              </tr>
+              {moveRows}
+              {gameOverDisplay[0]}
+              {gameOverDisplay[1]}
+            </tbody>
+          </table>
+        </div>
+        {(!this.state.onMobile) ? (!this.state.notFlipped) ? players.black : players.white : null}
+      </div>
     </div>
 
     return (
@@ -675,8 +709,8 @@ class Game extends React.Component<GameProps, GameState> {
             flexDirection: (this.state.onMobile) ? 'column' : 'row'
           }}>
           {(this.state.onMobile) ? boardAndPlayers : leftSideInfo}
-          {(this.state.onMobile) ? leftSideInfo : boardAndPlayers}
-          {previousMovesList}
+          {(this.state.onMobile) ? previousMovesList : boardAndPlayers}
+          {(this.state.onMobile) ? leftSideInfo : previousMovesList}
         </div>
       </div>
     );

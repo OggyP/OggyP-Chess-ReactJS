@@ -37,14 +37,27 @@ table {
     }
 }
 
+.game-controls-info {
+    margin: 18px;
+    font-size: large;
+}
+
 #previous-moves-wrapper {
-    overflow-y: auto;
-    max-height: inherit;
-    max-height: calc(100vh - 40px);
+    margin: 20px;
+    display: flex;
+    align-items: center;
     flex-basis: 100%;
+    .scollable {
+        // margin: 10px;
+        max-height: 50vh;
+        overflow-y: auto;
+        width: 100%;
+        // overflow-x: hidden;
+    }
 }
 
 #previous-moves {
+    width: 90%;
     thead tr th {
         color: white !important;
         text-align: center;
