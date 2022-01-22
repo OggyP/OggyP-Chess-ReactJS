@@ -1,5 +1,5 @@
 import { convertToPosition } from "./chessLogic/functions";
-import { Teams, Vector } from "./chessLogic/types";
+import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 
 class UCIengine {
   private _engine: Worker;
@@ -12,17 +12,17 @@ class UCIengine {
     this._isready = false;
     this._commandsQueue = initConfigCommands
     this._engine.postMessage('uci')
-    window.onbeforeunload = () => {this._engine.postMessage('quit')}
+    window.onbeforeunload = () => { this._engine.postMessage('quit') }
   }
 
-  analyse(startingFEN: string, longNotationMoves: string[]) {
+  goTime(startingFEN: string, longNotationMoves: string[], time: number) {
     let startingTeam: Teams = (startingFEN.split(' ')[1] === 'w') ? "white" : "black"
     if (longNotationMoves.length % 2 === 1) this._analyseFromTeam = (startingTeam === 'white') ? "black" : "white"
     else this._analyseFromTeam = startingTeam
     this.addToQueueAndSend('stop')
     this.addToQueueAndSend('isready')
     this.addToQueueAndSend(`position fen ${startingFEN} moves ${longNotationMoves.join(' ')}`)
-    this.addToQueueAndSend('go movetime 10000')
+    this.addToQueueAndSend('go movetime ' + time)
   }
 
   addToQueueAndSend(cmd: string) {
@@ -61,6 +61,7 @@ class UCIengine {
       const bestMove: {
         startingPos: Vector
         endingPos: Vector
+        promotion?: PieceCodes
       } = {
         startingPos: {
           'x': convertToPosition(move[0], 'x') as number,
@@ -75,6 +76,15 @@ class UCIengine {
         detail: bestMove
       })
       document.dispatchEvent(event);
+      if (this._isready) {
+        if (move.length === 5) {
+          bestMove.promotion = move[4] as PieceCodes
+        }
+        const event = new CustomEvent("bestmove", {
+          detail: bestMove
+        })
+        document.dispatchEvent(event);
+      }
     }
 
     if (line.startsWith('info')) {

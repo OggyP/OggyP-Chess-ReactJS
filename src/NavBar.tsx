@@ -12,6 +12,16 @@ function NavBar(props: NavBarProps) {
       <div className='item'>
         <p onClick={() => document.location.href = '/analysis'}>Analyse</p>
       </div>
+      <div className='item'>
+        <p onClick={() => {
+          if (window.location.pathname !== '/stockfish/')
+            document.location.href = '/stockfish'
+          else {
+            console.log('good reload')
+            window.location.reload()
+          }
+        }}>Stockfish</p>
+      </div>
     </div>
   )
 }

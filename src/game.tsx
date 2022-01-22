@@ -73,6 +73,7 @@ interface GameProps {
   allowPreMoves: boolean
   termination?: string
   canSharePGN?: boolean
+  versusStockfish?: number
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -146,9 +147,15 @@ class Game extends React.Component<GameProps, GameState> {
     })
   }
 
+  doEngineMove(event: any): void {
+    const move = event.detail
+    console.log(move)
+    this.doMove(move.startingPos, move.endingPos, move.promotion)
+  }
+
   boardMoveChanged(moveNum: number, firstMove: boolean = false) {
     if (this.engine)
-      this.engine.analyse(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum))
+      this.engine.goTime(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), (this.props.versusStockfish === undefined) ? 10000 : 500)
     if (this.state.game.getMoveCount() !== moveNum && !firstMove)
       this.setState({
         premoves: [],
@@ -240,12 +247,7 @@ class Game extends React.Component<GameProps, GameState> {
     if (!piece) return
     if (piece.team === this.props.team) return
     this.state.game.doMove(startPos, endPos, promotion)
-    const newViewNum = this.state.viewingMove + 1
-    this.setState({
-      game: this.state.game,
-      viewingMove: newViewNum
-    })
-    this.boardMoveChanged(newViewNum)
+    let newViewNum = this.state.viewingMove + 1
 
     // Pre Moves
     if (this.state.premoves.length > 0 && !this.state.game.gameOver) {
@@ -263,12 +265,8 @@ class Game extends React.Component<GameProps, GameState> {
           premoves: [],
           premoveBoard: null
         })
-      else if (this.props.multiplayerWs) {
-        const newViewNum = this.state.viewingMove + 1
-        this.setState({
-          game: this.state.game,
-          viewingMove: newViewNum
-        })
+      else if (this.props.allowPreMoves) {
+        newViewNum++
         if (!this.state.premoves.length) {
           this.setState({
             premoves: [],
@@ -285,13 +283,18 @@ class Game extends React.Component<GameProps, GameState> {
             premoveBoard: newBoard
           })
         }
-        this.boardMoveChanged(newViewNum)
-        sendToWs(this.props.multiplayerWs, 'move', {
-          startingPos: [premove.start.x, premove.start.y],
-          endingPos: [premove.end.x, premove.end.y],
-        })
+        if (this.props.multiplayerWs)
+          sendToWs(this.props.multiplayerWs, 'move', {
+            startingPos: [premove.start.x, premove.start.y],
+            endingPos: [premove.end.x, premove.end.y],
+          })
       }
     }
+    this.setState({
+      game: this.state.game,
+      viewingMove: newViewNum
+    })
+    this.boardMoveChanged(newViewNum)
     if (this.getDraggingPiece) {
       const draggingPiece = this.getDraggingPiece()
       if (draggingPiece)
@@ -470,11 +473,15 @@ class Game extends React.Component<GameProps, GameState> {
     }
     window.addEventListener("resize", this.handleResize);
     window.addEventListener("keydown", this.handleKeyPressed);
+    if (this.props.versusStockfish)
+      document.addEventListener("bestmove", this.doEngineMove.bind(this), false);
   }
 
   componentWillUnmount() {
     window.removeEventListener("resize", this.handleResize);
     window.removeEventListener("keydown", this.handleKeyPressed);
+    if (this.props.versusStockfish)
+      document.removeEventListener("bestmove", this.doEngineMove);
   }
 
   render() {
@@ -552,7 +559,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     let engineInfo = null
-    if (this.engine)
+    if (this.engine && this.props.versusStockfish === undefined)
       engineInfo = <EngineInfo />
 
     let players: {
@@ -596,7 +603,7 @@ class Game extends React.Component<GameProps, GameState> {
         moveInfo={this.state.game.getMove(this.state.viewingMove).move}
         showingPromotionSelector={!!this.state.promotionSelector}
         boxSize={this.state.boxSize}
-        haveEngine={!!this.engine}
+        haveEngine={!!this.engine && this.props.versusStockfish === undefined}
         doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
         isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
         onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
@@ -614,7 +621,7 @@ class Game extends React.Component<GameProps, GameState> {
         moveInfo={this.state.game.getMove(this.state.viewingMove).move}
         showingPromotionSelector={!!this.state.promotionSelector}
         boxSize={this.state.boxSize}
-        haveEngine={!!this.engine}
+        haveEngine={!!this.engine && this.props.versusStockfish === undefined}
         doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
         isLatestBoard={true}
         premoves={this.state.premoves}
@@ -625,7 +632,7 @@ class Game extends React.Component<GameProps, GameState> {
 
     let boardAndPlayers = <div id='board-and-info'
       style={{
-        flexBasis: this.state.boxSize * 8 + 'px'
+        flex: '0 0 ' + (this.state.boxSize * 8 + 1) + 'px'
       }}>
       {(this.state.onMobile) ? (this.state.notFlipped) ? players.black : players.white : null}
       <div
