@@ -651,7 +651,7 @@ class Game extends React.Component<GameProps, GameState> {
     </div>
 
     const boardStyleSelector = ['normal', 'green', 'dark-green']
-    const piecesStyleSelector = ['normal']
+    // const piecesStyleSelector = ['normal']
     const boardSelector = boardStyleSelector.map((item) => {
       return <button key={item} className='board-style-btn' onClick={() => this.setState({ boardStyle: item })}>{item}</button>
     })
@@ -677,6 +677,12 @@ class Game extends React.Component<GameProps, GameState> {
           {resumeButton}
           <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
           <button onClick={() => this.flipBoard()}>Flip Board</button>
+          {(!this.props.pgn && !this.props.multiplayerWs) ? <button onClick={() => {
+            this.setState({
+              game: new ChessGame({ fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
+            });
+            this.goToMove(0)
+          }}>Reset Game</button> : null}
         </div>
       </div>
     </div>

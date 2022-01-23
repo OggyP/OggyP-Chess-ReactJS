@@ -4,7 +4,7 @@ import '../css/login.scss'
 import { checkForToken, tokenType } from '../helpers/getToken';
 import Game from '../game';
 import { Teams } from '../chessLogic/types';
-import { Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
+import { Mutex } from 'async-mutex';
 
 interface PlayGameProps {
   url: string

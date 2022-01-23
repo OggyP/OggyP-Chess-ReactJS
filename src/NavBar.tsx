@@ -10,17 +10,10 @@ function NavBar(props: NavBarProps) {
         <img alt='icon' src='/logo.svg' onClick={() => document.location.href = '/home'}></img>
       </div>
       <div className='item'>
-        <p onClick={() => document.location.href = '/analysis'}>Analyse</p>
+        <a href='/analysis'>Analyse</a>
       </div>
       <div className='item'>
-        <p onClick={() => {
-          if (window.location.pathname !== '/stockfish/')
-            document.location.href = '/stockfish'
-          else {
-            console.log('good reload')
-            window.location.reload()
-          }
-        }}>Stockfish</p>
+        <a href='/stockfish'>Stockfish</a>
       </div>
     </div>
   )
