@@ -9,12 +9,8 @@ function NavBar(props: NavBarProps) {
       <div className='item first'>
         <img alt='icon' src='/logo.svg' onClick={() => document.location.href = '/home'}></img>
       </div>
-      <div className='item'>
-        <a href='/analysis'>Analyse</a>
-      </div>
-      <div className='item'>
-        <a href='/stockfish'>Stockfish</a>
-      </div>
+      <a className='item' href='/analysis'>Analyse</a>
+      <a className='item' href='/stockfish'>Stockfish</a>
     </div>
   )
 }

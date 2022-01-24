@@ -7,13 +7,12 @@
         vertical-align: middle;
         margin-left: 5px;
         margin-right: 5px;
-        a {
-            margin: 0;
-            text-align: center;
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-        }
+        padding-right: 6px;
+        margin: 0;
+        text-align: center;
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
         &:hover {
             background-color: var(--grey);
         }

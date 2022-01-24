@@ -133,7 +133,7 @@ class Game extends React.Component<GameProps, GameState> {
       boardStyle: (getCookie('boardStyle') || 'normal'),
       loadedNNUE: (this.engine?.loadedNNUE || false),
     }
-    this.boardMoveChanged(0, true)
+    this.boardMoveChanged(0, true, true)
     if (this.props.canSharePGN) this.updateURLtoHavePGN()
 
 
@@ -155,9 +155,9 @@ class Game extends React.Component<GameProps, GameState> {
     this.doMove(move.startingPos, move.endingPos, move.promotion)
   }
 
-  boardMoveChanged(moveNum: number, firstMove: boolean = false) {
+  boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
     if (this.engine)
-      if (!this.props.versusStockfish || firstMove)
+      if (!this.props.versusStockfish || goingToNewMove)
         this.engine.goTime(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), (this.props.versusStockfish === undefined) ? 10000 : 500)
     if (this.state.game.getMoveCount() !== moveNum && !firstMove)
       this.setState({
@@ -207,7 +207,7 @@ class Game extends React.Component<GameProps, GameState> {
           promotionSelector: null,
           viewingMove: newViewNum,
         })
-        this.boardMoveChanged(newViewNum)
+        this.boardMoveChanged(newViewNum, false, true)
         if (this.props.multiplayerWs)
           sendToWs(this.props.multiplayerWs, 'move', {
             startingPos: [info.pos.start.x, info.pos.start.y],
@@ -297,7 +297,7 @@ class Game extends React.Component<GameProps, GameState> {
       game: this.state.game,
       viewingMove: newViewNum
     })
-    this.boardMoveChanged(newViewNum)
+    this.boardMoveChanged(newViewNum, false, true)
     if (this.getDraggingPiece) {
       const draggingPiece = this.getDraggingPiece()
       if (draggingPiece)
@@ -402,7 +402,7 @@ class Game extends React.Component<GameProps, GameState> {
         game: this.state.game,
         viewingMove: newViewNum
       })
-      this.boardMoveChanged(newViewNum)
+      this.boardMoveChanged(newViewNum, false, true)
       if (this.props.canSharePGN) this.updateURLtoHavePGN()
       if (!this.props.multiplayerWs) return
       sendToWs(this.props.multiplayerWs, 'move', {
