@@ -1,10 +1,12 @@
 import { convertToPosition } from "./chessLogic/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
+import { getCookie } from "./helpers/getToken";
 
 class UCIengine {
   private _engine: Worker;
   private _isready: boolean;
   private _analyseFromTeam: Teams = "white";
+  loadedNNUE: boolean = getCookie('loadNNUE') === 'true'
   _commandsQueue: string[];
   constructor(path: string, initConfigCommands: string[] = []) {
     this._engine = new Worker(path)
@@ -12,6 +14,9 @@ class UCIengine {
     this._isready = false;
     this._commandsQueue = initConfigCommands
     this._engine.postMessage('uci')
+    if (this.loadedNNUE) {
+      this.loadNNUE()
+    }
     window.onbeforeunload = () => { this._engine.postMessage('quit') }
   }
 
@@ -44,6 +49,13 @@ class UCIengine {
         this._isready = false
     } else
       this._commandsQueue.push(cmd)
+  }
+
+  loadNNUE() {
+    this.addToQueueAndSend('stop')
+    this.addToQueueAndSend('isready')
+    this.addToQueueAndSend('setoption name Use NNUE value true')
+    this.loadedNNUE = true
   }
 
   onMessage(event: string | { data: string }) {

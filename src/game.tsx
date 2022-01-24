@@ -6,6 +6,7 @@ import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
+import { deleteCookie, setCookie } from './helpers/getToken';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -57,6 +58,7 @@ interface GameState {
   onMobile: boolean
   piecesStyle: string
   boardStyle: string
+  loadedNNUE: boolean
 }
 
 interface GameProps {
@@ -84,7 +86,6 @@ class Game extends React.Component<GameProps, GameState> {
     super(props)
     if (!this.props.multiplayerWs || (this.props.players && ((this.props.players.white.username === 'OggyP' && this.props.team === 'white') || (this.props.players.black.username === 'OggyP' && this.props.team === 'black'))))
       this.engine = new UCIengine('/stockfish/stockfish.js', [
-        "setoption name Use NNUE value true",
         "isready",
         "ucinewgame"
       ])
@@ -130,6 +131,7 @@ class Game extends React.Component<GameProps, GameState> {
       onMobile: windowSize.height * minAspectRatio > windowSize.width,
       piecesStyle: 'normal',
       boardStyle: 'normal',
+      loadedNNUE: (this.engine?.loadedNNUE || false),
     }
     this.boardMoveChanged(0, true)
     if (this.props.canSharePGN) this.updateURLtoHavePGN()
@@ -490,7 +492,6 @@ class Game extends React.Component<GameProps, GameState> {
 
     if (!this.engine && this.state.game.gameOver)
       this.engine = new UCIengine('/stockfish/stockfish.js', [
-        "setoption name Use NNUE value true",
         "isready",
         "ucinewgame"
       ])
@@ -559,8 +560,11 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     let engineInfo = null
-    if (this.engine && this.props.versusStockfish === undefined)
-      engineInfo = <EngineInfo />
+    if (this.engine)
+      engineInfo = <EngineInfo
+        showMoves={(this.props.versusStockfish === undefined)}
+        showEval={(this.props.versusStockfish === undefined)}
+      />
 
     let players: {
       white: JSX.Element | null,
@@ -677,6 +681,7 @@ class Game extends React.Component<GameProps, GameState> {
           {resumeButton}
           <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
           <button onClick={() => this.flipBoard()}>Flip Board</button>
+          {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); setCookie('loadNNUE', 'true', 100) }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); deleteCookie('loadNNUE') }}>Stop Loading NNUE</button>}
           {(!this.props.pgn && !this.props.multiplayerWs) ? <button onClick={() => {
             this.setState({
               game: new ChessGame({ fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })

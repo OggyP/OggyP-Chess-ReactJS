@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 
-function EngineInfo() {
+function EngineInfo(props: {
+  showMoves: boolean,
+  showEval: boolean
+}) {
   const [info, setInfo] = useState<any>(null);
 
   const handleEngineOutput = (event: any) => {
@@ -36,9 +39,9 @@ function EngineInfo() {
     }
     if (evalText !== 'Checkmate' && evalText !== 'Stalemate')
       return <div className='engine-info'>
-        <h3>Depth: {info.depth} | Eval: {evalText}</h3>
+        <h3>Depth: {info.depth}{(props.showEval) ? ' | Eval: ' + evalText : null}</h3>
         <p>Nodes: {info.nodes} | Nps: {info.nps}</p>
-        <h4>Moves: {(info.pv.length <= 30) ? info.pv : info.pv.slice(0, 25) + "..."}</h4>
+        {(props.showMoves) ? <h4>Moves: {(info.pv.length <= 30) ? info.pv : info.pv.slice(0, 25) + "..."}</h4> : null}
       </div>
     else
       return <div className='engine-info'>

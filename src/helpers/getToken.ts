@@ -43,5 +43,5 @@ interface tokenType {
     userId: string;
 }
 
-export { checkForToken, setCookie, deleteCookie }
+export { checkForToken, setCookie, deleteCookie, getCookie }
 export type { tokenType }
