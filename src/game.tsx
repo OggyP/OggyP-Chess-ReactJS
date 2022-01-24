@@ -6,7 +6,7 @@ import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
-import { deleteCookie, setCookie } from './helpers/getToken';
+import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -129,8 +129,8 @@ class Game extends React.Component<GameProps, GameState> {
       premoveBoard: null,
       premoves: [],
       onMobile: windowSize.height * minAspectRatio > windowSize.width,
-      piecesStyle: 'normal',
-      boardStyle: 'normal',
+      piecesStyle: (getCookie('pieceStyle') || 'normal'),
+      boardStyle: (getCookie('boardStyle') || 'normal'),
       loadedNNUE: (this.engine?.loadedNNUE || false),
     }
     this.boardMoveChanged(0, true)
@@ -641,7 +641,7 @@ class Game extends React.Component<GameProps, GameState> {
       {(this.state.onMobile) ? (this.state.notFlipped) ? players.black : players.white : null}
       <div
         id='board-wrapper'
-        className={'board-wrapper ' + this.state.boardStyle}
+        className={'board-wrapper ' + this.state.boardStyle + ' ' + this.state.piecesStyle}
         style={{
           width: 8 * this.state.boxSize,
           height: 8 * this.state.boxSize
@@ -655,9 +655,15 @@ class Game extends React.Component<GameProps, GameState> {
     </div>
 
     const boardStyleSelector = ['normal', 'green', 'dark-green']
-    // const piecesStyleSelector = ['normal']
+    const piecesStyleSelector = ['normal', 'medieval', 'ewan', ]
+
     const boardSelector = boardStyleSelector.map((item) => {
-      return <button key={item} className='board-style-btn' onClick={() => this.setState({ boardStyle: item })}>{item}</button>
+      return <button key={item} className='board-style-btn' onClick={() => {this.setState({ boardStyle: item }); setCookie('boardStyle', item, 100)}}>{item}</button>
+    })
+    const pieceSelector = piecesStyleSelector.map((item) => {
+      return <div key={item} className={'piece-style-btn ' + item} onClick={() => {this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100)}}>
+        <div className={'display-piece n l'} />
+      </div>
     })
 
     let metaValuesDisplay = this.state.game.metaValuesOrder.map((item) => {
@@ -674,6 +680,8 @@ class Game extends React.Component<GameProps, GameState> {
         <div>
           <h3>Chess Style Selector</h3>
           {boardSelector}
+          <h3>Piece Style Selector</h3>
+          {pieceSelector}
         </div>
         <br /><hr /><br />
         <div id="game-controls">

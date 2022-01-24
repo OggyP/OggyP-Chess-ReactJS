@@ -1,7 +1,7 @@
 import React from 'react';
 import '../css/index.scss';
 import '../css/chess.scss';
-import '../svg/assets.css'
+import '../svg/assets.scss'
 import Game from '../game'
 import { sendToWs } from '../helpers/wsHelper'
 import { Teams } from '../chessLogic';

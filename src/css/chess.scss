@@ -87,6 +87,18 @@
     }
 }
 
+.display-piece {
+    width: 70px;
+    height: 70px;
+    -o-background-size: cover;
+    -moz-background-size: cover;
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-color: var(--grey);
+    margin: 3px;
+    border-radius: 20px;
+}
+
 .square {
     pointer-events: none;
     width: 12.5%;
