@@ -157,7 +157,8 @@ class Game extends React.Component<GameProps, GameState> {
 
   boardMoveChanged(moveNum: number, firstMove: boolean = false) {
     if (this.engine)
-      this.engine.goTime(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), (this.props.versusStockfish === undefined) ? 10000 : 500)
+      if (!this.props.versusStockfish || firstMove)
+        this.engine.goTime(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), (this.props.versusStockfish === undefined) ? 10000 : 500)
     if (this.state.game.getMoveCount() !== moveNum && !firstMove)
       this.setState({
         premoves: [],
@@ -655,13 +656,13 @@ class Game extends React.Component<GameProps, GameState> {
     </div>
 
     const boardStyleSelector = ['normal', 'green', 'dark-green']
-    const piecesStyleSelector = ['normal', 'medieval', 'ewan', ]
+    const piecesStyleSelector = ['normal', 'medieval', 'ewan', 'sus']
 
     const boardSelector = boardStyleSelector.map((item) => {
-      return <button key={item} className='board-style-btn' onClick={() => {this.setState({ boardStyle: item }); setCookie('boardStyle', item, 100)}}>{item}</button>
+      return <button key={item} className='board-style-btn' onClick={() => { this.setState({ boardStyle: item }); setCookie('boardStyle', item, 100) }}>{item}</button>
     })
     const pieceSelector = piecesStyleSelector.map((item) => {
-      return <div key={item} className={'piece-style-btn ' + item} onClick={() => {this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100)}}>
+      return <div key={item} className={'piece-style-btn ' + item} onClick={() => { this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100) }}>
         <div className={'display-piece n l'} />
       </div>
     })

@@ -123,3 +123,42 @@
         background-image: url('./medieval/Black King Default.svg')
     }
 }
+
+.sus {
+    .p.l {
+        background-image: url('./sus/white pawn.png')
+    }
+    .n.l {
+        background-image: url('./sus/white knight.png')
+    }
+    .b.l {
+        background-image: url('./sus/white bishop.png')
+    }
+    .r.l {
+        background-image: url('./sus/white rook.png')
+    }
+    .q.l {
+        background-image: url('./sus/white queen.png')
+    }
+    .k.l {
+        background-image: url('./sus/white king.png')
+    }
+    .p.d {
+        background-image: url('./sus/black pawn.png')
+    }
+    .n.d {
+        background-image: url('./sus/black knight.png')
+    }
+    .b.d {
+        background-image: url('./sus/black bishop.png')
+    }
+    .r.d {
+        background-image: url('./sus/black rook.png')
+    }
+    .q.d {
+        background-image: url('./sus/black queen.png')
+    }
+    .k.d {
+        background-image: url('./sus/black king.png')
+    }
+}
