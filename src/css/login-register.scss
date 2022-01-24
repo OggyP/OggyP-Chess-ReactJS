@@ -1,4 +1,4 @@
-#login-form {
+#account-form {
     // position: absolute;
     height: 100%;
     width: 100%;
@@ -10,7 +10,7 @@
     h1 {
         font-size: 70px;
     }
-    h2.login-error {
+    h2.account-error {
         font-size: large;
         background-color: rgb(253, 132, 132, 0.2);
         border-style: solid;
@@ -23,6 +23,15 @@
         width: 40%;
         position: absolute;
         z-index: -1;
+    }
+    p {
+        margin-top: 20px;
+        margin-bottom: 5px;
+    }
+    a {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
     }
     overflow: hidden;
 }

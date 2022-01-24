@@ -1,6 +1,5 @@
 import React from 'react';
 import { sendToWs } from '../helpers/wsHelper'
-import '../css/login.scss'
 import { checkForToken, tokenType } from '../helpers/getToken';
 import Game from '../game';
 import { Teams } from '../chessLogic/types';

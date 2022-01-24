@@ -152,6 +152,9 @@ table {
     &.black {
         color: white;
         background: black;
+        .timer {
+            color: white;
+        }
     }
     &.isTurn {
         border-style: solid;

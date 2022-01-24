@@ -63,7 +63,8 @@ hr {
 ********************/
 
 button,
-input+label.button {
+input+label.button,
+.button-type {
     background: var(--dark);
     cursor: pointer;
     border: none;

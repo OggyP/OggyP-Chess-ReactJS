@@ -2,6 +2,7 @@ import Analysis from './pages/analysis'
 import ViewGame from './pages/viewGame'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/login';
+import Register from './pages/register';
 import Home from './pages/home';
 import NavBar from './NavBar';
 import PlayGame from './pages/play'
@@ -23,6 +24,7 @@ function App() {
         <Route path='/analysis' element={<Analysis />} />
         <Route path='/viewGame/*' element={<ViewGame url={wsURL} />} />
         <Route path='/login' element={<Login url={wsURL} />} />
+        <Route path='/register' element={<Register url={wsURL} />} />
         <Route path='/home' element={<Home url={wsURL} />} />
         <Route path='/play' element={<PlayGame url={wsURL} />} />
         <Route path='/stockfish' element={<VersusStockfish />} />
