@@ -7,6 +7,8 @@ import UCIengine from './engine'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
+import StockfishGame from './pages/stockfish';
+import { textChangeRangeIsUnchanged } from 'typescript';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -75,20 +77,54 @@ interface GameProps {
   allowPreMoves: boolean
   termination?: string
   canSharePGN?: boolean
-  versusStockfish?: number
+  versusStockfish?: {
+    skill: number
+    fastGame: boolean
+  } | undefined
 }
 
 class Game extends React.Component<GameProps, GameState> {
   engine: UCIengine | null = null
   getDraggingPiece: Function | undefined
+  engineMoveType = 'movetime 10000'
 
   constructor(props: GameProps) {
     super(props)
-    if (!this.props.multiplayerWs || (this.props.players && ((this.props.players.white.username === 'OggyP' && this.props.team === 'white') || (this.props.players.black.username === 'OggyP' && this.props.team === 'black'))))
-      this.engine = new UCIengine('/stockfish/stockfish.js', [
+    if (!props.multiplayerWs || (props.players && ((props.players.white.username === 'OggyP' && props.team === 'white') || (props.players.black.username === 'OggyP' && props.team === 'black')))) {
+      let startingCommands = [
         "isready",
         "ucinewgame"
-      ])
+      ]
+      if (props.versusStockfish) {
+        ///NOTE: Stockfish level 20 does not make errors (intentially), so these numbers have no effect on level 20.
+        /// Level 0 starts at 1
+        let errProb = Math.round((props.versusStockfish.skill * 6.35) + 1);
+        /// Level 0 starts at 10
+        let maxErr = Math.round((props.versusStockfish.skill * -0.5) + 10);
+        
+        if (props.versusStockfish.skill !== 20) startingCommands.unshift('setoption name Skill Level value ' + props.versusStockfish.skill)
+
+        if (!props.versusStockfish.fastGame || props.versusStockfish.skill <= 15) {
+          let depth: number | null = null
+          if (props.versusStockfish.skill < 2) {
+            depth = 1;
+          } else if (props.versusStockfish.skill < 5) {
+            depth = 2;
+          } else if (props.versusStockfish.skill < 10) {
+            depth = 3;
+          } else if (props.versusStockfish.skill < 15) {
+            depth = 4;
+          } else {
+            this.engineMoveType = 'movetime 10000'
+          }
+          if (depth)
+            this.engineMoveType = 'move depth ' + depth
+        } else
+          this.engineMoveType = 'movetime 1000'
+      }
+      console.log(this.engineMoveType )
+      this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands)
+    }
     const windowSize = {
       width: window.innerWidth,
       height: window.innerHeight
@@ -134,9 +170,7 @@ class Game extends React.Component<GameProps, GameState> {
       loadedNNUE: (this.engine?.loadedNNUE || false),
     }
     this.boardMoveChanged(0, true, true)
-    if (this.props.canSharePGN) this.updateURLtoHavePGN()
-
-
+    if (props.canSharePGN) this.updateURLtoHavePGN()
   }
 
   gameBoardMounted(callbacks: any) {
@@ -158,7 +192,7 @@ class Game extends React.Component<GameProps, GameState> {
   boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
     if (this.engine)
       if (!this.props.versusStockfish || goingToNewMove)
-        this.engine.goTime(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), (this.props.versusStockfish === undefined) ? 10000 : 500)
+        this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
     if (this.state.game.getMoveCount() !== moveNum && !firstMove)
       this.setState({
         premoves: [],
@@ -563,8 +597,8 @@ class Game extends React.Component<GameProps, GameState> {
     let engineInfo = null
     if (this.engine)
       engineInfo = <EngineInfo
-        showMoves={(this.props.versusStockfish === undefined)}
-        showEval={(this.props.versusStockfish === undefined)}
+        showMoves={(!this.props.versusStockfish)}
+        showEval={(!this.props.versusStockfish)}
       />
 
     let players: {
@@ -608,7 +642,7 @@ class Game extends React.Component<GameProps, GameState> {
         moveInfo={this.state.game.getMove(this.state.viewingMove).move}
         showingPromotionSelector={!!this.state.promotionSelector}
         boxSize={this.state.boxSize}
-        haveEngine={!!this.engine && this.props.versusStockfish === undefined}
+        haveEngine={!!this.engine && !this.props.versusStockfish}
         doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
         isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
         onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
@@ -626,7 +660,7 @@ class Game extends React.Component<GameProps, GameState> {
         moveInfo={this.state.game.getMove(this.state.viewingMove).move}
         showingPromotionSelector={!!this.state.promotionSelector}
         boxSize={this.state.boxSize}
-        haveEngine={!!this.engine && this.props.versusStockfish === undefined}
+        haveEngine={!!this.engine && !this.props.versusStockfish}
         doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
         isLatestBoard={true}
         premoves={this.state.premoves}
@@ -692,6 +726,8 @@ class Game extends React.Component<GameProps, GameState> {
           <button onClick={() => this.flipBoard()}>Flip Board</button>
           {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); setCookie('loadNNUE', 'true', 100) }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); deleteCookie('loadNNUE') }}>Stop Loading NNUE</button>}
           {(!this.props.pgn && !this.props.multiplayerWs) ? <button onClick={() => {
+            if (this.engine) 
+              this.engine.reset()
             this.setState({
               game: new ChessGame({ fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
             });

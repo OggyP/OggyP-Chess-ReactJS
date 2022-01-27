@@ -2,6 +2,8 @@ import { convertToPosition } from "./chessLogic/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
 
+const debugEngine = true;
+
 class UCIengine {
   private _engine: Worker;
   private _isready: boolean;
@@ -20,21 +22,27 @@ class UCIengine {
     window.onbeforeunload = () => { this._engine.postMessage('quit') }
   }
 
-  goTime(startingFEN: string, longNotationMoves: string[], time: number) {
+  go(startingFEN: string, longNotationMoves: string[], type: string) {
     let startingTeam: Teams = (startingFEN.split(' ')[1] === 'w') ? "white" : "black"
     if (longNotationMoves.length % 2 === 1) this._analyseFromTeam = (startingTeam === 'white') ? "black" : "white"
     else this._analyseFromTeam = startingTeam
     this.addToQueueAndSend('stop')
     this.addToQueueAndSend('isready')
     this.addToQueueAndSend(`position fen ${startingFEN} moves ${longNotationMoves.join(' ')}`)
-    this.addToQueueAndSend('go movetime ' + time)
+    this.addToQueueAndSend('go ' + type)
+  }
+
+  reset() {
+    this.addToQueueAndSend('stop')
+    this.addToQueueAndSend('isready')
+    this.addToQueueAndSend('ucinewgame')
   }
 
   addToQueueAndSend(cmd: string) {
     this._commandsQueue.push(cmd)
     if (this._isready) {
       const cmdToSend = this._commandsQueue.shift() as string
-      // console.log("SendC " + cmdToSend)
+      if (debugEngine) console.log("SendC " + cmdToSend)
       this._engine.postMessage(cmdToSend);
     }
     if (['uci', 'isready'].includes(cmd))
@@ -44,7 +52,7 @@ class UCIengine {
   sendCmd(cmd: string) {
     if (this._isready) {
       this._engine.postMessage(cmd);
-      // console.log("SendD " + cmd)
+      if (debugEngine) console.log("SendD " + cmd)
       if (['uci', 'isready'].includes(cmd))
         this._isready = false
     } else
@@ -66,9 +74,10 @@ class UCIengine {
       line = event;
     }
 
-    // console.log(`Receive: ${line}`)
+    if (debugEngine) console.log(`Receive: ${line}`)
 
     if (line.startsWith('bestmove')) {
+      if (line === 'bestmove (none)') return
       const move = line.split(' ')[1]
       const bestMove: {
         startingPos: Vector

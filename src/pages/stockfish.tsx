@@ -2,14 +2,37 @@ import '../css/index.scss';
 import '../css/chess.scss';
 import '../svg/assets.scss'
 import Game from '../game'
+import { useState } from 'react';
 
 function StockfishGame() {
-  return <Game
-    team='white'
-    allowMoving={true}
-    allowPreMoves={true}
-    versusStockfish={20}
-  />
+  const [difficulty, setDifficulty] = useState<number>(5);
+  const [fastGame, setFastGame] = useState<boolean>(true);
+  const [gameStarted, setGameStarted] = useState<boolean>(false);
+  if (gameStarted)
+    return <Game
+      team='white'
+      allowMoving={true}
+      allowPreMoves={true}
+      versusStockfish={{
+        skill: difficulty,
+        fastGame: fastGame
+      }
+      }
+    />
+  return <div className='full-screen-menu'>
+    <h2>Choose Stockfish Difficulty</h2>
+    <h3>Level {difficulty}</h3>
+    <input type="range" min="0" max="20" defaultValue={5} id="stockfish-slider" onChange={(event) => setDifficulty(event.currentTarget.valueAsNumber)} />
+    {(difficulty >= 15) ?
+      (fastGame) ?
+        <button onClick={() => setFastGame(false)}>Disable Fast Stockfish Moving</button> :
+        <button onClick={() => setFastGame(true)}>Enable Fast Stockfish Moving</button>
+      : null
+    }
+    <br />
+    <br />
+    <button onClick={() => setGameStarted(true)}>Play</button>
+  </div>
 }
 
 export default StockfishGame
