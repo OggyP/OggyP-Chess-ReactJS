@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChessBoard, ChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector } from './chessLogic'
+import { ChessBoard, ChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, Pawn } from './chessLogic'
 import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
@@ -204,7 +204,7 @@ class Game extends React.Component<GameProps, GameState> {
     })
   }
 
-  doEngineMove(event: any): void {
+  doEngineMove = (event: any) => {
     const move = event.detail
     console.log(move)
     this.doMove(move.startingPos, move.endingPos, move.promotion)
@@ -308,7 +308,6 @@ class Game extends React.Component<GameProps, GameState> {
     let newViewNum = this.state.viewingMove + 1
 
     const latestBoard = this.state.game.getLatest().board
-    let didEnPassant = false
     if (latestBoard.enPassant) {
       console.log('enpassant available')
       // person who just moved is white then check for black
@@ -320,10 +319,9 @@ class Game extends React.Component<GameProps, GameState> {
         console.log(checkPos)
         if (!checkPos) continue
         const checkPiece = latestBoard.getPos(checkPos)
-        if (!checkPiece || checkPiece.team === piece.team) continue // if same as person who just moved
+        if (!checkPiece || checkPiece.team === piece.team || !(checkPiece instanceof Pawn)) continue // if same as person who just moved
         if (this.state.game.doMove(checkPos, latestBoard.enPassant)) {
           newViewNum++
-          didEnPassant = true
           this.setState({
             premoves: [],
             premoveBoard: null
@@ -427,6 +425,8 @@ class Game extends React.Component<GameProps, GameState> {
       let newBoard: ChessBoard | null = null
       let moveType: string[] | null = null
 
+      if (!this.state.selectedPiece) throw new Error("selected piece is undefined");
+
       const selectedPiecePos = Object.assign({}, this.state.selectedPiece)
 
       let selectedPiece: PieceAtPos = null
@@ -515,11 +515,14 @@ class Game extends React.Component<GameProps, GameState> {
     }
     const newBoxSize = Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8)
     const onMobile = windowSize.height * minAspectRatio > windowSize.width
-    if (newBoxSize !== this.state.boxSize || onMobile !== this.state.onMobile)
+    if (newBoxSize !== this.state.boxSize || onMobile !== this.state.onMobile) {
       this.setState({
         boxSize: newBoxSize,
-        onMobile: windowSize.height * minAspectRatio > windowSize.width
+        onMobile: windowSize.height * minAspectRatio > windowSize.width,
+        validMoves: [],
+        selectedPiece: null,
       })
+    }
   };
 
   handleKeyPressed = (event: KeyboardEvent) => {
@@ -552,6 +555,10 @@ class Game extends React.Component<GameProps, GameState> {
     })
   }
 
+  preventContextMenu(e: any) {
+    e.preventDefault()
+  }
+
   componentDidMount() {
     if (this.props.onMounted) {
       this.props.onMounted({
@@ -560,13 +567,15 @@ class Game extends React.Component<GameProps, GameState> {
         updateTimer: (white: TimerInfo, black: TimerInfo) => this.updateTimer(white, black)
       });
     }
+    document.addEventListener('contextmenu', this.preventContextMenu)
     window.addEventListener("resize", this.handleResize);
     window.addEventListener("keydown", this.handleKeyPressed);
     if (this.props.versusStockfish)
-      document.addEventListener("bestmove", this.doEngineMove.bind(this), false);
+      document.addEventListener("bestmove", this.doEngineMove);
   }
 
   componentWillUnmount() {
+    document.removeEventListener('contextmenu', this.preventContextMenu)
     window.removeEventListener("resize", this.handleResize);
     window.removeEventListener("keydown", this.handleKeyPressed);
     if (this.props.versusStockfish)
@@ -641,6 +650,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     let boardToDisplay: JSX.Element
+    console.log('boxsize', this.state.boxSize)
     if (!this.state.premoveBoard) {
       boardToDisplay = <Board
         board={this.viewingBoard()}
@@ -691,6 +701,7 @@ class Game extends React.Component<GameProps, GameState> {
       <div
         id='board-wrapper'
         className={'board-wrapper ' + this.state.piecesStyle}
+        onContextMenu={function () { return false; }}
         style={{
           width: 8 * this.state.boxSize,
           height: 8 * this.state.boxSize
@@ -710,16 +721,8 @@ class Game extends React.Component<GameProps, GameState> {
       </div>
     })
 
-    let metaValuesDisplay = this.state.game.metaValuesOrder.map((item) => {
-      return <p key={item} className='meta'><span className='name'>{item}</span> | <span className='value'>{this.state.game.metaValues.get(item)}</span></p>
-    })
-
     let leftSideInfo = <div className="game-controls-info">
       <div className='col-down'>
-        <h3>PGN Meta Values:</h3>
-        <div id='game-meta-display'>
-          {metaValuesDisplay}
-        </div>
         <br /><hr /><br />
         <div>
           <h3>Board Colour Selector</h3>
@@ -736,7 +739,6 @@ class Game extends React.Component<GameProps, GameState> {
             }), 100)
           }
           }>Lichess Colours</button>
-          <br />
           <button onClick={() => {
             this.setState({
               boardStyle: {
@@ -752,11 +754,10 @@ class Game extends React.Component<GameProps, GameState> {
           }>Chess.com Colours</button>
           <br />
           <br />
-          <label htmlFor="white-tile-color">White Tile Colour:</label>
-          <input type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100); this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } }) }} />
-          <br />
-          <label htmlFor="black-tile-color">Black Tile Colour:</label>
-          <input type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100); this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } }) }} />
+          <label className='button-type' htmlFor="white-tile-color">Custom White Tile Colour</label>
+          <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100); this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } }) }} />
+          <label className='button-type' htmlFor="black-tile-color">Custom Black Tile Colour</label>
+          <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100); this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } }) }} />
           <h3>Piece Style Selector</h3>
           {pieceSelector}
         </div>
@@ -787,6 +788,7 @@ class Game extends React.Component<GameProps, GameState> {
       goToMove={(i: number) => this.goToMove(i)}
       game={this.state.game}
       viewingMove={this.state.viewingMove}
+      latestMove={this.state.game.getMoveCount()}
     />
 
     return (

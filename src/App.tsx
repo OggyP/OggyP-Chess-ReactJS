@@ -11,7 +11,7 @@ import WelcomePage from './pages/Welcome'
 import VersusStockfish from './pages/stockfish'
 
 import './css/all.scss'
-import './css/normalise.css'
+import './css/normalise.scss'
 
 const wsURL = "wss://chess.oggyp.com:8443"
 

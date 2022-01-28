@@ -86,13 +86,11 @@ input+label.button,
     -ms-transition: 50ms;
     -o-transition: 50ms;
     transition: 50ms;
-}
-
-button:hover,
-button:focus,
-input+label.button:hover,
-input+label.button:focus {
-    background: var(--grey);
+    margin-right: 10px;
+    &:hover,
+    &:focus {
+        background: var(--grey);
+    }
 }
 
 

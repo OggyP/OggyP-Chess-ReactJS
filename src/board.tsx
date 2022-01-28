@@ -69,22 +69,24 @@ class Board extends React.Component<BoardProps, BoardState> {
         getDraggingPiece: () => { return this.state.pieceBeingDragged },
       });
     }
-    window.addEventListener("mousedown", this.mouseDown.bind(this), false);
-    window.addEventListener("mouseup", this.mouseUp.bind(this), false);
-    window.addEventListener("mousemove", this._onMouseMove.bind(this), false);
-    window.addEventListener("touchstart", this._onTouchStart.bind(this), false);
-    window.addEventListener("touchend", this._onTouchEnd.bind(this), false);
+    console.log('setup')
+    window.addEventListener("mousedown", this.mouseDown);
+    window.addEventListener("mouseup", this.mouseUp);
+    window.addEventListener("mousemove", this._onMouseMove);
+    window.addEventListener("touchstart", this._onTouchStart);
+    window.addEventListener("touchend", this._onTouchEnd);
   }
 
   componentWillUnmount() {
-    window.removeEventListener("mousedown", this.mouseDown.bind(this), false);
-    window.removeEventListener("mouseup", this.mouseUp.bind(this), false);
-    window.removeEventListener("mousemove", this._onMouseMove.bind(this), false);
-    window.removeEventListener("touchstart", this._onTouchStart.bind(this), false);
-    window.removeEventListener("touchend", this._onTouchEnd.bind(this), false);
+    console.log('unmount')
+    window.removeEventListener("mousedown", this.mouseDown);
+    window.removeEventListener("mouseup", this.mouseUp);
+    window.removeEventListener("mousemove", this._onMouseMove);
+    window.removeEventListener("touchstart", this._onTouchStart);
+    window.removeEventListener("touchend", this._onTouchEnd);
   }
 
-  private _onTouchStart(event: TouchEvent) {
+  private _onTouchStart = (event: TouchEvent) => {
     const mainBoard = document.getElementById("main-board")
     if (!mainBoard) return
     const bounds = mainBoard.getBoundingClientRect();
@@ -95,10 +97,12 @@ class Board extends React.Component<BoardProps, BoardState> {
       posSelected = { "x": Math.floor(coordPressed.x / this.props.boxSize), "y": Math.floor(coordPressed.y / this.props.boxSize) }
     else
       posSelected = { "x": 7 - Math.floor(coordPressed.x / this.props.boxSize), "y": 7 - Math.floor(coordPressed.y / this.props.boxSize) }
-    this.posClicked(posSelected, 'touch')
+    if (posSelected.x >= 0 && posSelected.x < 8 && posSelected.y >= 0 && posSelected.y < 8) {
+      this.posClicked(posSelected, 'touch')
+    }
   }
 
-  private _onTouchEnd(event: TouchEvent) {
+  private _onTouchEnd = (event: TouchEvent) => {
     const mainBoard = document.getElementById("main-board")
     if (!mainBoard) return
     const bounds = mainBoard.getBoundingClientRect();
@@ -112,13 +116,19 @@ class Board extends React.Component<BoardProps, BoardState> {
     this.posReleased(posSelected)
   }
 
-  mouseDown() {
+  mouseDown = (event: MouseEvent) => {
+    event.stopImmediatePropagation()
+    console.log(this.mousePos, event, this.props.boxSize, this)
     let posSelected: Vector;
     if (this.props.notFlipped)
       posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
     else
       posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
-    this.posClicked(posSelected, 'mouse')
+    if (posSelected.x >= 0 && posSelected.x < 8 && posSelected.y >= 0 && posSelected.y < 8) {
+      console.log(posSelected)
+      if (event.button === 0)
+        this.posClicked(posSelected, 'mouse')
+    }
   }
 
   posClicked(posSelected: Vector, dragType: 'mouse' | 'touch'): void {
@@ -146,7 +156,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
   }
 
-  mouseUp() {
+  mouseUp = () => {
     if (this.state.pieceBeingDragged) {
       let posSelected: Vector;
       if (this.props.notFlipped)
@@ -206,7 +216,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
   }
 
-  private _onMouseMove(event: MouseEvent) {
+  private _onMouseMove = (event: MouseEvent) => {
     const mainBoard = document.getElementById("main-board")
     if (mainBoard) {
       const bounds = mainBoard.getBoundingClientRect();
@@ -215,6 +225,7 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   render() {
+    console.log(this)
     let pieces: piecesArray[] = []
     for (let x = 0; x < 8; x++)
       for (let y = 0; y < 8; y++) {

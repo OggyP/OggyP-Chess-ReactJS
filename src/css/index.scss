@@ -6,7 +6,7 @@ table {
     display: flex;
     flex-direction: row;
     margin: 0;
-    min-width: 100vw;
+    width: 100%;
     font-weight: normal;
     .game-controls-info {
         flex-basis: 100%;
@@ -57,6 +57,7 @@ div.piece-style-btn {
     display: inline-block;
     &.current div.display-piece {
         filter: brightness(0.5);
+        cursor: not-allowed;
         &:hover {
             background-color: var(--grey);
             transform: scale(1);
@@ -73,6 +74,7 @@ div.piece-style-btn {
         margin: 3px;
         border-radius: 20px;
         transition: all 300ms;
+        cursor: pointer;
         &:hover {
             background-color: grey;
             transform: scale(1.5);
@@ -93,7 +95,6 @@ div.piece-style-btn {
 }
 
 #board-and-info {
-    #main-board {}
     p {
         font-weight: normal;
         margin-top: 5px;
@@ -116,11 +117,11 @@ div.piece-style-btn {
 #previous-moves-wrapper {
     max-height: 87vh;
     margin-left: 10px;
-    margin-right: 10px;
+    // margin-right: 10px;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
-    flex-basis: 100%;
+    flex-basis: calc(100% - 20px);
     &.mobile {
         .scollable {
             max-height: 50vh;
@@ -169,6 +170,45 @@ div.piece-style-btn {
             border-radius: 5px;
             border-color: red;
             border-style: solid;
+        }
+    }
+    #game-viewmove-controls {
+        display: flex;
+        flex-direction: row;
+        p {
+            -webkit-touch-callout: none;
+            /* iOS Safari */
+            -webkit-user-select: none;
+            /* Safari */
+            -khtml-user-select: none;
+            /* Konqueror HTML */
+            -moz-user-select: none;
+            /* Old versions of Firefox */
+            -ms-user-select: none;
+            /* Internet Explorer/Edge */
+            user-select: none;
+            /* Non-prefixed version, currently
+                                        supported by Chrome, Edge, Opera and Firefox */
+            span.material-icons-sharp {
+                font-size: xx-large !important;
+                pointer-events: none;
+            }
+            margin-top: 10px;
+            background-color: var(--grey);
+            border-radius: 5px;
+            width: calc(25% - 15px);
+            text-align: center;
+            margin-left: 5px;
+            margin-right: 5px;
+            cursor: pointer;
+            transition: all 300ms;
+            &:hover {
+                background-color: grey;
+            }
+            &.disabled {
+                background-color: rgb(39, 39, 39);
+                cursor: not-allowed;
+            }
         }
     }
 }

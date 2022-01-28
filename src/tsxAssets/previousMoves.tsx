@@ -12,6 +12,7 @@ interface PreviousMovesProps {
   goToMove: Function,
   game: game,
   viewingMove: number,
+  latestMove: number,
 }
 
 function PreviousMoves(props: PreviousMovesProps) {
@@ -51,32 +52,57 @@ function PreviousMoves(props: PreviousMovesProps) {
     </div>
   }
 
-  return <div id="previous-moves-wrapper" className={(props.onMobile) ? 'mobile' : ''}>
-  <div className='col-down moves'>
-    {(!props.onMobile) ? (props.notFlipped) ? props.players.black : props.players.white : null}
-    <div className='scollable'>
-      {(!props.onMobile) ? props.engineInfo : null}
-      <table id="previous-moves">
-        <thead>
-          <tr>
-            <th scope="col"></th>
-            <th scope="col">White</th>
-            <th scope="col">Black</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope='row'><p>0</p></th>
-            <td colSpan={2} onClick={() => props.goToMove(0)} className={(props.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
-          </tr>
-          {moveRows}
-        </tbody>
-      </table>
-    </div>
-    {gameOverDisplay}
-    {(!props.onMobile) ? (!props.notFlipped) ? <div style={{ verticalAlign: "bottom" }}>{props.players.black}</div> : props.players.white : null}
+  const gameControls = <div id='game-viewmove-controls'>
+    <p onClick={() => { if (props.viewingMove !== 0) props.goToMove(0) }} className={(props.viewingMove === 0) ? 'disabled' : ''}>
+      <span className="material-icons-sharp">
+        first_page
+      </span>
+    </p>
+    <p onClick={() => { if (props.viewingMove !== 0) props.goToMove(props.viewingMove - 1) }} className={(props.viewingMove === 0) ? 'disabled' : ''}>
+      <span className="material-icons-sharp">
+        chevron_left
+      </span>
+    </p>
+    <p onClick={() => { if (props.viewingMove !== props.latestMove) props.goToMove(props.viewingMove + 1) }} className={(props.latestMove === props.viewingMove) ? 'disabled' : ''}>
+      <span className="material-icons-sharp">
+        chevron_right
+      </span>
+    </p>
+    <p onClick={() => { if (props.viewingMove !== props.latestMove) props.goToMove(props.latestMove) }} className={(props.latestMove === props.viewingMove) ? 'disabled' : ''}>
+      <span className="material-icons-sharp">
+        last_page
+      </span>
+    </p>
   </div>
-</div>
+
+  return <div id="previous-moves-wrapper" className={(props.onMobile) ? 'mobile' : ''}>
+    <div className='col-down moves'>
+      {(props.onMobile) ? gameControls : null}
+      {(!props.onMobile) ? (props.notFlipped) ? props.players.black : props.players.white : null}
+      <div className='scollable'>
+        {(!props.onMobile) ? props.engineInfo : null}
+        <table id="previous-moves">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">White</th>
+              <th scope="col">Black</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope='row'><p>0</p></th>
+              <td colSpan={2} onClick={() => props.goToMove(0)} className={(props.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
+            </tr>
+            {moveRows}
+          </tbody>
+        </table>
+      </div>
+      {gameOverDisplay}
+      {(!props.onMobile) ? (!props.notFlipped) ? <div style={{ verticalAlign: "bottom" }}>{props.players.black}</div> : props.players.white : null}
+      {(!props.onMobile) ? gameControls : null}
+    </div>
+  </div>
 }
 
 export default PreviousMoves
