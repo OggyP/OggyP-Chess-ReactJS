@@ -8,6 +8,7 @@ import PreviousMoves from './tsxAssets/previousMoves'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
+import { addVectorsAndCheckPos } from './chessLogic/functions';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -156,7 +157,15 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     if (boardStyleSavedVal) {
-      boardStyle = JSON.parse(boardStyleSavedVal)
+      try {
+        boardStyle = JSON.parse(boardStyleSavedVal)
+      }
+      catch {
+        boardStyle = {
+          white: '#f0d9b5',
+          black: '#b58863',
+        }
+      }
     } else {
       boardStyle = {
         white: '#f0d9b5',
@@ -297,6 +306,37 @@ class Game extends React.Component<GameProps, GameState> {
     if (piece.team === this.props.team) return
     this.state.game.doMove(startPos, endPos, promotion)
     let newViewNum = this.state.viewingMove + 1
+
+    const latestBoard = this.state.game.getLatest().board
+    let didEnPassant = false
+    if (latestBoard.enPassant) {
+      console.log('enpassant available')
+      // person who just moved is white then check for black
+      const pawnMoveDirection: number = ((piece.team === 'white') ? 1 : -1)
+      // Plus x 
+      const xOffsets = [-1, 1]
+      for (let i = 0; i < xOffsets.length; i++) {
+        const checkPos = addVectorsAndCheckPos(latestBoard.enPassant, { x: xOffsets[i], y: -pawnMoveDirection })
+        console.log(checkPos)
+        if (!checkPos) continue
+        const checkPiece = latestBoard.getPos(checkPos)
+        if (!checkPiece || checkPiece.team === piece.team) continue // if same as person who just moved
+        if (this.state.game.doMove(checkPos, latestBoard.enPassant)) {
+          newViewNum++
+          didEnPassant = true
+          this.setState({
+            premoves: [],
+            premoveBoard: null
+          })
+          if (this.props.multiplayerWs)
+            sendToWs(this.props.multiplayerWs, 'move', {
+              startingPos: [checkPos.x, checkPos.y],
+              endingPos: [latestBoard.enPassant.x, latestBoard.enPassant.y],
+            })
+          break
+        }
+      }
+    }
 
     // Pre Moves
     if (this.state.premoves.length > 0 && !this.state.game.gameOver) {
@@ -683,6 +723,35 @@ class Game extends React.Component<GameProps, GameState> {
         <br /><hr /><br />
         <div>
           <h3>Board Colour Selector</h3>
+          <button onClick={() => {
+            this.setState({
+              boardStyle: {
+                white: '#f0d9b5',
+                black: '#b58863',
+              }
+            });
+            setCookie('boardStyle', JSON.stringify({
+              white: '#f0d9b5',
+              black: '#b58863',
+            }), 100)
+          }
+          }>Lichess Colours</button>
+          <br />
+          <button onClick={() => {
+            this.setState({
+              boardStyle: {
+                white: '#ebecd0',
+                black: '#779556',
+              }
+            });
+            setCookie('boardStyle', JSON.stringify({
+              white: '#ebecd0',
+              black: '#779556',
+            }), 100)
+          }
+          }>Chess.com Colours</button>
+          <br />
+          <br />
           <label htmlFor="white-tile-color">White Tile Colour:</label>
           <input type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100); this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } }) }} />
           <br />

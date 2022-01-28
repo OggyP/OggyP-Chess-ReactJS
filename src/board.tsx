@@ -341,7 +341,7 @@ class Board extends React.Component<BoardProps, BoardState> {
       <div id='main-board' className='chess-board'>
         <div id='board-svg'>
           {/* <xml version="1.0" encoding="UTF-8" standalone="no" /> */}
-          <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 8 8" shape-rendering="crispEdges">
+          <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 8 8" shapeRendering="crispEdges">
             <g id="a">
               <g id="b">
                 <g id="c">

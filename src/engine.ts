@@ -2,7 +2,7 @@ import { convertToPosition } from "./chessLogic/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
 
-const debugEngine = true;
+const debugEngine = false;
 
 class UCIengine {
   private _engine: Worker;
