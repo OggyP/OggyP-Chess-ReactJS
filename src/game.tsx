@@ -4,11 +4,10 @@ import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
+import PreviousMoves from './tsxAssets/previousMoves'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
-import StockfishGame from './pages/stockfish';
-import { textChangeRangeIsUnchanged } from 'typescript';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -59,7 +58,10 @@ interface GameState {
   premoves: { start: Vector, end: Vector }[]
   onMobile: boolean
   piecesStyle: string
-  boardStyle: string
+  boardStyle: {
+    white: string,
+    black: string,
+  }
   loadedNNUE: boolean
 }
 
@@ -96,12 +98,6 @@ class Game extends React.Component<GameProps, GameState> {
         "ucinewgame"
       ]
       if (props.versusStockfish) {
-        ///NOTE: Stockfish level 20 does not make errors (intentially), so these numbers have no effect on level 20.
-        /// Level 0 starts at 1
-        let errProb = Math.round((props.versusStockfish.skill * 6.35) + 1);
-        /// Level 0 starts at 10
-        let maxErr = Math.round((props.versusStockfish.skill * -0.5) + 10);
-        
         if (props.versusStockfish.skill !== 20) startingCommands.unshift('setoption name Skill Level value ' + props.versusStockfish.skill)
 
         if (!props.versusStockfish.fastGame || props.versusStockfish.skill <= 15) {
@@ -122,7 +118,7 @@ class Game extends React.Component<GameProps, GameState> {
         } else
           this.engineMoveType = 'movetime 1000'
       }
-      console.log(this.engineMoveType )
+      console.log(this.engineMoveType)
       this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands)
     }
     const windowSize = {
@@ -152,6 +148,22 @@ class Game extends React.Component<GameProps, GameState> {
         }
       }
     }
+
+    const boardStyleSavedVal = getCookie('boardStyle')
+    let boardStyle: {
+      white: string,
+      black: string,
+    }
+
+    if (boardStyleSavedVal) {
+      boardStyle = JSON.parse(boardStyleSavedVal)
+    } else {
+      boardStyle = {
+        white: '#f0d9b5',
+        black: '#b58863',
+      }
+    }
+
     this.state = {
       game: game,
       viewingMove: 0, // make it `game.getMoveCount()` to go to the lastest move
@@ -166,7 +178,7 @@ class Game extends React.Component<GameProps, GameState> {
       premoves: [],
       onMobile: windowSize.height * minAspectRatio > windowSize.width,
       piecesStyle: (getCookie('pieceStyle') || 'normal'),
-      boardStyle: (getCookie('boardStyle') || 'normal'),
+      boardStyle: boardStyle,
       loadedNNUE: (this.engine?.loadedNNUE || false),
     }
     this.boardMoveChanged(0, true, true)
@@ -548,51 +560,11 @@ class Game extends React.Component<GameProps, GameState> {
       promotionSelector = <div id="promotion-choice">{promotionOptionsDisplay}</div>
     }
 
-    let moveRows: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>[] = []
-    let currentRow: React.DetailedHTMLProps<React.TdHTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement>[] = []
-    for (let i = 1; i <= this.state.game.getMoveCount(); i++) {
-      const move = this.state.game.getMove(i)
-      if (i !== 1 && i % 2 === 1) // is white's turn and is not the first turn
-      {
-        moveRows.push(
-          <tr key={i}><th scope='row'><p>{Math.floor(i / 2)}</p></th>{currentRow}</tr>
-        )
-        currentRow = []
-      }
-      currentRow.push(
-        <td key={i} onClick={() => this.goToMove(i)} className={(this.state.viewingMove === i) ? 'current-move' : ''}><p>{move.text}</p></td>
-      )
-    }
-    if (currentRow.length > 0) moveRows.push(
-      <tr key={this.state.game.getMoveCount() + 1}><th scope='row'><p>{Math.floor((this.state.game.getMoveCount() + 1) / 2)}</p></th>{currentRow}</tr>
-    )
-
     let resumeButton = null
     if (this.state.viewingMove !== this.state.game.getMoveCount())
       resumeButton = <button onClick={() => this.setState({
         viewingMove: this.state.game.getMoveCount()
       })}>Resume</button>
-
-
-    let gameOverDisplay: (JSX.Element | null)[] = [null, null]
-    if (this.state.game.gameOver) {
-      const winner = {
-        "white": "White wins by",
-        "draw": "Draw by",
-        "black": "Black wins by"
-      }
-      const scoreVal = {
-        'white': '1-0',
-        'draw': '1/2-1/2',
-        'black': '0-1'
-      }
-      gameOverDisplay[0] = <tr className='game-over'>
-        <th scope='row' rowSpan={2}>End</th>
-        <td colSpan={2} rowSpan={2}>{`${scoreVal[this.state.game.gameOver.winner]}`}<br />{`${winner[this.state.game.gameOver.winner]} ${this.state.game.gameOver.by}`}</td>
-      </tr>
-      gameOverDisplay[1] = <tr className='game-over'>
-      </tr>
-    }
 
     let engineInfo = null
     if (this.engine)
@@ -646,6 +618,7 @@ class Game extends React.Component<GameProps, GameState> {
         doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
         isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
         onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
+        boardStyle={this.state.boardStyle}
       />
     } else {
       boardToDisplay = <Board
@@ -666,6 +639,7 @@ class Game extends React.Component<GameProps, GameState> {
         premoves={this.state.premoves}
         deletePremoves={() => { this.setState({ premoves: [], premoveBoard: null }) }}
         onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
+        boardStyle={this.state.boardStyle}
       />
     }
 
@@ -676,7 +650,7 @@ class Game extends React.Component<GameProps, GameState> {
       {(this.state.onMobile) ? (this.state.notFlipped) ? players.black : players.white : null}
       <div
         id='board-wrapper'
-        className={'board-wrapper ' + this.state.boardStyle + ' ' + this.state.piecesStyle}
+        className={'board-wrapper ' + this.state.piecesStyle}
         style={{
           width: 8 * this.state.boxSize,
           height: 8 * this.state.boxSize
@@ -689,14 +663,9 @@ class Game extends React.Component<GameProps, GameState> {
       {(!this.state.onMobile) ? <p>{this.viewingBoard().getFen()}</p> : null}
     </div>
 
-    const boardStyleSelector = ['normal', 'green', 'dark-green']
     const piecesStyleSelector = ['normal', 'medieval', 'ewan', 'sus']
-
-    const boardSelector = boardStyleSelector.map((item) => {
-      return <button key={item} className='board-style-btn' onClick={() => { this.setState({ boardStyle: item }); setCookie('boardStyle', item, 100) }}>{item}</button>
-    })
     const pieceSelector = piecesStyleSelector.map((item) => {
-      return <div key={item} className={'piece-style-btn ' + item} onClick={() => { this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100) }}>
+      return <div key={item} className={'piece-style-btn ' + item + ((this.state.piecesStyle === item) ? ' current' : '')} onClick={() => { this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100) }}>
         <div className={'display-piece n l'} />
       </div>
     })
@@ -713,8 +682,12 @@ class Game extends React.Component<GameProps, GameState> {
         </div>
         <br /><hr /><br />
         <div>
-          <h3>Chess Style Selector</h3>
-          {boardSelector}
+          <h3>Board Colour Selector</h3>
+          <label htmlFor="white-tile-color">White Tile Colour:</label>
+          <input type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100); this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } }) }} />
+          <br />
+          <label htmlFor="black-tile-color">Black Tile Colour:</label>
+          <input type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100); this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } }) }} />
           <h3>Piece Style Selector</h3>
           {pieceSelector}
         </div>
@@ -726,7 +699,7 @@ class Game extends React.Component<GameProps, GameState> {
           <button onClick={() => this.flipBoard()}>Flip Board</button>
           {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); setCookie('loadNNUE', 'true', 100) }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); deleteCookie('loadNNUE') }}>Stop Loading NNUE</button>}
           {(!this.props.pgn && !this.props.multiplayerWs) ? <button onClick={() => {
-            if (this.engine) 
+            if (this.engine)
               this.engine.reset()
             this.setState({
               game: new ChessGame({ fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
@@ -737,33 +710,15 @@ class Game extends React.Component<GameProps, GameState> {
       </div>
     </div>
 
-    let previousMovesList = <div id="previous-moves-wrapper">
-      <div className='col-down'>
-        {(!this.state.onMobile) ? (this.state.notFlipped) ? players.black : players.white : null}
-        <div className='scollable'>
-          {(!this.state.onMobile) ? engineInfo : null}
-          <table id="previous-moves">
-            <thead>
-              <tr>
-                <th scope="col"></th>
-                <th scope="col">White</th>
-                <th scope="col">Black</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope='row'><p>0</p></th>
-                <td colSpan={2} onClick={() => this.goToMove(0)} className={(this.state.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
-              </tr>
-              {moveRows}
-              {gameOverDisplay[0]}
-              {gameOverDisplay[1]}
-            </tbody>
-          </table>
-        </div>
-        {(!this.state.onMobile) ? (!this.state.notFlipped) ? players.black : players.white : null}
-      </div>
-    </div>
+    let previousMovesList = <PreviousMoves
+      onMobile={this.state.onMobile}
+      notFlipped={this.state.notFlipped}
+      players={players}
+      engineInfo={engineInfo}
+      goToMove={(i: number) => this.goToMove(i)}
+      game={this.state.game}
+      viewingMove={this.state.viewingMove}
+    />
 
     return (
       <div className="game">

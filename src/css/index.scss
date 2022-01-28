@@ -7,8 +7,12 @@ table {
     flex-direction: row;
     margin: 0;
     min-width: 100vw;
+    font-weight: normal;
     .game-controls-info {
         flex-basis: 100%;
+    }
+    hr {
+        margin-top: 10px;
     }
 }
 
@@ -31,6 +35,9 @@ table {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    br {
+        margin-top: 10px;
+    }
 }
 
 #stockfish-slider {
@@ -41,18 +48,63 @@ table {
     display: flex;
     flex-direction: column;
     width: 100%;
+    &.moves {
+        height: 100%;
+    }
 }
 
-.piece-style-btn {
-    // margin: ;
-    // height: 100px;
+div.piece-style-btn {
     display: inline-block;
+    &.current div.display-piece {
+        filter: brightness(0.5);
+        &:hover {
+            background-color: var(--grey);
+            transform: scale(1);
+        }
+    }
+    div.display-piece {
+        width: 70px;
+        height: 70px;
+        -o-background-size: cover;
+        -moz-background-size: cover;
+        -webkit-background-size: cover;
+        background-size: cover;
+        background-color: var(--grey);
+        margin: 3px;
+        border-radius: 20px;
+        transition: all 300ms;
+        &:hover {
+            background-color: grey;
+            transform: scale(1.5);
+        }
+    }
+    z-index: 1;
+    &:hover {
+        z-index: 5;
+    }
+}
+
+.white-square {
+    fill: white;
+}
+
+.black-square {
+    fill: grey;
 }
 
 #board-and-info {
+    #main-board {}
     p {
+        font-weight: normal;
         margin-top: 5px;
         width: 100%;
+        &.opening {
+            .eco {
+                margin-right: 7px;
+                color: grey;
+            }
+            overflow: hidden;
+        }
     }
 }
 
@@ -62,55 +114,62 @@ table {
 }
 
 #previous-moves-wrapper {
-    margin: 20px;
+    max-height: 87vh;
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     flex-basis: 100%;
-    .scollable {
-        // margin: 10px;
-        max-height: 50vh;
-        overflow-y: auto;
-        width: 100%;
-        // overflow-x: hidden;
-    }
-}
-
-#previous-moves {
-    width: 90%;
-    thead tr th {
-        color: white !important;
-        text-align: center;
-    }
-    margin: 5px;
-    th,
-    tr,
-    td {
-        padding: 5px;
-        border-style: solid;
-        border-color: rgba(255, 255, 255, 0);
-    }
-    th {
-        color: grey;
-    }
-    .game-over {
-        td {
-            background-color: green;
-            color: white;
+    &.mobile {
+        .scollable {
+            max-height: 50vh;
         }
     }
-    tr.game-over td {
-        border-radius: 5px;
-    }
-    p {
-        width: 100%;
+    .scollable {
         height: 100%;
-        margin: 0;
-        text-align: center;
+        overflow-y: auto;
+        width: 100%;
     }
-    .current-move {
+    .game-over {
+        background-color: green;
+        color: white;
+        padding: 5px;
         border-radius: 5px;
-        border-color: red;
-        border-style: solid;
+        margin: 5px;
+        font-weight: bolder;
+    }
+    #previous-moves {
+        width: 90%;
+        thead tr th {
+            color: white !important;
+            text-align: center;
+        }
+        margin: 5px;
+        th,
+        tr,
+        td {
+            padding: 5px;
+            border-style: solid;
+            border-color: rgba(255, 255, 255, 0);
+        }
+        th {
+            color: grey;
+        }
+        tr.game-over td {
+            border-radius: 5px;
+        }
+        p {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            text-align: center;
+        }
+        .current-move {
+            border-radius: 5px;
+            border-color: red;
+            border-style: solid;
+        }
     }
 }
 
@@ -137,15 +196,6 @@ table {
     padding: 13px;
     border-radius: 20px;
     margin: 10px;
-}
-
-.opening {
-    .eco {
-        margin-right: 7px;
-        color: grey;
-    }
-    overflow: hidden;
-    margin: 0;
 }
 
 .player-info {

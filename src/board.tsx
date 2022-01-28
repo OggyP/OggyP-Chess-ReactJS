@@ -39,6 +39,10 @@ interface BoardProps {
   premoves?: { start: Vector, end: Vector }[]
   deletePremoves?: Function
   onMounted?: Function
+  boardStyle: {
+    white: string,
+    black: string,
+  }
 }
 interface BoardState {
   pieceBeingDragged: Vector | null
@@ -335,6 +339,27 @@ class Board extends React.Component<BoardProps, BoardState> {
 
     return (
       <div id='main-board' className='chess-board'>
+        <div id='board-svg'>
+          {/* <xml version="1.0" encoding="UTF-8" standalone="no" /> */}
+          <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 8 8" shape-rendering="crispEdges">
+            <g id="a">
+              <g id="b">
+                <g id="c">
+                  <g id="d">
+                    <rect width="1" height="1" fill={this.props.boardStyle.white} id="e" />
+                    <use x="1" y="1" href="#e" xlinkHref="#e" />
+                    <rect y="1" width="1" height="1" fill={this.props.boardStyle.black} id="f" />
+                    <use x="1" y="-1" href="#f" xlinkHref="#f" />
+                  </g>
+                  <use x="2" href="#d" xlinkHref="#d" />
+                </g>
+                <use x="4" href="#c" xlinkHref="#c" />
+              </g>
+              <use y="2" href="#b" xlinkHref="#b" />
+            </g>
+            <use y="4" href="#a" xlinkHref="#a" />
+          </svg>
+        </div>
         <div id='legal-moves-layer'>
           {legalMovesToDisplay}
           {inCheckPos}

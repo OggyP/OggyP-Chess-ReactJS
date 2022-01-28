@@ -1,15 +1,18 @@
 .board-wrapper {
     width: 100px;
     height: 100px;
-    &.normal .chess-board {
-        background-image: url('../svg/board/brownBoard.svg');
-    }
-    &.green .chess-board {
-        background-image: url('../svg/board/greenBoard.svg');
-    }
-    &.dark-green .chess-board {
-        background-image: url('../svg/board/AbrenicaBoard.svg');
-    }
+    // &.normal .chess-board {
+    //     background-image: url('../svg/board/brownBoard.svg');
+    // }
+    // &.green .chess-board {
+    //     background-image: url('../svg/board/greenBoard.svg');
+    // }
+    // &.dark-green .chess-board {
+    //     background-image: url('../svg/board/AbrenicaBoard.svg');
+    // }
+    // &.test .chess-board {
+    //     background-image: url('../svg/board/testBoard.svg');
+    // }
 }
 
 #main-board {
@@ -21,7 +24,8 @@
 }
 
 #best-move,
-#legal-moves-layer {
+#legal-moves-layer,
+#board-svg {
     position: absolute;
     width: inherit;
     height: inherit;
@@ -87,18 +91,6 @@
     }
 }
 
-.display-piece {
-    width: 70px;
-    height: 70px;
-    -o-background-size: cover;
-    -moz-background-size: cover;
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-color: var(--grey);
-    margin: 3px;
-    border-radius: 20px;
-}
-
 .square {
     pointer-events: none;
     width: 12.5%;
@@ -138,10 +130,10 @@
     .square {
         background-color: purple;
         &.from {
-            opacity: 0.6;
+            opacity: 0.8;
         }
         &.to {
-            opacity: 0.3;
+            opacity: 0.6;
         }
     }
 }
