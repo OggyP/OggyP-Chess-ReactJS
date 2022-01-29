@@ -91,7 +91,7 @@ function PreviousMoves(props: PreviousMovesProps) {
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr className='first-row'>
               <th scope='row'><p>0</p></th>
               <td colSpan={2} onClick={() => props.goToMove(0)} className={(props.viewingMove === 0) ? 'current-move' : ''}><p>Starting Position</p></td>
             </tr>

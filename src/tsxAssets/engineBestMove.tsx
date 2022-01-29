@@ -2,6 +2,7 @@ import Square from './square'
 import React, { useState } from 'react'
 import { Vector } from '../chessLogic/types';
 import { convertToPosition } from '../chessLogic/functions';
+import { Arrow } from './custom-svgs';
 
 function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
   const [bestMove, setBestMove] = useState<{
@@ -51,20 +52,12 @@ function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
   }, [bestMove]);
 
   if (bestMove) {
-    return <div id="best-move">
-      <Square
-        classes={['from']}
-        boxSize={props.boxSize}
-        pos={bestMove.startingPos}
-        notFlipped={props.notFlipped}
-      />
-      <Square
-        classes={['to']}
-        boxSize={props.boxSize}
-        pos={bestMove.endingPos}
-        notFlipped={props.notFlipped}
-      />
-    </div>
+    return <Arrow
+      start={bestMove.startingPos}
+      end={bestMove.endingPos}
+      colour='blue'
+      notFlipped={props.notFlipped}
+    />
   }
   return null
 }

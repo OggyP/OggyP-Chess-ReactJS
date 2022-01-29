@@ -8,7 +8,7 @@ import { Arrow, Circle } from './tsxAssets/custom-svgs'
 import { ChessBoard, ChessPiece, convertToChessNotation, Teams, Vector } from './chessLogic'
 import React from 'react';
 import EngineBestMove from './tsxAssets/engineBestMove'
-import { timeStamp } from 'console'
+import { VecSame } from './chessLogic/functions'
 
 interface piecesArray {
   piece: ChessPiece
@@ -82,7 +82,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     if (this.props.onMounted) {
       this.props.onMounted({
         getDraggingPiece: () => { return this.state.pieceBeingDragged },
-        clearCustomSVGS: () => {this.clearCustomSVGS()}
+        clearCustomSVGS: () => { this.clearCustomSVGS() }
       });
     }
     console.log('setup')
@@ -207,12 +207,31 @@ class Board extends React.Component<BoardProps, BoardState> {
       this.posReleased(posSelected)
     } else if (this.state.arrowDrag) {
       const currentCustomSVGS = this.state.customSVG
-      if (this.state.arrowDrag.start.x !== this.state.arrowDrag.end.x || this.state.arrowDrag.start.y !== this.state.arrowDrag.end.y)
+      let foundDuplicate = false
+      if (!VecSame(this.state.arrowDrag.start, this.state.arrowDrag.end)) {
         // arrow
-        currentCustomSVGS.arrows.push([this.state.arrowDrag.start, this.state.arrowDrag.end])
-      else
+        for (let i = 0; i < currentCustomSVGS.arrows.length; i++) {
+          const checkArrow = currentCustomSVGS.arrows[i]
+          if (VecSame(checkArrow[0], this.state.arrowDrag.start) && VecSame(checkArrow[1], this.state.arrowDrag.end)) {
+            currentCustomSVGS.arrows.splice(i, 1)
+            foundDuplicate = true
+          }
+        }
+        if (!foundDuplicate)
+          currentCustomSVGS.arrows.push([this.state.arrowDrag.start, this.state.arrowDrag.end])
+      }
+      else {
         // circle
-        currentCustomSVGS.circles.push(this.state.arrowDrag.start)
+        for (let i = 0; i < currentCustomSVGS.circles.length; i++) {
+          const checkCircle = currentCustomSVGS.circles[i]
+          if (VecSame(checkCircle, this.state.arrowDrag.start)) {
+            currentCustomSVGS.circles.splice(i, 1)
+            foundDuplicate = true
+          }
+        }
+        if (!foundDuplicate)
+          currentCustomSVGS.circles.push(this.state.arrowDrag.start)
+      }
       this.setState({
         arrowDrag: null,
         customSVG: currentCustomSVGS
@@ -416,11 +435,11 @@ class Board extends React.Component<BoardProps, BoardState> {
     }
 
     const svgArrows = this.state.customSVG.arrows.map((item, index) => {
-      return <Arrow key={index} start={item[0]} end={item[1]} notFlipped={this.props.notFlipped} />
+      return <Arrow key={index} colour="green" start={item[0]} end={item[1]} notFlipped={this.props.notFlipped} />
     })
 
     const svgCircle = this.state.customSVG.circles.map((item, index) => {
-      return <Circle key={index} pos={item} notFlipped={this.props.notFlipped} />
+      return <Circle key={index} colour="green" pos={item} notFlipped={this.props.notFlipped} />
     })
 
     return (
@@ -459,30 +478,32 @@ class Board extends React.Component<BoardProps, BoardState> {
         </div>
         <svg id='custom-svg' viewBox='0 0 8 8'>
           <defs>
-            <marker id="arrowhead-pb" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
+            <marker id="arrowhead-b" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
               <path d="M0,0 V4 L3,2 Z" fill="#003088"></path>
             </marker>
             <marker id="arrowhead-g" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
               <path d="M0,0 V4 L3,2 Z" fill="#15781B"></path>
+            </marker>
+            <marker id="arrowhead-a" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
+              <path d="M0,0 V4 L3,2 Z" fill="#199e26"></path>
             </marker>
           </defs>
           <g>
             {
               (this.state.arrowDrag) ?
                 (this.state.arrowDrag.start.x !== this.state.arrowDrag.end.x || this.state.arrowDrag.start.y !== this.state.arrowDrag.end.y) ?
-                  <Arrow start={this.state.arrowDrag.start} end={this.state.arrowDrag.end} notFlipped={this.props.notFlipped} /> :
-                  <Circle pos={this.state.arrowDrag.start} notFlipped={this.props.notFlipped} />
+                  <Arrow colour="green-drag" start={this.state.arrowDrag.start} end={this.state.arrowDrag.end} notFlipped={this.props.notFlipped} /> :
+                  <Circle colour="green-drag" pos={this.state.arrowDrag.start} notFlipped={this.props.notFlipped} />
                 : null
             }
+            {(this.props.haveEngine) ? <EngineBestMove
+              notFlipped={this.props.notFlipped}
+              boxSize={this.props.boxSize}
+            /> : null}
             {svgArrows}
             {svgCircle}
           </g>
         </svg>
-
-        {(this.props.haveEngine) ? <EngineBestMove
-          notFlipped={this.props.notFlipped}
-          boxSize={this.props.boxSize}
-        /> : null}
         <Coords
           notFlipped={this.props.notFlipped}
         />

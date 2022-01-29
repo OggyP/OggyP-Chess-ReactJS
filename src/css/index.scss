@@ -115,6 +115,11 @@ div.piece-style-btn {
     font-size: large;
 }
 
+@font-face {
+    font-family: ChessFont;
+    src: url(../resources/lichess.chess.woff2);
+}
+
 #previous-moves-wrapper {
     max-height: 87vh;
     margin-left: 10px;
@@ -142,16 +147,29 @@ div.piece-style-btn {
         font-weight: bolder;
     }
     #previous-moves {
+        font-family: 'ChessFont', 'Noto Sans JP', sans-serif;
+        font-size: large;
         width: 90%;
-        thead tr th {
-            color: white !important;
-            text-align: center;
+        thead {
+            font-family: var(--font-1);
+            tr th {
+                color: white !important;
+                text-align: center;
+            }
+        }
+        tbody {
+            tr.first-row {
+                font-family: var(--font-1);
+            }
+            th {
+                font-family: var(--font-1);
+            }
         }
         margin: 5px;
         th,
         tr,
         td {
-            padding: 5px;
+            padding: 0;
             border-style: solid;
             border-color: rgba(255, 255, 255, 0);
         }

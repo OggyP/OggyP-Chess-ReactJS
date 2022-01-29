@@ -122,5 +122,8 @@ function convertToPosition(notation: string, coord?: 'x' | 'y'): Vector | number
       return 8 - Number(notation)
 }
 
+function VecSame(v1: Vector, v2: Vector) {
+  return (v1.x === v2.x && v1.y == v2.y)
+}
 
-export { getRayCastVectors, getVectors, legal, addVectorsAndCheckPos, convertToChessNotation, convertToPosition }
+export { getRayCastVectors, getVectors, legal, addVectorsAndCheckPos, convertToChessNotation, convertToPosition, VecSame }

@@ -775,7 +775,7 @@ class Game extends React.Component<GameProps, GameState> {
           <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
           <button onClick={() => this.flipBoard()}>Flip Board</button>
           {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); setCookie('loadNNUE', 'true', 100) }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); deleteCookie('loadNNUE') }}>Stop Loading NNUE</button>}
-          {(!this.props.pgn && !this.props.multiplayerWs) ? <button onClick={() => {
+          {(!this.props.multiplayerWs && this.state.game.getMoveCount() > 0) ? <button onClick={() => {
             if (this.engine)
               this.engine.reset()
             this.setState({

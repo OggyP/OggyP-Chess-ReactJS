@@ -16,8 +16,17 @@ function StockfishGame() {
       versusStockfish={{
         skill: difficulty,
         fastGame: fastGame
-      }
-      }
+      }}
+      players={{
+        white: {
+          username: 'You',
+          rating: 0
+        },
+        black: {
+          username: 'Stockfish Level ' + difficulty,
+          rating: 0
+        }
+      }}
     />
   return <div className='full-screen-menu'>
     <h2>Choose Stockfish Difficulty</h2>
