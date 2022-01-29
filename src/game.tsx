@@ -211,7 +211,7 @@ class Game extends React.Component<GameProps, GameState> {
 
   boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
     if (this.engine)
-      if (!this.props.versusStockfish || goingToNewMove)
+      if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver)
         this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
     if (this.state.game.getMoveCount() !== moveNum && !firstMove)
       this.setState({
@@ -338,7 +338,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     // Pre Moves
-    if (this.state.premoves.length > 0 && !this.state.game.gameOver) {
+    if (this.state.premoves.length > 0) {
       const premove = this.state.premoves.shift()
       console.log(premove)
       let premoveError = false
@@ -623,8 +623,8 @@ class Game extends React.Component<GameProps, GameState> {
     let engineInfo = null
     if (this.engine)
       engineInfo = <EngineInfo
-        showMoves={(!this.props.versusStockfish)}
-        showEval={(!this.props.versusStockfish)}
+        showMoves={(!this.props.versusStockfish || !!this.state.game.gameOver)}
+        showEval={(!this.props.versusStockfish || !!this.state.game.gameOver)}
       />
 
     let players: {
@@ -669,7 +669,7 @@ class Game extends React.Component<GameProps, GameState> {
         moveInfo={this.state.game.getMove(this.state.viewingMove).move}
         showingPromotionSelector={!!this.state.promotionSelector}
         boxSize={this.state.boxSize}
-        haveEngine={!!this.engine && !this.props.versusStockfish}
+        haveEngine={!!this.engine && (!this.props.versusStockfish || !!this.state.game.gameOver)}
         doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
         isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
         onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
