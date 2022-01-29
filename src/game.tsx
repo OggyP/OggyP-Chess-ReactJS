@@ -86,6 +86,7 @@ interface GameProps {
 class Game extends React.Component<GameProps, GameState> {
   engine: UCIengine | null = null
   getDraggingPiece: Function | undefined
+  clearCustomSVGS: Function | undefined
   engineMoveType = 'movetime 10000'
 
   constructor(props: GameProps) {
@@ -193,6 +194,7 @@ class Game extends React.Component<GameProps, GameState> {
 
   gameBoardMounted(callbacks: any) {
     this.getDraggingPiece = callbacks.getDraggingPiece
+    this.clearCustomSVGS = callbacks.clearCustomSVGS
   }
 
   flipBoard(): void {
@@ -216,6 +218,8 @@ class Game extends React.Component<GameProps, GameState> {
         premoves: [],
         premoveBoard: null
       })
+    if (this.clearCustomSVGS)
+      this.clearCustomSVGS()
   }
 
   customGameOver(winner: Teams | 'draw', by: string, extraInfo?: string) {

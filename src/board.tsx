@@ -4,9 +4,11 @@ import TouchDraggedPiece from './tsxAssets/touchDraggingPiece'
 import Square from './tsxAssets/square'
 import ValidMove from './tsxAssets/validMove'
 import Coords from './tsxAssets/coords'
-import { ChessBoard, ChessPiece, Teams, Vector } from './chessLogic'
+import { Arrow, Circle } from './tsxAssets/custom-svgs'
+import { ChessBoard, ChessPiece, convertToChessNotation, Teams, Vector } from './chessLogic'
 import React from 'react';
 import EngineBestMove from './tsxAssets/engineBestMove'
+import { timeStamp } from 'console'
 
 interface piecesArray {
   piece: ChessPiece
@@ -48,6 +50,14 @@ interface BoardState {
   pieceBeingDragged: Vector | null
   beingDraggedPieceKey: number | null
   dragType: 'mouse' | 'touch' | null
+  arrowDrag: {
+    start: Vector
+    end: Vector
+  } | null
+  customSVG: {
+    arrows: [Vector, Vector][]
+    circles: Vector[]
+  }
 }
 class Board extends React.Component<BoardProps, BoardState> {
   mousePos: Vector;
@@ -58,6 +68,11 @@ class Board extends React.Component<BoardProps, BoardState> {
       pieceBeingDragged: null,
       beingDraggedPieceKey: null,
       dragType: null,
+      arrowDrag: null,
+      customSVG: {
+        arrows: [],
+        circles: []
+      }
     }
     this.mousePos = { "x": 0, "y": 0 }
     this.posSelected = { "x": 0, "y": 0 }
@@ -67,6 +82,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     if (this.props.onMounted) {
       this.props.onMounted({
         getDraggingPiece: () => { return this.state.pieceBeingDragged },
+        clearCustomSVGS: () => {this.clearCustomSVGS()}
       });
     }
     console.log('setup')
@@ -126,9 +142,33 @@ class Board extends React.Component<BoardProps, BoardState> {
       posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
     if (posSelected.x >= 0 && posSelected.x < 8 && posSelected.y >= 0 && posSelected.y < 8) {
       console.log(posSelected)
-      if (event.button === 0)
+      if (event.button === 0) {
         this.posClicked(posSelected, 'mouse')
+        this.clearCustomSVGS()
+      }
+      else if (event.button === 2) {
+        if (this.props.deletePremoves && this.props.premoves && this.props.premoves.length > 0)
+          this.props.deletePremoves()
+        else {
+          this.setState({
+            arrowDrag: {
+              start: posSelected,
+              end: posSelected
+            }
+          })
+        }
+      }
     }
+  }
+
+  clearCustomSVGS() {
+    if (this.state.customSVG.circles.length > 0 || this.state.customSVG.arrows.length > 0)
+      this.setState({
+        customSVG: {
+          arrows: [],
+          circles: []
+        }
+      })
   }
 
   posClicked(posSelected: Vector, dragType: 'mouse' | 'touch'): void {
@@ -165,6 +205,18 @@ class Board extends React.Component<BoardProps, BoardState> {
         posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
 
       this.posReleased(posSelected)
+    } else if (this.state.arrowDrag) {
+      const currentCustomSVGS = this.state.customSVG
+      if (this.state.arrowDrag.start.x !== this.state.arrowDrag.end.x || this.state.arrowDrag.start.y !== this.state.arrowDrag.end.y)
+        // arrow
+        currentCustomSVGS.arrows.push([this.state.arrowDrag.start, this.state.arrowDrag.end])
+      else
+        // circle
+        currentCustomSVGS.circles.push(this.state.arrowDrag.start)
+      this.setState({
+        arrowDrag: null,
+        customSVG: currentCustomSVGS
+      })
     }
   }
 
@@ -221,6 +273,21 @@ class Board extends React.Component<BoardProps, BoardState> {
     if (mainBoard) {
       const bounds = mainBoard.getBoundingClientRect();
       this.mousePos = { "x": event.clientX - bounds.left, "y": event.clientY - bounds.top }
+      if (this.state.arrowDrag) {
+        let posSelected: Vector;
+        if (this.props.notFlipped)
+          posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
+        else
+          posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
+        if (posSelected.x !== this.state.arrowDrag.end.x || posSelected.y !== this.state.arrowDrag.end.y) {
+          this.setState({
+            arrowDrag: {
+              start: this.state.arrowDrag.start,
+              end: posSelected
+            }
+          })
+        }
+      }
     }
   }
 
@@ -348,6 +415,14 @@ class Board extends React.Component<BoardProps, BoardState> {
       })
     }
 
+    const svgArrows = this.state.customSVG.arrows.map((item, index) => {
+      return <Arrow key={index} start={item[0]} end={item[1]} notFlipped={this.props.notFlipped} />
+    })
+
+    const svgCircle = this.state.customSVG.circles.map((item, index) => {
+      return <Circle key={index} pos={item} notFlipped={this.props.notFlipped} />
+    })
+
     return (
       <div id='main-board' className='chess-board'>
         <div id='board-svg'>
@@ -382,6 +457,27 @@ class Board extends React.Component<BoardProps, BoardState> {
           {piecesToDisplay}
           {ghostPiece}
         </div>
+        <svg id='custom-svg' viewBox='0 0 8 8'>
+          <defs>
+            <marker id="arrowhead-pb" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
+              <path d="M0,0 V4 L3,2 Z" fill="#003088"></path>
+            </marker>
+            <marker id="arrowhead-g" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
+              <path d="M0,0 V4 L3,2 Z" fill="#15781B"></path>
+            </marker>
+          </defs>
+          <g>
+            {
+              (this.state.arrowDrag) ?
+                (this.state.arrowDrag.start.x !== this.state.arrowDrag.end.x || this.state.arrowDrag.start.y !== this.state.arrowDrag.end.y) ?
+                  <Arrow start={this.state.arrowDrag.start} end={this.state.arrowDrag.end} notFlipped={this.props.notFlipped} /> :
+                  <Circle pos={this.state.arrowDrag.start} notFlipped={this.props.notFlipped} />
+                : null
+            }
+            {svgArrows}
+            {svgCircle}
+          </g>
+        </svg>
 
         {(this.props.haveEngine) ? <EngineBestMove
           notFlipped={this.props.notFlipped}

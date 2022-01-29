@@ -33,6 +33,11 @@
     pointer-events: none;
 }
 
+#custom-svg {
+    @extend #board-svg;
+    z-index: 5;
+}
+
 #pieces-layer {
     @extend #legal-moves-layer;
     z-index: 2;
@@ -63,7 +68,7 @@
     height: 12.5%;
     margin: auto;
     position: absolute;
-    z-index: 5;
+    z-index: 6;
     opacity: 0%;
     transform: scale(2);
     opacity: 100%;
