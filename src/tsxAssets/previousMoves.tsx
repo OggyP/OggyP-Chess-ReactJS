@@ -77,6 +77,7 @@ function PreviousMoves(props: PreviousMovesProps) {
 
   return <div id="previous-moves-wrapper" className={(props.onMobile) ? 'mobile' : ''}>
     <div className='col-down moves'>
+      {(props.onMobile) ? gameOverDisplay : null}
       {(props.onMobile) ? gameControls : null}
       {(!props.onMobile) ? (props.notFlipped) ? props.players.black : props.players.white : null}
       <div className='scollable'>
@@ -98,7 +99,7 @@ function PreviousMoves(props: PreviousMovesProps) {
           </tbody>
         </table>
       </div>
-      {gameOverDisplay}
+      {(!props.onMobile) ? gameOverDisplay : null}
       {(!props.onMobile) ? (!props.notFlipped) ? <div style={{ verticalAlign: "bottom" }}>{props.players.black}</div> : props.players.white : null}
       {(!props.onMobile) ? gameControls : null}
     </div>

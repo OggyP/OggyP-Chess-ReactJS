@@ -1,6 +1,7 @@
 .board-wrapper {
     width: 100px;
     height: 100px;
+    touch-action: none;
     // &.normal .chess-board {
     //     background-image: url('../svg/board/brownBoard.svg');
     // }

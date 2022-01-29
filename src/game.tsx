@@ -754,10 +754,12 @@ class Game extends React.Component<GameProps, GameState> {
           }>Chess.com Colours</button>
           <br />
           <br />
-          <label className='button-type' htmlFor="white-tile-color">Custom White Tile Colour</label>
-          <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100); this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } }) }} />
-          <label className='button-type' htmlFor="black-tile-color">Custom Black Tile Colour</label>
-          <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100); this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } }) }} />
+          {(!this.state.onMobile) ? <div>
+            <label className='button-type' htmlFor="white-tile-color">Custom White Tile Colour</label>
+            <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100); this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } }) }} />
+            <label className='button-type' htmlFor="black-tile-color">Custom Black Tile Colour</label>
+            <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100); this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } }) }} />
+          </div> : null}
           <h3>Piece Style Selector</h3>
           {pieceSelector}
         </div>
