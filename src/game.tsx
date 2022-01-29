@@ -9,6 +9,7 @@ import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 import { addVectorsAndCheckPos } from './chessLogic/functions';
+import { MovesAndBoard } from './chessLogic/types'
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -29,11 +30,7 @@ interface PlayerInfo {
 interface GameState {
   game: ChessGame
   viewingMove: number
-  validMoves: {
-    "move": Vector,
-    "board": ChessBoard,
-    "moveType": string[]
-  }[]
+  validMoves: MovesAndBoard[]
   selectedPiece: Vector | null
   notFlipped: boolean
   boxSize: number
@@ -424,6 +421,7 @@ class Game extends React.Component<GameProps, GameState> {
     if (!this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount()) {
       let newBoard: ChessBoard | null = null
       let moveType: string[] | null = null
+      let displayPos: Vector | null = null
 
       if (!this.state.selectedPiece) throw new Error("selected piece is undefined");
 
@@ -437,8 +435,11 @@ class Game extends React.Component<GameProps, GameState> {
         if (checkMove.move.x === posClicked.x && checkMove.move.y === posClicked.y) {
           newBoard = checkMove.board
           moveType = checkMove.moveType
+          displayPos = (checkMove.displayVector) ? checkMove.displayVector : posClicked
         }
       }
+
+      if (!displayPos) throw new Error("Display pos is null");
 
       newBoard = newBoard as ChessBoard
 
@@ -453,7 +454,7 @@ class Game extends React.Component<GameProps, GameState> {
               board: newBoard,
               pos: {
                 start: selectedPiecePos,
-                end: posClicked,
+                end: displayPos,
               }
             }
           })
@@ -468,17 +469,17 @@ class Game extends React.Component<GameProps, GameState> {
       })
       if (isPromotion) return
       const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-      const shortNotation = ChessBoard.getShortNotation(selectedPiecePos, posClicked, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
+      const shortNotation = ChessBoard.getShortNotation(selectedPiecePos, displayPos, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
       this.state.game.newMove({
         board: newBoard,
         text: shortNotation,
         move: {
           start: selectedPiecePos,
-          end: posClicked,
+          end: displayPos,
           type: moveType as string[],
           notation: {
             short: shortNotation,
-            long: convertToChessNotation(selectedPiecePos) + convertToChessNotation(posClicked)
+            long: convertToChessNotation(selectedPiecePos) + convertToChessNotation(displayPos)
           }
         }
       })
@@ -493,7 +494,7 @@ class Game extends React.Component<GameProps, GameState> {
       if (!this.props.multiplayerWs) return
       sendToWs(this.props.multiplayerWs, 'move', {
         startingPos: [selectedPiecePos.x, selectedPiecePos.y],
-        endingPos: [posClicked.x, posClicked.y],
+        endingPos: [displayPos.x, displayPos.y],
       })
     } else console.warn("Error - Wrong turn / not latest game")
   }

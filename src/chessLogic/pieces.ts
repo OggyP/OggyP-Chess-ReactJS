@@ -257,15 +257,16 @@ class King extends ChessPiece {
                 newBoard.castleInfo[this.team].kingSide = false
                 newBoard.castleInfo[this.team].queenSide = false
                 moves.push({
-                  "move": vectorToDisplay,
-                  "board": newBoard,
-                  "moveType": ["castleKingSide"]
+                  move: vectorToDisplay,
+                  board: newBoard,
+                  moveType: ["castleKingSide"]
                 })
                 const castleCaptureBoard = new Board(newBoard)
                 moves.push({
-                  "move": { "x": 7, "y": pos.y },
-                  "board": castleCaptureBoard,
-                  "moveType": ["castleKingSide", 'capture']
+                  move: { "x": 7, "y": pos.y },
+                  board: castleCaptureBoard,
+                  moveType: ["castleKingSide", 'capture'],
+                  displayVector: vectorToDisplay
                 })
               }
             }
@@ -290,15 +291,16 @@ class King extends ChessPiece {
                 newBoard.castleInfo[this.team].kingSide = false
                 newBoard.castleInfo[this.team].queenSide = false
                 moves.push({
-                  "move": vectorToDisplay,
-                  "board": newBoard,
-                  "moveType": ["castleQueenSide"]
+                  move: vectorToDisplay,
+                  board: newBoard,
+                  moveType: ["castleQueenSide"]
                 })
                 const castleCaptureBoard = new Board(newBoard)
                 moves.push({
-                  "move": { "x": 0, "y": pos.y },
-                  "board": castleCaptureBoard,
-                  "moveType": ["castleKingSide", 'capture']
+                  move: { "x": 0, "y": pos.y },
+                  board: castleCaptureBoard,
+                  moveType: ["castleKingSide", 'capture'],
+                  displayVector: vectorToDisplay
                 })
               }
             }

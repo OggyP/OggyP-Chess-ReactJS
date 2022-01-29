@@ -11,9 +11,10 @@ interface Vector {
 }
 
 interface MovesAndBoard {
-    "move": Vector,
-    "board": ChessBoard,
-    "moveType": string[]
+    move: Vector,
+    board: ChessBoard,
+    moveType: string[],
+    displayVector?: Vector
 }
 
 interface VectorsAndPieces {
