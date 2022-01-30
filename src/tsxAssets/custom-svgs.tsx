@@ -9,6 +9,8 @@ interface ArrowProps {
   end: Vector
   notFlipped: boolean
   colour: 'green' | 'blue' | 'green-drag'
+  strokeWidth?: number
+  opacity?: number
 }
 
 const colourToHex = {
@@ -19,7 +21,13 @@ const colourToHex = {
 
 function Arrow(props: ArrowProps) {
   return (
-    <line stroke={colourToHex[props.colour]} strokeWidth={(props.colour === 'green-drag') ? 0.13 : 0.15625} strokeLinecap="round" markerEnd={(props.colour === 'green') ? 'url(#arrowhead-g)' : 'url(#arrowhead-' + props.colour[0] + ')'} opacity="0.5"
+    <line
+      stroke={colourToHex[props.colour]}
+      strokeWidth={(!props.strokeWidth) ? 0.15625 : props.strokeWidth}
+      strokeLinecap="round"
+      markerEnd={(props.colour === 'green') ? 'url(#arrowhead-g)' : 'url(#arrowhead-' + props.colour[0] + ')'}
+      opacity={(!props.opacity) ? 0.5 : props.opacity}
+
       x1={((props.notFlipped) ? props.start.x : 7 - props.start.x) + 0.5}
       y1={((props.notFlipped) ? props.start.y : 7 - props.start.y) + 0.5}
 
@@ -33,10 +41,11 @@ interface CircleProps {
   pos: Vector
   notFlipped: boolean
   colour: 'green' | 'blue' | 'green-drag'
+  strokeWidth?: number
 }
 function Circle(props: CircleProps) {
   return (
-    <circle stroke={colourToHex[props.colour]} strokeWidth="0.0625" fill="none" opacity="0.5"
+    <circle stroke={colourToHex[props.colour]} strokeWidth={(!props.strokeWidth) ? 0.0625 : props.strokeWidth} fill="none" opacity="0.5"
       r="0.46875"
       cx={((props.notFlipped) ? props.pos.x : 7 - props.pos.x) + 0.5}
       cy={((props.notFlipped) ? props.pos.y : 7 - props.pos.y) + 0.5}

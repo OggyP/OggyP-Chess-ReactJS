@@ -492,17 +492,17 @@ class Board extends React.Component<BoardProps, BoardState> {
             {
               (this.state.arrowDrag) ?
                 (this.state.arrowDrag.start.x !== this.state.arrowDrag.end.x || this.state.arrowDrag.start.y !== this.state.arrowDrag.end.y) ?
-                  <Arrow colour="green-drag" start={this.state.arrowDrag.start} end={this.state.arrowDrag.end} notFlipped={this.props.notFlipped} /> :
-                  <Circle colour="green-drag" pos={this.state.arrowDrag.start} notFlipped={this.props.notFlipped} />
+                  <Arrow colour="green" strokeWidth={0.13} start={this.state.arrowDrag.start} end={this.state.arrowDrag.end} notFlipped={this.props.notFlipped} /> :
+                  <Circle colour="green" strokeWidth={0.035} pos={this.state.arrowDrag.start} notFlipped={this.props.notFlipped} />
                 : null
             }
-            {(this.props.haveEngine) ? <EngineBestMove
-              notFlipped={this.props.notFlipped}
-              boxSize={this.props.boxSize}
-            /> : null}
             {svgArrows}
             {svgCircle}
           </g>
+          {(this.props.haveEngine) ? <EngineBestMove
+            notFlipped={this.props.notFlipped}
+            boxSize={this.props.boxSize}
+          /> : null}
         </svg>
         <Coords
           notFlipped={this.props.notFlipped}

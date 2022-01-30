@@ -1,45 +1,47 @@
-import Square from './square'
 import React, { useState } from 'react'
 import { Vector } from '../chessLogic/types';
-import { convertToPosition } from '../chessLogic/functions';
+import { convertToPosition, VecSame } from '../chessLogic/functions';
 import { Arrow } from './custom-svgs';
 
 function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
-  const [bestMove, setBestMove] = useState<{
+  const [bestMoves, setBestMoves] = useState<({
     startingPos: Vector
     endingPos: Vector
-  } | null>(null);
-
-
+  } | null)[]>([]);
 
   React.useEffect(() => {
     const handleEngineOutput = (event: any) => {
       const info = event.detail
-      if (info.score) {
-        if (info.pv) {
-          const pvMoves = info.pv.split(' ')
-          if (pvMoves.length) {
-            const move = pvMoves[0]
-            setBestMove({
-              startingPos: {
-                'x': convertToPosition(move[0], 'x') as number,
-                'y': convertToPosition(move[1], 'y') as number
-              },
-              endingPos: {
-                'x': convertToPosition(move[2], 'x') as number,
-                'y': convertToPosition(move[3], 'y') as number
+      if (info[0].score) {
+        const bestMoves = info.map((item: any, index: number) => {
+          if (item.pv) {
+            const pvMoves = item.pv.split(' ')
+            if (pvMoves.length) {
+              const move = pvMoves[0]
+              return {
+                startingPos: {
+                  'x': convertToPosition(move[0], 'x') as number,
+                  'y': convertToPosition(move[1], 'y') as number
+                },
+                endingPos: {
+                  'x': convertToPosition(move[2], 'x') as number,
+                  'y': convertToPosition(move[3], 'y') as number
+                }
               }
-            })
+            } else
+              return null
+          } else {
+            return null
           }
-        } else {
-          setBestMove(null)
-        }
-      } else if (info.startingPos.x && (!bestMove ||
-        info.startingPos.x !== bestMove.startingPos.x ||
-        info.startingPos.y !== bestMove.startingPos.y ||
-        info.endingPos.x !== bestMove.endingPos.x ||
-        info.endingPos.y !== bestMove.endingPos.y)) {
-        setBestMove(info)
+        })
+        console.log(bestMoves)
+        setBestMoves(bestMoves)
+      } else if (info.startingPos.x && (!bestMoves[0] ||
+        !VecSame(info.startingPos, bestMoves[0].startingPos) ||
+        !VecSame(info.endingPos, bestMoves[0].endingPos))) {
+        const bestMovesList = bestMoves.slice()
+        bestMovesList[0] = info
+        setBestMoves(bestMovesList)
       }
     };
 
@@ -49,15 +51,29 @@ function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
     return () => {
       document.removeEventListener('engine', handleEngineOutput);
     };
-  }, [bestMove]);
+  }, [bestMoves]);
 
-  if (bestMove) {
-    return <Arrow
-      start={bestMove.startingPos}
-      end={bestMove.endingPos}
-      colour='blue'
-      notFlipped={props.notFlipped}
-    />
+  if (bestMoves.length) {
+    const BestMoveArrows = bestMoves.map((item, index) => {
+      if (!item) return null
+      for (let i = 0; i < index; i++) {
+        const checkEngineMove = bestMoves[i]
+        if (!checkEngineMove) continue
+        if (VecSame(item.startingPos, checkEngineMove.startingPos) && VecSame(item.endingPos, checkEngineMove.endingPos))
+          return null
+      }
+      return <Arrow
+        key={index}
+        strokeWidth={0.18 - (index * 0.03)}
+        opacity={0.5 - (index * 0.15)}
+        colour='blue'
+        notFlipped={props.notFlipped}
+        start={item.startingPos}
+        end={item.endingPos} />
+    })
+    return <g>
+      {BestMoveArrows}
+    </g>
   }
   return null
 }

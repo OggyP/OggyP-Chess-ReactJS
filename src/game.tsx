@@ -116,9 +116,10 @@ class Game extends React.Component<GameProps, GameState> {
             this.engineMoveType = 'move depth ' + depth
         } else
           this.engineMoveType = 'movetime 1000'
-      }
+      } else
+        startingCommands.unshift('setoption name UCI_AnalyseMode value true')
       console.log(this.engineMoveType)
-      this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands)
+      this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands, (props.versusStockfish) ? 1 : 3)
     }
     const windowSize = {
       width: window.innerWidth,
@@ -204,6 +205,7 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   doEngineMove = (event: any) => {
+    if (this.state.game.gameOver) return
     const move = event.detail
     console.log(move)
     this.doMove(move.startingPos, move.endingPos, move.promotion)
@@ -591,11 +593,15 @@ class Game extends React.Component<GameProps, GameState> {
     let promotionSelector
     const promotionSelectorVal = this.state.promotionSelector
 
-    if (!this.engine && this.state.game.gameOver)
+    if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
+      this.engineMoveType = 'movetime 10000'
       this.engine = new UCIengine('/stockfish/stockfish.js', [
+        'setoption name UCI_AnalyseMode value true',
         "isready",
         "ucinewgame"
-      ])
+      ], 3)
+      this.boardMoveChanged(this.state.viewingMove)
+    }
 
     if (promotionSelectorVal) {
       const promotionChoices: PieceCodes[] = ['q', 'n', 'b', 'r']

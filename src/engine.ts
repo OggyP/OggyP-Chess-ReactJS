@@ -8,14 +8,18 @@ class UCIengine {
   private _engine: Worker;
   private _isready: boolean;
   private _analyseFromTeam: Teams = "white";
+  private _infoBuffer: any[] = []
+  multiPV: number;
   loadedNNUE: boolean = getCookie('loadNNUE') === 'true'
   _commandsQueue: string[];
-  constructor(path: string, initConfigCommands: string[] = []) {
+  constructor(path: string, initConfigCommands: string[] = [], multiPV: number = 1) {
+    this.multiPV = multiPV
     this._engine = new Worker(path)
     this._engine.onmessage = (event) => { this.onMessage(event) }
     this._isready = false;
     this._commandsQueue = initConfigCommands
     this._engine.postMessage('uci')
+    this._engine.postMessage('setoption name MultiPV value ' + multiPV)
     if (this.loadedNNUE) {
       this.loadNNUE()
     }
@@ -93,10 +97,6 @@ class UCIengine {
           'y': convertToPosition(move[3], 'y') as number
         }
       }
-      const event = new CustomEvent("engine", {
-        detail: bestMove
-      })
-      document.dispatchEvent(event);
       if (this._isready) {
         if (move.length === 5) {
           bestMove.promotion = move[4] as PieceCodes
@@ -112,15 +112,21 @@ class UCIengine {
       const lineInfo = UCIengine.parseInfoLine(line, this._analyseFromTeam)
       lineInfo.raw = line
       if (lineInfo.score) {
-        const event = new CustomEvent("engine", {
-          detail: lineInfo
-        })
-        document.dispatchEvent(event);
+        this._infoBuffer.push(lineInfo)
+        if (Number(lineInfo.multipv) === this.multiPV || lineInfo.score === 'mate 0') {
+          const event = new CustomEvent("engine", {
+            detail: this._infoBuffer
+          })
+          document.dispatchEvent(event);
+          this._infoBuffer = []
+        }
       }
     }
 
-    if (['uciok', 'readyok'].includes(line))
+    if (['uciok', 'readyok'].includes(line)) {
+      this._infoBuffer = [] // clear info buffer
       this._isready = true
+    }
 
     while (this._commandsQueue.length > 0 && this._isready) {
       let popCmd = this._commandsQueue.shift() as string

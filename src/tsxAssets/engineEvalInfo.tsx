@@ -1,51 +1,92 @@
 import React, { useState } from 'react';
 
+interface PVinfo {
+  score: string,
+  pv: string,
+}
+
 function EngineInfo(props: {
   showMoves: boolean,
   showEval: boolean
 }) {
-  const [info, setInfo] = useState<any>(null);
-
-  const handleEngineOutput = (event: any) => {
-    if (event.detail.score)
-      setInfo(event.detail)
-  };
+  const [info, setInfo] = useState<{
+    info: any,
+    eval: string
+  } | null>(null);
+  const [PVlist, setPVlist] = useState<(PVinfo | null)[]>([]);
 
   React.useEffect(() => {
+    const handleEngineOutput = (event: any) => {
+      const data = event.detail
+      if (data[0].score) {
+        const PVlist: (PVinfo | null)[] = data.map((item: any, index: number) => {
+          let evalText = ""
+          if (item.score.includes("mate")) {
+            const mateIn = item.score.split(' ')[1]
+            if (mateIn === '0') {
+              evalText = "Checkmate"
+            }
+            else {
+              evalText = `${(mateIn[0] === '-') ? '-' : '+'}M ${Math.abs(Number(mateIn))}`
+            }
+          } else {
+            if (item.raw === 'info depth 0 score cp 0') evalText = 'Stalemate'
+            else {
+              // Show in points
+              if (Number(item.score.split(' ')[1]) > 0) evalText += "+"
+              evalText += (Number(item.score.split(' ')[1]) / 100).toString()
+            }
+          }
+          if (index === 0)
+          setInfo({
+            info: data[0],
+            eval: evalText
+          })
+          if (!item.pv) return null
+          return {
+            score: evalText,
+            pv: item.pv
+          }
+        })
+        setPVlist(PVlist)
+      }
+    };
+
     document.addEventListener('engine', handleEngineOutput);
 
     // cleanup this component
     return () => {
       document.removeEventListener('engine', handleEngineOutput);
     };
-  }, []);
+  }, [PVlist]);
 
   if (info) {
-    let evalText = ""
-    if (info.score.includes("mate")) {
-      if (Number(info.score.split(' ')[1]) === 0) {
-        evalText = "Checkmate"
-      } else {
-        // console.log(parsedLineInfo.score)
-        evalText = `${(info.score.split(' ')[1][0] === '-') ? '-' : '+'}M ${Math.abs(Number(info.score.split(' ')[1]))}`
-      }
-    } else {
-      if (info.raw === 'info depth 0 score cp 0') evalText = 'Stalemate'
-      else {
-        // Show in points
-        if (Number(info.score.split(' ')[1]) > 0) evalText += "+"
-        evalText += (Number(info.score.split(' ')[1]) / 100).toString()
-      }
-    }
-    if (evalText !== 'Checkmate' && evalText !== 'Stalemate')
+    console.log(info)
+    if (info.eval !== 'Checkmate' && info.eval !== 'Stalemate') {
+      const movesList = (props.showMoves) ?
+        <div id='eval-pvs'>
+          <table>
+            <tbody>
+              {PVlist.map((item, index) => {
+                if (!item) return null
+                return <tr key={index}>
+                  <td className='eval'>{item.score}</td>
+                  <td className='pv'>{(item.pv.length <= 40) ? item.pv : item.pv.slice(0, 35) + "..."}</td>
+                </tr>
+              })}
+            </tbody>
+          </table>
+        </div>
+        : null
       return <div className='engine-info'>
-        <h3>Depth: {info.depth}{(props.showEval) ? ' | Eval: ' + evalText : null}</h3>
-        <p>Nodes: {info.nodes} | Nps: {info.nps}</p>
-        {(props.showMoves) ? <h4>Moves: {(info.pv.length <= 30) ? info.pv : info.pv.slice(0, 25) + "..."}</h4> : null}
+        <h3>Depth: {info.info.depth}{(props.showEval) ? ' | Eval: ' + info.eval : null}</h3>
+        <p>Nodes: {info.info.nodes} | Nps: {info.info.nps}</p>
+        {movesList}
       </div>
+    }
     else
       return <div className='engine-info'>
-        <h3>{evalText}</h3>
+        <h3>{info.eval}</h3>
       </div>
   }
   else

@@ -128,6 +128,40 @@ div.piece-style-btn {
     display: flex;
     align-items: center;
     flex-basis: calc(100% - 20px);
+    .engine-info {
+        position: -webkit-sticky;
+        width: auto;
+        position: sticky;
+        top: 0;
+        h3 {
+            font-size: x-large;
+            margin: 0;
+        }
+        h4 {
+            font-size: medium;
+        }
+        p {
+            margin: 2px;
+            margin-left: 0;
+            margin-top: 7px;
+            font-size: small;
+        }
+        color: white;
+        background: rgb(100, 0, 100);
+        padding: 13px;
+        border-radius: 20px;
+        margin: 10px;
+        #eval-pvs {
+            tr {
+                td {
+                    &.eval {
+                        font-weight: bolder;
+                        padding-right: 20px;
+                    }
+                }
+            }
+        }
+    }
     &.mobile {
         .scollable {
             max-height: 50vh;
@@ -230,31 +264,6 @@ div.piece-style-btn {
             }
         }
     }
-}
-
-.engine-info {
-    position: -webkit-sticky;
-    width: auto;
-    position: sticky;
-    top: 0;
-    h3 {
-        font-size: x-large;
-        margin: 0;
-    }
-    h4 {
-        font-size: medium;
-    }
-    p {
-        margin: 2px;
-        margin-left: 0;
-        margin-top: 7px;
-        font-size: small;
-    }
-    color: white;
-    background: rgb(100, 0, 100);
-    padding: 13px;
-    border-radius: 20px;
-    margin: 10px;
 }
 
 .player-info {
