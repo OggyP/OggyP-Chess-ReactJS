@@ -2,9 +2,8 @@ import { convertToPosition } from "./chessLogic/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
 import { Mutex } from 'async-mutex';
-const engineMutex = new Mutex();
 
-const debugEngine = true;
+const debugEngine = false;
 
 class UCIengine {
   private _engine: Worker;
@@ -19,7 +18,7 @@ class UCIengine {
     this.multiPV = multiPV
     this._engine = new Worker(path)
     this._engine.onmessage = (event) => {
-      engineMutex.acquire()
+      this._EngineMutex.acquire()
         .then((release) => {
           this.onMessage(event)
           release()
@@ -135,7 +134,7 @@ class UCIengine {
           })
           document.dispatchEvent(event);
           this._infoBuffer = []
-        } else if (lineInfo.multipv === this._infoBuffer.length.toString()) {
+        } else if (Number(lineInfo.multipv) <= this._infoBuffer.length) {
           const event = new CustomEvent("engine", {
             detail: this._infoBuffer
           })

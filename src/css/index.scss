@@ -157,6 +157,12 @@ div.piece-style-btn {
                     &.eval {
                         font-weight: bolder;
                         padding-right: 20px;
+                        font-size: medium;
+                    }
+                    &.pv {
+                        font-size: medium;
+                        overflow-x: hidden;
+                        white-space: nowrap;
                     }
                 }
             }

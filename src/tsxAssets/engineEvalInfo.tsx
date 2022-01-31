@@ -68,9 +68,9 @@ function EngineInfo(props: {
             <tbody>
               {PVlist.map((item, index) => {
                 if (!item) return null
-                return <tr key={index}>
+                return <tr key={index} title={item.pv}>
                   <td className='eval'>{item.score}</td>
-                  <td className='pv'>{(item.pv.length <= 40) ? item.pv : item.pv.slice(0, 35) + "..."}</td>
+                  <td className='pv'>{(item.pv.length <= 45) ? item.pv : item.pv.slice(0, 40) + "..."}</td>
                 </tr>
               })}
             </tbody>
