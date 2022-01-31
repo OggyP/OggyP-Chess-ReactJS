@@ -248,7 +248,7 @@ class King extends ChessPiece {
         if (piecesInWay.length === 2 && piecesInWay.includes('k') && piecesInWay.includes('r')) {
           const newBoard = new Board(board)
           const vectorToDisplay = { "x": 6, "y": pos.y }
-          if (vectorToDisplay) {
+          if (vectorToDisplay && !board.getPos({ "x": 5, "y": pos.y }) && !board.getPos({ "x": 6, "y": pos.y })) {
             newBoard.doMove(pos, { "x": 5, "y": pos.y })
             if (!newBoard.inCheck(this.team)) {
               newBoard.doMove({ "x": 5, "y": pos.y }, vectorToDisplay)
@@ -282,7 +282,7 @@ class King extends ChessPiece {
         if (piecesInWay.length === 2 && piecesInWay.includes('k') && piecesInWay.includes('r')) {
           const newBoard = new Board(board)
           const vectorToDisplay = { "x": 2, "y": pos.y }
-          if (vectorToDisplay) {
+          if (vectorToDisplay && !board.getPos({ "x": 3, "y": pos.y }) && !board.getPos({ "x": 2, "y": pos.y }) && !board.getPos({ "x": 1, "y": pos.y })) {
             newBoard.doMove(pos, { "x": 3, "y": pos.y })
             if (!newBoard.inCheck(this.team)) {
               newBoard.doMove({ "x": 3, "y": pos.y }, vectorToDisplay)
@@ -299,7 +299,7 @@ class King extends ChessPiece {
                 moves.push({
                   move: { "x": 0, "y": pos.y },
                   board: castleCaptureBoard,
-                  moveType: ["castleKingSide", 'capture'],
+                  moveType: ["castleQueenSide", 'capture'],
                   displayVector: vectorToDisplay
                 })
               }
