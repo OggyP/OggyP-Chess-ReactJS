@@ -12,6 +12,7 @@ function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
   React.useEffect(() => {
     const handleEngineOutput = (event: any) => {
       const info = event.detail
+      console.log(info)
       if (info[0].score) {
         const bestMoves = info.map((item: any, index: number) => {
           if (item.pv) {
@@ -34,7 +35,6 @@ function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
             return null
           }
         })
-        console.log(bestMoves)
         setBestMoves(bestMoves)
       } else if (info.startingPos.x && (!bestMoves[0] ||
         !VecSame(info.startingPos, bestMoves[0].startingPos) ||

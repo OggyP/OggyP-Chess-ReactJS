@@ -87,7 +87,7 @@ class Game extends React.Component<GameProps, GameState> {
   engine: UCIengine | null = null
   getDraggingPiece: Function | undefined
   clearCustomSVGS: Function | undefined
-  engineMoveType = 'movetime 10000'
+  engineMoveType = 'movetime 60000'
 
   constructor(props: GameProps) {
     super(props)
@@ -118,7 +118,6 @@ class Game extends React.Component<GameProps, GameState> {
           this.engineMoveType = 'movetime 1000'
       } else
         startingCommands.unshift('setoption name UCI_AnalyseMode value true')
-      console.log(this.engineMoveType)
       this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands, (props.versusStockfish) ? 1 : 3)
     }
     const windowSize = {
@@ -207,7 +206,6 @@ class Game extends React.Component<GameProps, GameState> {
   doEngineMove = (event: any) => {
     if (this.state.game.gameOver) return
     const move = event.detail
-    console.log(move)
     this.doMove(move.startingPos, move.endingPos, move.promotion)
   }
 
@@ -312,14 +310,12 @@ class Game extends React.Component<GameProps, GameState> {
 
     const latestBoard = this.state.game.getLatest().board
     if (latestBoard.enPassant) {
-      console.log('enpassant available')
       // person who just moved is white then check for black
       const pawnMoveDirection: number = ((piece.team === 'white') ? 1 : -1)
       // Plus x 
       const xOffsets = [-1, 1]
       for (let i = 0; i < xOffsets.length; i++) {
         const checkPos = addVectorsAndCheckPos(latestBoard.enPassant, { x: xOffsets[i], y: -pawnMoveDirection })
-        console.log(checkPos)
         if (!checkPos) continue
         const checkPiece = latestBoard.getPos(checkPos)
         if (!checkPiece || checkPiece.team === piece.team || !(checkPiece instanceof Pawn)) continue // if same as person who just moved
@@ -342,14 +338,12 @@ class Game extends React.Component<GameProps, GameState> {
     // Pre Moves
     if (this.state.premoves.length > 0) {
       const premove = this.state.premoves.shift()
-      console.log(premove)
       let premoveError = false
       if (!premove) throw new Error("premove is undefined");
       const piece = this.latestBoard().getPos(premove.start)
       if (!piece) premoveError = true
       if (piece && piece.team !== this.props.team) premoveError = true
       if (!this.state.game.doMove(premove.start, premove.end, undefined, false)) premoveError = true
-      console.log('Premove ' + premoveError + ' ' + this.latestBoard().getFen())
       if (premoveError)
         this.setState({
           premoves: [],
@@ -594,7 +588,7 @@ class Game extends React.Component<GameProps, GameState> {
     const promotionSelectorVal = this.state.promotionSelector
 
     if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
-      this.engineMoveType = 'movetime 10000'
+      this.engineMoveType = 'movetime 60000'
       this.engine = new UCIengine('/stockfish/stockfish.js', [
         'setoption name UCI_AnalyseMode value true',
         "isready",
@@ -661,7 +655,6 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     let boardToDisplay: JSX.Element
-    console.log('boxsize', this.state.boxSize)
     if (!this.state.premoveBoard) {
       boardToDisplay = <Board
         board={this.viewingBoard()}

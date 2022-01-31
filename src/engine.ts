@@ -1,6 +1,8 @@
 import { convertToPosition } from "./chessLogic/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
+import { Mutex } from 'async-mutex';
+const engineMutex = new Mutex();
 
 const debugEngine = true;
 
@@ -9,13 +11,20 @@ class UCIengine {
   private _isready: boolean;
   private _analyseFromTeam: Teams = "white";
   private _infoBuffer: any[] = []
+  private _EngineMutex = new Mutex();
   multiPV: number;
   loadedNNUE: boolean = getCookie('loadNNUE') === 'true'
   _commandsQueue: string[];
   constructor(path: string, initConfigCommands: string[] = [], multiPV: number = 1) {
     this.multiPV = multiPV
     this._engine = new Worker(path)
-    this._engine.onmessage = (event) => { this.onMessage(event) }
+    this._engine.onmessage = (event) => {
+      engineMutex.acquire()
+        .then((release) => {
+          this.onMessage(event)
+          release()
+        })
+    }
     this._isready = false;
     this._commandsQueue = initConfigCommands
     this._engine.postMessage('uci')
@@ -105,6 +114,13 @@ class UCIengine {
           detail: bestMove
         })
         document.dispatchEvent(event);
+        if (this._infoBuffer.length) {
+          const event = new CustomEvent("engine", {
+            detail: this._infoBuffer
+          })
+          document.dispatchEvent(event);
+          this._infoBuffer = []
+        }
       }
     }
 
@@ -112,14 +128,21 @@ class UCIengine {
       const lineInfo = UCIengine.parseInfoLine(line, this._analyseFromTeam)
       lineInfo.raw = line
       if (lineInfo.score) {
-        this._infoBuffer.push(lineInfo)
         if (Number(lineInfo.multipv) === this.multiPV || lineInfo.score === 'mate 0') {
+          this._infoBuffer.push(lineInfo)
           const event = new CustomEvent("engine", {
             detail: this._infoBuffer
           })
           document.dispatchEvent(event);
           this._infoBuffer = []
-        }
+        } else if (lineInfo.multipv === this._infoBuffer.length.toString()) {
+          const event = new CustomEvent("engine", {
+            detail: this._infoBuffer
+          })
+          document.dispatchEvent(event);
+          this._infoBuffer = [lineInfo]
+        } else
+          this._infoBuffer.push(lineInfo)
       }
     }
 

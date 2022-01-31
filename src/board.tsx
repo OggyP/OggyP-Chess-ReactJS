@@ -5,7 +5,7 @@ import Square from './tsxAssets/square'
 import ValidMove from './tsxAssets/validMove'
 import Coords from './tsxAssets/coords'
 import { Arrow, Circle } from './tsxAssets/custom-svgs'
-import { ChessBoard, ChessPiece, convertToChessNotation, Teams, Vector } from './chessLogic'
+import { ChessBoard, ChessPiece, Teams, Vector } from './chessLogic'
 import React from 'react';
 import EngineBestMove from './tsxAssets/engineBestMove'
 import { VecSame } from './chessLogic/functions'
@@ -85,7 +85,6 @@ class Board extends React.Component<BoardProps, BoardState> {
         clearCustomSVGS: () => { this.clearCustomSVGS() }
       });
     }
-    console.log('setup')
     window.addEventListener("mousedown", this.mouseDown);
     window.addEventListener("mouseup", this.mouseUp);
     window.addEventListener("mousemove", this._onMouseMove);
@@ -94,7 +93,6 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   componentWillUnmount() {
-    console.log('unmount')
     window.removeEventListener("mousedown", this.mouseDown);
     window.removeEventListener("mouseup", this.mouseUp);
     window.removeEventListener("mousemove", this._onMouseMove);
@@ -134,14 +132,12 @@ class Board extends React.Component<BoardProps, BoardState> {
 
   mouseDown = (event: MouseEvent) => {
     event.stopImmediatePropagation()
-    console.log(this.mousePos, event, this.props.boxSize, this)
     let posSelected: Vector;
     if (this.props.notFlipped)
       posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
     else
       posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
     if (posSelected.x >= 0 && posSelected.x < 8 && posSelected.y >= 0 && posSelected.y < 8) {
-      console.log(posSelected)
       if (event.button === 0) {
         this.posClicked(posSelected, 'mouse')
         this.clearCustomSVGS()
@@ -257,7 +253,6 @@ class Board extends React.Component<BoardProps, BoardState> {
     if (posSelected.x !== this.state.pieceBeingDragged.x || posSelected.y !== this.state.pieceBeingDragged.y) {
       if (this.props.isLatestBoard && this.props.board.getTurn('next') !== this.props.ownTeam) {
         // handle pre moves
-        console.log(this.props)
         this.props.doPremove(this.state.pieceBeingDragged, posSelected)
       }
       this.props.deselectPiece()
@@ -311,7 +306,6 @@ class Board extends React.Component<BoardProps, BoardState> {
   }
 
   render() {
-    console.log(this)
     let pieces: piecesArray[] = []
     for (let x = 0; x < 8; x++)
       for (let y = 0; y < 8; y++) {

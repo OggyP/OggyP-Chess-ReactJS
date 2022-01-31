@@ -61,7 +61,6 @@ function EngineInfo(props: {
   }, [PVlist]);
 
   if (info) {
-    console.log(info)
     if (info.eval !== 'Checkmate' && info.eval !== 'Stalemate') {
       const movesList = (props.showMoves) ?
         <div id='eval-pvs'>
