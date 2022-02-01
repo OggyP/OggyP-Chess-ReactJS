@@ -41,8 +41,19 @@ class Board {
       this._repitions = input._repitions
     } else {
       let FENparts = input.split(' ')
-      if (FENparts.length !== 6)
-        throw new Error("Invalid FEN, There should be 6 segments. The input FEN was " + input)
+      if (FENparts.length !== 6) {
+        console.log("Invalid FEN, There should be 6 segments. The input FEN was " + input)
+        input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        FENparts = input.split(' ')
+      }
+
+      let rows = FENparts[0].split('/')
+      if (rows.length !== 8) {
+        console.log("Invalid FEN, there needs to be 8 rows specified.")
+        input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        FENparts = input.split(' ')
+        rows = FENparts[0].split('/')
+      }
 
       let turn = (FENparts[1] === 'w') ? "white" : "black"
 
@@ -67,10 +78,6 @@ class Board {
       this._repitions.set(FENparts[0], 1)
 
       // Set Pieces
-      let rows = FENparts[0].split('/')
-      if (rows.length !== 8)
-        throw new Error("Invalid FEN, there needs to be 8 rows specified.")
-
       for (let rowNum = 0; rowNum < 8; rowNum++) {
         let row = rows[rowNum]
         for (let i = 0; i < row.length; i++) {

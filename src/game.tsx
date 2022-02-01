@@ -60,7 +60,8 @@ interface GameState {
     white: string,
     black: string,
   }
-  loadedNNUE: boolean
+  loadedNNUE: boolean,
+  resetGameFEN: string
 }
 
 interface GameProps {
@@ -76,7 +77,7 @@ interface GameProps {
   allowMoving: boolean
   allowPreMoves: boolean
   termination?: string
-  canSharePGN?: boolean
+  pgnAndFenChange?: boolean
   versusStockfish?: {
     skill: number
     fastGame: boolean
@@ -187,9 +188,10 @@ class Game extends React.Component<GameProps, GameState> {
       piecesStyle: (getCookie('pieceStyle') || 'normal'),
       boardStyle: boardStyle,
       loadedNNUE: (this.engine?.loadedNNUE || false),
+      resetGameFEN: ""
     }
     this.boardMoveChanged(0, true, true)
-    if (props.canSharePGN) this.updateURLtoHavePGN()
+    if (props.pgnAndFenChange) this.updateURLtoHavePGN()
   }
 
   gameBoardMounted(callbacks: any) {
@@ -270,7 +272,7 @@ class Game extends React.Component<GameProps, GameState> {
             endingPos: [info.pos.end.x, info.pos.end.y],
             promote: piece + ((info.team === 'white') ? 'l' : 'd')
           })
-        if (this.props.canSharePGN) this.updateURLtoHavePGN()
+        if (this.props.pgnAndFenChange) this.updateURLtoHavePGN()
       }
       else
         alert("L, you can't do that because you will be in check!")
@@ -387,10 +389,23 @@ class Game extends React.Component<GameProps, GameState> {
   }
 
   updateURLtoHavePGN() {
-    if (this.state.game.metaValues.get('White') && this.state.game.metaValues.get('White') !== '?')
-      window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/?pgn=' + encodeURIComponent(this.state.game.getPGN().replace(/ /g, '_')));
-    else
-      window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/?pgn=' + encodeURIComponent(this.state.game.shortNotationMoves.replace(/ /g, '_')));
+    let queries = ''
+    if (this.state.game.metaValues.get('White') && this.state.game.metaValues.get('White') !== '?') {
+      const toSet = encodeURIComponent(this.state.game.getPGN().replace(/ /g, '_'))
+      if (toSet)
+        queries = '?pgn=' + toSet
+    }
+    else {
+      const toSet = encodeURIComponent(this.state.game.shortNotationMoves.replace(/ /g, '_'))
+      if (toSet)
+        queries = '?pgn=' + toSet
+    }
+    if (this.state.game.startingFEN && this.state.game.startingFEN !== "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+      console.log(queries)
+      queries += ((queries) ? '&' : '?') + "fen=" + this.state.game.startingFEN.replace(/ /g, '_')
+      console.log(queries)
+    }
+    window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/' + queries);
   }
 
   handlePieceClick(posClicked: Vector): void {
@@ -490,7 +505,7 @@ class Game extends React.Component<GameProps, GameState> {
         viewingMove: newViewNum
       })
       this.boardMoveChanged(newViewNum, false, true)
-      if (this.props.canSharePGN) this.updateURLtoHavePGN()
+      if (this.props.pgnAndFenChange) this.updateURLtoHavePGN()
       if (!this.props.multiplayerWs) return
       sendToWs(this.props.multiplayerWs, 'move', {
         startingPos: [selectedPiecePos.x, selectedPiecePos.y],
@@ -554,6 +569,20 @@ class Game extends React.Component<GameProps, GameState> {
         black: black
       }
     })
+  }
+
+  resetGame(fen: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+    const game = this.state.game
+    // Need to run this becuase 
+    game.startingFEN = fen
+    game.shortNotationMoves = ""
+    this.setState({
+      game: new ChessGame({ fen: { val: fen } })
+    });
+    if (this.engine)
+      this.engine.reset()
+    this.goToMove(0)
+    this.updateURLtoHavePGN()
   }
 
   preventContextMenu(e: any) {
@@ -715,7 +744,56 @@ class Game extends React.Component<GameProps, GameState> {
       </div>
       {(this.state.onMobile) ? (!this.state.notFlipped) ? players.black : players.white : null}
       {<p className='opening'>{(this.state.game.opening.ECO) ? <span className='eco'>{this.state.game.opening.ECO}</span> : null}{this.state.game.opening.Name}</p>}
-      {(!this.state.onMobile) ? <p>{this.viewingBoard().getFen()}</p> : null}
+      {(!this.state.onMobile) ? <div className='inline-info'>
+        <p className='button-type'
+          onClick={() => {
+            navigator.clipboard.writeText(this.viewingBoard().getFen())
+              .then(() => {
+                alert('Copied FEN to clipboard.');
+              })
+              .catch(err => {
+                alert('Error in copying text: ' + err);
+              });
+          }}>
+          Copy Fen
+        </p>
+        {(this.props.pgnAndFenChange) ?
+          <form onSubmit={(event) => {
+            event.preventDefault()
+            if (!this.state.resetGameFEN) return
+            const inputFen = this.state.resetGameFEN.trim()
+            const fenLength = inputFen.split(' ').length
+            let finalFen = inputFen
+            if (fenLength !== 6) {
+              if (fenLength === 1) finalFen += ' w KQkq - 0 1'
+              else if (fenLength === 2) finalFen += ' KQkq - 0 1'
+              else if (fenLength === 3) finalFen += ' - 0 1'
+              else if (fenLength === 4) finalFen += ' 0 1'
+              else if (fenLength === 5) finalFen += ' 1'
+              else return
+            }
+            console.log(finalFen)
+            if (finalFen.split(' ')[0].split('/').length !== 8) return
+            console.log('no errors')
+            this.resetGame(finalFen)
+            this.setState({ resetGameFEN: "" })
+          }}>
+            <label htmlFor='current-fen'>
+              <input
+                type='text'
+                id='current-fen'
+                placeholder={this.viewingBoard().getFen()}
+                value={this.state.resetGameFEN}
+                name='board-fen'
+                onChange={(event) => {
+                  this.setState({ resetGameFEN: event.target.value })
+                }}
+              />
+            </label>
+          </form>
+          : <p>{this.viewingBoard().getFen()}</p>}
+      </div>
+        : null}
     </div>
 
     const piecesStyleSelector = ['normal', 'medieval', 'ewan', 'sus']
@@ -760,9 +838,17 @@ class Game extends React.Component<GameProps, GameState> {
           <br />
           {(!this.state.onMobile) ? <div>
             <label className='button-type' htmlFor="white-tile-color">Custom White Tile Colour</label>
-            <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100); this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } }) }} />
+            <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white}
+              onChange={(event) => {
+                setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100);
+                this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } })
+              }} />
             <label className='button-type' htmlFor="black-tile-color">Custom Black Tile Colour</label>
-            <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black} onChange={(event) => { setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100); this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } }) }} />
+            <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black}
+              onChange={(event) => {
+                setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100);
+                this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } })
+              }} />
           </div> : null}
           <h3>Piece Style Selector</h3>
           {pieceSelector}
@@ -775,12 +861,7 @@ class Game extends React.Component<GameProps, GameState> {
           <button onClick={() => this.flipBoard()}>Flip Board</button>
           {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); setCookie('loadNNUE', 'true', 100) }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); deleteCookie('loadNNUE') }}>Stop Loading NNUE</button>}
           {(!this.props.multiplayerWs && this.state.game.getMoveCount() > 0) ? <button onClick={() => {
-            if (this.engine)
-              this.engine.reset()
-            this.setState({
-              game: new ChessGame({ fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
-            });
-            this.goToMove(0)
+            this.resetGame()
           }}>Reset Game</button> : null}
         </div>
       </div>

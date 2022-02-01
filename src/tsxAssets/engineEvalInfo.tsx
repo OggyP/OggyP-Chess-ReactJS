@@ -70,7 +70,7 @@ function EngineInfo(props: {
                 if (!item) return null
                 return <tr key={index} title={item.pv}>
                   <td className='eval'>{item.score}</td>
-                  <td className='pv'>{(item.pv.length <= 45) ? item.pv : item.pv.slice(0, 40) + "..."}</td>
+                  <td className='pv'>{(item.pv.length <= 35) ? item.pv : item.pv.slice(0, 30) + "..."}</td>
                 </tr>
               })}
             </tbody>

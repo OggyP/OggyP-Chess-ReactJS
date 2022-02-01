@@ -63,7 +63,21 @@ class Game {
       // Parse PGN
       console.log(input.pgn)
       this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-      this.metaValues = new Map<string, string>()
+      this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening']
+      const currentDate = new Date()
+      this.metaValues = new Map([
+        ['Event', '?'],
+        ['Site', 'https://chess.oggyp.com'],
+        ['Date', currentDate.getFullYear() + '.' + currentDate.getMonth() + '.' + currentDate.getDate()],
+        ['Round', '?'],
+        ['White', '?'],
+        ['Black', '?'],
+        ['Result', '*'],
+        ['Variant', 'Standard'],
+        ['TimeControl', '-'],
+        ['ECO', '?'],
+        ['Opening', '?']
+      ])
 
       let lines = input.pgn.split('\n')
       const lastLine = (lines.pop() as string)?.split('{')
@@ -81,6 +95,8 @@ class Game {
       console.log(lastLineParsed)
 
       const moves = lastLineParsed.split(' ')
+      if (moves.length === 1 && moves[0] === '') moves.pop()
+      console.log(moves)
       this.metaValuesOrder = []
       if (!moves) return
 
@@ -89,7 +105,8 @@ class Game {
         const words = line.split(' ')
         const metaValueName = words[0].replace('[', '')
         this.metaValues.set(metaValueName, line.split('"')[1])
-        this.metaValuesOrder.push(metaValueName)
+        if (!this.metaValuesOrder.includes(metaValueName))
+          this.metaValuesOrder.push(metaValueName)
       })
 
       if (this.metaValues.has('FEN'))
@@ -133,8 +150,12 @@ class Game {
           const endingPos = Object.assign({}, kingPos)
           endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 2
           let piece = board.getPos(kingPos)
-          if (!piece) throw new Error(`Castle ${move} is illegal. ${board.getFen()}`);
+          if (!piece) {
+            console.log('No legal castle found. ', board.getFen())
+            break;
+          }
           const moves = piece.getMoves(kingPos, board)
+          let moveFound = false;
           for (let i = 0; i < moves.length; i++) {
             const checkMove = moves[i]
             if (checkMove.move.x === endingPos.x && checkMove.move.y === endingPos.y) {
@@ -152,8 +173,13 @@ class Game {
                   }
                 }
               })
+              moveFound = true;
               break;
             }
+          }
+          if (!moveFound) {
+            console.log('No legal castle found. ', board.getFen())
+            break;
           }
         } else if (move[0] === move[0].toLowerCase()) {
           console.log('Pawn Move ' + originalPGNmove + '|' + move)
@@ -193,7 +219,10 @@ class Game {
               }
             }
           }
-          if (!moveInfo) throw new Error("No legal pawn move was found. " + board.getFen());
+          if (!moveInfo) {
+            console.log("No legal pawn move was found. ", board.getFen())
+            break;
+          }
           if (move[2] === '=') {
             moveInfo.board.promote(endingPos, move.split('=')[1].toLowerCase() as PieceCodes, turn)
             if (moveInfo.move)
@@ -254,8 +283,10 @@ class Game {
                   }
                 }
               }
-          if (!foundMove) throw new Error("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '');
-
+          if (!foundMove) {
+            console.log("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '')
+            break;
+          }
         }
         turn = (turn === 'white') ? 'black' : 'white' // invert team
         this.gameOver = board.isGameOverFor(turn)
@@ -278,7 +309,8 @@ class Game {
           ['Variant', 'Standard'],
           ['TimeControl', '-'],
           ['ECO', '?'],
-          ['Opening', '?']
+          ['Opening', '?'],
+          ['FEN', input.fen.val]
         ])
       }
       this._history = [{
@@ -307,7 +339,7 @@ class Game {
     white: PlayerInfo
     black: PlayerInfo
   } | null {
-    if (this.metaValues.has('White') && this.metaValues.has('Black')) {
+    if (this.metaValues.has('White') && this.metaValues.has('Black') && (this.metaValues.get('White') !== '?' || this.metaValues.get('Black') !== '?')) {
       let ratings = {
         white: (this.metaValues.has('WhiteElo')) ? Number(this.metaValues.get('WhiteElo')) : 0,
         black: (this.metaValues.has('BlackElo')) ? Number(this.metaValues.get('BlackElo')) : 0
@@ -366,7 +398,7 @@ class Game {
     }
     return gameOverInfo
   }
-  
+
   doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined, allowPromotion = true): boolean {
     const latestBoard = this.getLatest().board
     const piece = latestBoard.getPos(startPos)

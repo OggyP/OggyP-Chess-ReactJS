@@ -9,16 +9,24 @@ function AnalysisPage() {
 
   const urlParams = new URLSearchParams(window.location.search);
 
-  let pgn: string | undefined = undefined
+  let pgn: string = ''
+  let startingFen: string | undefined = undefined
   if (urlParams.has('pgn'))
     pgn = (urlParams.get('pgn') as string).replace(/_/g, ' ')
+  if (urlParams.has('fen'))
+    startingFen = (urlParams.get('fen') as string).replace(/_/g, ' ')
+
+  if (startingFen)
+    pgn = `[FEN "${startingFen}"]\n\n` + pgn
+
+  console.log(pgn)
 
   return <Game
     team='any'
     allowMoving={true}
     allowPreMoves={false}
-    pgn={pgn}
-    canSharePGN={true}
+    pgn={(pgn) ? pgn : undefined}
+    pgnAndFenChange={true}
   />
 }
 

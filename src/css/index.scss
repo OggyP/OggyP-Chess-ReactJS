@@ -98,7 +98,7 @@ div.piece-style-btn {
     p {
         font-weight: normal;
         margin-top: 5px;
-        width: 100%;
+        width: calc(100% - 10px);
         &.opening {
             margin-left: 5px;
             .eco {
@@ -106,6 +106,27 @@ div.piece-style-btn {
                 color: grey;
             }
             overflow: hidden;
+        }
+    }
+    div.inline-info {
+        margin-left: 5px;
+        display: flex;
+        p.button-type {
+            flex-basis: 20%;
+        }
+        align-items: center;
+    }
+    form {
+        width: 100%;
+        label {
+            margin: 0;
+            width: 100%;
+            input {
+                margin: 0;
+                margin-left: 5px;
+                padding-left: 0;
+                width: 100%;
+            }
         }
     }
 }
@@ -162,7 +183,6 @@ div.piece-style-btn {
                     &.pv {
                         font-size: medium;
                         overflow-x: hidden;
-                        white-space: nowrap;
                     }
                 }
             }
