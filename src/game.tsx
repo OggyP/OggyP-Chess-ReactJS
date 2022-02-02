@@ -10,6 +10,7 @@ import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 import { addVectorsAndCheckPos } from './chessLogic/functions';
 import { MovesAndBoard } from './chessLogic/types'
+import { textChangeRangeIsUnchanged } from 'typescript';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -97,29 +98,11 @@ class Game extends React.Component<GameProps, GameState> {
         "isready",
         "ucinewgame"
       ]
-      if (props.versusStockfish) {
-        if (props.versusStockfish.skill !== 20) startingCommands.unshift('setoption name Skill Level value ' + props.versusStockfish.skill)
-
-        if (!props.versusStockfish.fastGame || props.versusStockfish.skill <= 15) {
-          let depth: number | null = null
-          if (props.versusStockfish.skill < 2) {
-            depth = 1;
-          } else if (props.versusStockfish.skill < 5) {
-            depth = 2;
-          } else if (props.versusStockfish.skill < 10) {
-            depth = 3;
-          } else if (props.versusStockfish.skill < 15) {
-            depth = 4;
-          } else {
-            this.engineMoveType = 'movetime 10000'
-          }
-          if (depth)
-            this.engineMoveType = 'move depth ' + depth
-        } else
-          this.engineMoveType = 'movetime 1000'
-      } else
+      if (!props.versusStockfish)
         startingCommands.unshift('setoption name UCI_AnalyseMode value true')
       this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands, (props.versusStockfish) ? 1 : 3)
+      if (props.versusStockfish)
+        this.engineMoveType = this.engine.setDifficulty(props.versusStockfish.skill, props.versusStockfish.fastGame)
     }
     const windowSize = {
       width: window.innerWidth,
@@ -579,8 +562,11 @@ class Game extends React.Component<GameProps, GameState> {
     this.setState({
       game: new ChessGame({ fen: { val: fen } })
     });
-    if (this.engine)
+    if (this.engine) {
       this.engine.reset()
+      if (this.props.versusStockfish)
+        this.engineMoveType = this.engine.setDifficulty(this.props.versusStockfish.skill, this.props.versusStockfish.fastGame)
+    }
     this.goToMove(0)
     this.updateURLtoHavePGN()
   }

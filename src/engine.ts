@@ -50,6 +50,34 @@ class UCIengine {
     this.addToQueueAndSend('ucinewgame')
   }
 
+  setDifficulty(skill: number, fastGame: boolean) {
+    this.addToQueueAndSend('stop')
+    this.addToQueueAndSend('isready')
+
+    if (skill !== 20) this.addToQueueAndSend('setoption name Skill Level value ' + skill)
+
+    let engineMoveType = 'movetime 60000'
+
+    if (!fastGame || skill <= 15) {
+      let depth: number | null = null
+      if (skill < 2) {
+        depth = 1;
+      } else if (skill < 5) {
+        depth = 2;
+      } else if (skill < 10) {
+        depth = 3;
+      } else if (skill < 15) {
+        depth = 4;
+      } else {
+        engineMoveType = 'movetime 10000'
+      }
+      if (depth)
+        engineMoveType = 'move depth ' + depth
+    } else
+      engineMoveType = 'movetime 1000'
+    return engineMoveType
+  }
+
   addToQueueAndSend(cmd: string) {
     this._commandsQueue.push(cmd)
     if (this._isready) {
