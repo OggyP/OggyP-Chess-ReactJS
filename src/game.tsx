@@ -11,6 +11,7 @@ import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 import { addVectorsAndCheckPos } from './chessLogic/functions';
 import { MovesAndBoard } from './chessLogic/types'
 import { textChangeRangeIsUnchanged } from 'typescript';
+import { send } from 'process';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -849,6 +850,12 @@ class Game extends React.Component<GameProps, GameState> {
           {(!this.props.multiplayerWs && this.state.game.getMoveCount() > 0) ? <button onClick={() => {
             this.resetGame()
           }}>Reset Game</button> : null}
+          {(this.props.multiplayerWs && !this.state.game.gameOver) ? <button onClick={() => {
+            if (this.props.multiplayerWs)
+              sendToWs(this.props.multiplayerWs, 'game', [
+                ['option', 'resign']
+              ])
+          }}>Resign</button> : null}
         </div>
       </div>
     </div>
