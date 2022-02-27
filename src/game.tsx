@@ -10,8 +10,6 @@ import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 import { addVectorsAndCheckPos } from './chessLogic/functions';
 import { MovesAndBoard } from './chessLogic/types'
-import { textChangeRangeIsUnchanged } from 'typescript';
-import { send } from 'process';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
