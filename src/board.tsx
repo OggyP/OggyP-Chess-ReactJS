@@ -480,6 +480,9 @@ class Board extends React.Component<BoardProps, BoardState> {
             <marker id="arrowhead-g" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
               <path d="M0,0 V4 L3,2 Z" fill="#15781B"></path>
             </marker>
+            <marker id="arrowhead-p" orient="auto" markerWidth="4" markerHeight="8" refX="2.05" refY="2.01">
+              <path d="M0,0 V4 L3,2 Z" fill="#b500ff"></path>
+            </marker>
           </defs>
           <g>
             {

@@ -63,9 +63,9 @@ function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {
       }
       return <Arrow
         key={index}
-        strokeWidth={0.18 - (index * 0.03)}
+        strokeWidth={0.20 - (index * 0.05)}
         opacity={0.5 - (index * 0.15)}
-        colour='blue'
+        colour={(index === 0) ? 'purple' : 'blue'}
         notFlipped={props.notFlipped}
         start={item.startingPos}
         end={item.endingPos} />

@@ -8,15 +8,17 @@ interface ArrowProps {
   start: Vector
   end: Vector
   notFlipped: boolean
-  colour: 'green' | 'blue' | 'green-drag'
+  colour: 'green' | 'blue' | 'green-drag' | 'purple'
   strokeWidth?: number
   opacity?: number
 }
 
 const colourToHex = {
-  green: '#15781B',
+  green: '#15781b',
   blue: '#003088',
-  'green-drag': '#15781B'
+  purple: '#b500ff',
+  'green-drag': '#15781b'
+  
 }
 
 function Arrow(props: ArrowProps) {
@@ -25,7 +27,7 @@ function Arrow(props: ArrowProps) {
       stroke={colourToHex[props.colour]}
       strokeWidth={(!props.strokeWidth) ? 0.15625 : props.strokeWidth}
       strokeLinecap="round"
-      markerEnd={(props.colour === 'green') ? 'url(#arrowhead-g)' : 'url(#arrowhead-' + props.colour[0] + ')'}
+      markerEnd={'url(#arrowhead-' + props.colour[0] + ')'}
       opacity={(!props.opacity) ? 0.5 : props.opacity}
 
       x1={((props.notFlipped) ? props.start.x : 7 - props.start.x) + 0.5}
@@ -40,7 +42,7 @@ function Arrow(props: ArrowProps) {
 interface CircleProps {
   pos: Vector
   notFlipped: boolean
-  colour: 'green' | 'blue' | 'green-drag'
+  colour: 'green' | 'blue' | 'green-drag' | 'purple'
   strokeWidth?: number
 }
 function Circle(props: CircleProps) {
