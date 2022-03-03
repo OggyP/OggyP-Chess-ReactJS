@@ -75,7 +75,7 @@ class Board extends React.Component<BoardProps, BoardState> {
       }
     }
     this.mousePos = { "x": 0, "y": 0 }
-    this.posSelected = { "x": 0, "y": 0 }
+    this.posSelected = null
   }
 
   componentDidMount() {
@@ -137,6 +137,7 @@ class Board extends React.Component<BoardProps, BoardState> {
       posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
     else
       posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
+    console.log("pos selected", posSelected)
     if (posSelected.x >= 0 && posSelected.x < 8 && posSelected.y >= 0 && posSelected.y < 8) {
       if (event.button === 0) {
         this.posClicked(posSelected, 'mouse')
@@ -182,6 +183,7 @@ class Board extends React.Component<BoardProps, BoardState> {
     const piece = this.props.board.getPos(posSelected)
 
     if (piece && (this.props.ownTeam === 'any' || piece.team === this.props.ownTeam)) {
+      console.log("detected click", this.posSelected)
       if (!this.posSelected || (this.posSelected.x !== posSelected.x || this.posSelected.y !== posSelected.y))
         this.props.onPieceClick(posSelected)
       this.setState({
