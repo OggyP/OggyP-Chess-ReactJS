@@ -1,5 +1,5 @@
 import { ChessBoard } from '../chessLogic'
-import {ChessPiece} from './pieces'
+import { ChessPiece } from './pieces'
 
 type PieceCodes = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
 type Teams = 'white' | 'black';

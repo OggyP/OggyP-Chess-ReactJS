@@ -207,7 +207,7 @@ div.piece-style-btn {
         font-weight: bolder;
     }
     #previous-moves {
-        font-family: 'ChessFont', 'Noto Sans JP', sans-serif;
+        font-family: ChessFont, 'Noto Sans JP', sans-serif;
         font-size: large;
         width: 90%;
         thead {
@@ -295,18 +295,42 @@ div.piece-style-btn {
 .player-info {
     height: auto;
     font-size: medium;
-    padding: 6px;
+    padding: 0;
     h4 {
-        margin: 0;
+        margin: 6px;
         .rating {
             text-align: right;
             font-size: small;
             color: grey;
         }
-        .timer {
+        &.timer {
             float: right;
+            // margin-left: 100%;
             color: black;
+            text-align: right;
+            position: absolute;
+            right: 0;
         }
+    }
+    .material {
+        &.pieces {
+            img {
+                display: inline;
+                vertical-align: middle;
+                margin: auto;
+                height: 1.5em;
+                margin-bottom: 5px;
+                margin-right: 3px;
+            }
+        }
+        &.points {
+            width: fit-content !important;
+        }
+    }
+    div,
+    p,
+    h4 {
+        display: inline-block;
     }
     &.white {
         color: black;
