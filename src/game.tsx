@@ -652,18 +652,12 @@ class Game extends React.Component<GameProps, GameState> {
         const currentTurn = (this.state.game.gameOver) ? 'None' : this.latestBoard().getTurn('next')
 
         let timers = this.state.timers
-        if (this.state.game.gameOver && timers) {
-            timers.white.countingDown = false
-            timers.black.countingDown = false
-        }
-
-        console.log(this.viewingBoard().capturedPieces)
         let cancelledOutTakenMaterial = cancelOutMaterial(this.viewingBoard().capturedPieces.white, this.viewingBoard().capturedPieces.black)
-        console.log(cancelledOutTakenMaterial)
-
         let teamArray: Teams[] = ['white', 'black']
         teamArray.forEach((item: Teams) => {
             let team = item as Teams
+            if (timers && this.state.game.gameOver)
+                timers[team].countingDown = false
             players[team] = <UserInfoDisplay
                 team={team}
                 username={this.state.players?.[team].username || team.charAt(0).toUpperCase() + team.slice(1)}
