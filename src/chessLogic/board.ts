@@ -133,6 +133,8 @@ class Board {
     promote(pos: Vector, pieceCode: PieceCodes, promoteTeam: Teams): void {
         this._pieceId++
         this.setPos(pos, new pieceCodeClasses[pieceCode](promoteTeam, this._pieceId))
+        this.capturedPieces[promoteTeam].push(pieceCode)
+        this.capturedPieces[(promoteTeam === 'white') ? 'black' : 'white'].push('p')
     }
 
     // prev is the move that has just been played
