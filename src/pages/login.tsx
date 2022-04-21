@@ -109,11 +109,10 @@ class Login extends React.Component<LoginProps, LoginState>{
     let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
     if (this.state.loginError) passwordError = <h2 className='account-error'>{this.state.loginError}</h2>
     return <form id='account-form' onSubmit={this.handleSubmit.bind(this)}>
-      <img src="/assets/images/favicon-login-bg.png" alt="" className="bg-img" />
+      {/* <img src="/assets/images/favicon-login-bg.png" alt="" className="bg-img" /> */}
       <h1>Login</h1>
       {passwordError}
       <label htmlFor="username-input">
-        Username:
         <input
           type='text'
           id='username-input'
@@ -124,7 +123,6 @@ class Login extends React.Component<LoginProps, LoginState>{
       </label>
       {/* <br /> */}
       <label htmlFor='password-input'>
-        Password:
         <input
           type='password'
           id='password-input'

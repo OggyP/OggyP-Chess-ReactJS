@@ -1,4 +1,8 @@
 #account-form {
+    background-image: url("../resources/favicon-login-bg.png");
+    background-size: min(100vh - 40px - 60px, 100vw - 60px);
+    background-repeat: no-repeat;
+    background-position: calc((100vw - min(100vh - 40px - 60px, 100vw - 60px)) / 2), calc(((100vh - 40px) - min(100vh - 40px - 60px, 100vw - 60px)) / 2);
     // position: absolute;
     height: 100%;
     width: 100%;
@@ -17,12 +21,6 @@
         border-color: red;
         padding: 10px;
         border-radius: 5px;
-    }
-    .bg-img {
-        opacity: 0.5;
-        width: 40%;
-        position: absolute;
-        z-index: -1;
     }
     p {
         margin-top: 20px;

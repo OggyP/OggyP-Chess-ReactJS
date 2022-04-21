@@ -172,19 +172,15 @@ div.piece-style-btn {
         padding: 13px;
         border-radius: 20px;
         margin: 10px;
-        #eval-pvs {
-            tr {
-                td {
-                    &.eval {
-                        font-weight: bolder;
-                        padding-right: 20px;
-                        font-size: medium;
-                    }
-                    &.pv {
-                        font-size: medium;
-                        overflow-x: hidden;
-                    }
-                }
+        #eval-pvs td {
+            &.eval {
+                font-weight: bolder;
+                padding-right: 20px;
+                font-size: medium;
+            }
+            &.pv {
+                font-size: medium;
+                overflow-x: hidden;
             }
         }
     }
