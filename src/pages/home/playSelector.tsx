@@ -27,12 +27,18 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
                 return <div className='button disabled' key={index}>{time}</div>
         } else {
             // Preset time
-            return <div
-                key={index}
-                className={(selectedGameMode) ? undefined : 'disabled'}
-                onClick={() => { window.location.href = '/play/?mode=' + encodeURIComponent(`${selectedGameMode} ${time[0]}|${time[1]}`) }}>
-                {time[0]}+{time[1]}
-            </div>
+            if (selectedGameMode)
+                return <div
+                    key={index}
+                    onClick={() => { window.location.href = '/play/?mode=' + encodeURIComponent(`${selectedGameMode} ${time[0]}|${time[1]}`) }}>
+                    {time[0]}+{time[1]}
+                </div>
+            else
+                return <div
+                    key={index}
+                    className='disabled'>
+                    {time[0]}+{time[1]}
+                </div>
         }
     })
 

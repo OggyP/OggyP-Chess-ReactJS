@@ -18,13 +18,13 @@
         padding: 20px;
         grid-area: 1 / 1 / 3 / 2;
         .username {
-            font-size: max(3em, 3vw);
+            font-size: max(1.5em, 3vw);
         }
         .rating {
-            font-size: max(1em, 1.3vw);
+            font-size: max(0.7em, 1.3vw);
         }
         .sign-up-date {
-            font-size: max(0.7em, 1vw);
+            font-size: max(0.4em, 1vw);
         }
         .user-id {
             color: grey;
@@ -99,6 +99,9 @@
         }
     }
     #previous-games {
+        h3 {
+            text-align: center;
+        }
         padding: 20px;
         table {
             border-spacing: 0 3px;
@@ -152,10 +155,13 @@
         grid-area: 1 / 2 / 4 / 4;
     }
     #pgn-input-wrapper {
+        h3 {
+            font-size: 1em;
+        }
         padding: 20px;
         grid-area: 4 / 2 / 5 / 4;
         textarea {
-            width: 100%;
+            width: 80%;
             height: 75%;
         }
     }
