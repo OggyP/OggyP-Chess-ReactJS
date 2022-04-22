@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Vector } from '../chessLogic/types';
-import { convertToPosition, VecSame } from '../chessLogic/functions';
+import { convertToPosition, VecSame } from '../chessLogic/standard/functions';
 import { Arrow } from './custom-svgs';
 
 function EngineBestMove(props: { notFlipped: boolean; boxSize: number }) {

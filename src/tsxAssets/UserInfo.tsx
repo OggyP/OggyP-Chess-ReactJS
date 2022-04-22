@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { pieceCodesArray } from '../chessLogic/pieces';
+import { pieceCodesArray } from '../chessLogic/standard/pieces';
 import { Teams } from '../chessLogic/types'
 
 interface UserInfoProps {

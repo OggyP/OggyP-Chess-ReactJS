@@ -8,7 +8,7 @@ import PreviousMoves from './tsxAssets/previousMoves'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
-import { addVectorsAndCheckPos, cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/functions';
+import { addVectorsAndCheckPos, cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/standard/functions';
 import { MovesAndBoard } from './chessLogic/types'
 
 const boardSize = 0.87
@@ -292,31 +292,13 @@ class Game extends React.Component<GameProps, GameState> {
         this.state.game.doMove(startPos, endPos, promotion)
         let newViewNum = this.state.viewingMove + 1
 
-        const latestBoard = this.state.game.getLatest().board
-        if (latestBoard.enPassant) {
-            // person who just moved is white then check for black
-            const pawnMoveDirection: number = ((piece.team === 'white') ? 1 : -1)
-            // Plus x 
-            const xOffsets = [-1, 1]
-            for (let i = 0; i < xOffsets.length; i++) {
-                const checkPos = addVectorsAndCheckPos(latestBoard.enPassant, { x: xOffsets[i], y: -pawnMoveDirection })
-                if (!checkPos) continue
-                const checkPiece = latestBoard.getPos(checkPos)
-                if (!checkPiece || checkPiece.team === piece.team || !(checkPiece instanceof Pawn)) continue // if same as person who just moved
-                if (this.state.game.doMove(checkPos, latestBoard.enPassant)) {
-                    newViewNum++
-                    this.setState({
-                        premoves: [],
-                        premoveBoard: null
-                    })
-                    if (this.props.multiplayerWs)
-                        sendToWs(this.props.multiplayerWs, 'move', {
-                            startingPos: [checkPos.x, checkPos.y],
-                            endingPos: [latestBoard.enPassant.x, latestBoard.enPassant.y],
-                        })
-                    break
-                }
-            }
+        // Forced Enpassant
+        if (this.state.game.forcedEnpassant(this.props.multiplayerWs, piece.team)) {
+            newViewNum++
+            this.setState({
+                premoves: [],
+                premoveBoard: null
+            })
         }
 
         // Pre Moves

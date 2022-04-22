@@ -1,6 +1,7 @@
 import { Teams, Vector, MovesAndBoard, PieceCodes } from './types'
-import { ChessBoard as Board } from '../chessLogic'
+import  Board from './board'
 import { getVectors, legal, getRayCastVectors, addVectorsAndCheckPos } from './functions'
+import ChessPiece from '../default/pieces'
 
 let pieceCodesArray: PieceCodes[] = ['k', 'q', 'r', 'b', 'n', 'p']
 
@@ -12,27 +13,6 @@ const piecePoints = {
     n: 3,
     r: 5
 }
-
-class ChessPiece {
-    team: Teams;
-    code: PieceCodes;
-    key: number;
-
-    constructor(team: Teams, pieceCode: PieceCodes, pieceId: number) {
-        this.team = team;
-        this.code = pieceCode;
-        this.key = pieceId;
-    }
-
-    getMoves(pos: Vector, board: Board): MovesAndBoard[] {
-        return []
-    }
-
-    getTeam(): Teams {
-        return this.team
-    }
-}
-
 
 class Queen extends ChessPiece {
     constructor(team: Teams, pieceId: number) {

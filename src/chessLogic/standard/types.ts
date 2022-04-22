@@ -1,11 +1,10 @@
-import Board from './default/board'
-import Piece from './default/pieces'
-import { ChessPiece as StandardChessPiece } from './standard/pieces'
-import { ChessPiece as FisherRandomPiece } from './960/pieces'
+import Board from './board';
+import { ChessPiece } from './pieces'
+
 
 type PieceCodes = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
 type Teams = 'white' | 'black';
-type PieceAtPos = Piece | null
+type PieceAtPos = ChessPiece | null
 
 
 interface Vector {
@@ -27,7 +26,7 @@ interface MovesAndBoard {
 }
 
 interface VectorsAndPieces {
-    pieces: Piece[];
+    pieces: ChessPiece[];
     vectors: MovesAndBoard[];
 }
 

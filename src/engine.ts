@@ -1,4 +1,4 @@
-import { convertToPosition } from "./chessLogic/functions";
+import { convertToPosition } from "./chessLogic/standard/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
 import { Mutex } from 'async-mutex';

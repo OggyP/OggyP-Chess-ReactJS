@@ -1,6 +1,7 @@
-import { PieceCodes, Teams, Vector, PieceAtPos } from './types'
+import { PieceCodes, Teams, BoardPos, PieceAtPos } from './types'
 import { getRayCastVectors, getVectors, convertToPosition, convertToChessNotation } from './functions'
 import { Queen, Rook, Bishop, Knight, King, Pawn, pieceCodeClasses } from './pieces'
+import DefaultBoard from '../default/board'
 
 interface CastleInfoOfTeam {
     kingSide: boolean;
@@ -18,9 +19,9 @@ type gameOverRespone = {
     extraInfo?: string
 } | false
 
-class Board {
+class Board extends DefaultBoard {
     private _squares: Array<Array<PieceAtPos>>;
-    enPassant: Vector | null = null;
+    enPassant: BoardPos | null = null;
     halfMoveNumber: number;
     halfMovesSinceCaptureOrPawnMove: number;
     castleInfo: { white: CastleInfoOfTeam, black: CastleInfoOfTeam } = {
@@ -34,22 +35,24 @@ class Board {
     private _pieceId = 0;
     private _repitions = new Map<string, number>()
 
-    constructor(input: string | Board = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+    constructor(input: string | DefaultBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+        super('standard')
         this._squares = []
         for (let i = 0; i < 8; i++)
             this._squares.push([])
-        if (input instanceof Board) {
+        if (typeof input !== 'string') {
+            let board = input as Board
             for (let i = 0; i < 8; i++)
-                this._squares[i] = Object.assign([], input._squares[i])
-            this.halfMoveNumber = input.halfMoveNumber
-            this.halfMovesSinceCaptureOrPawnMove = input.halfMovesSinceCaptureOrPawnMove
-            this.castleInfo.white = Object.assign({}, input.castleInfo.white)
-            this.castleInfo.black = Object.assign({}, input.castleInfo.black)
-            this.enPassant = input.enPassant
-            this.capturedPieces.white = Object.assign([], input.capturedPieces.white)
-            this.capturedPieces.black = Object.assign([], input.capturedPieces.black)
-            this._pieceId = input._pieceId
-            this._repitions = input._repitions
+                this._squares[i] = Object.assign([], board._squares[i])
+            this.halfMoveNumber = board.halfMoveNumber
+            this.halfMovesSinceCaptureOrPawnMove = board.halfMovesSinceCaptureOrPawnMove
+            this.castleInfo.white = Object.assign({}, board.castleInfo.white)
+            this.castleInfo.black = Object.assign({}, board.castleInfo.black)
+            this.enPassant = board.enPassant
+            this.capturedPieces.white = Object.assign([], board.capturedPieces.white)
+            this.capturedPieces.black = Object.assign([], board.capturedPieces.black)
+            this._pieceId = board._pieceId
+            this._repitions = board._repitions
         } else {
             let FENparts = input.split(' ')
             if (FENparts.length !== 6) {
@@ -85,7 +88,7 @@ class Board {
 
             // Set Enpassant
             if (FENparts[3] !== '-')
-                this.enPassant = convertToPosition(FENparts[3]) as Vector;
+                this.enPassant = convertToPosition(FENparts[3]) as BoardPos;
 
             this.halfMovesSinceCaptureOrPawnMove = Number(FENparts[4])
             this.halfMoveNumber = (Number(FENparts[5]) - 1) * 2
@@ -120,8 +123,8 @@ class Board {
             }
         }
     }
-
-    doMove(pieceStartingPos: Vector, pieceEndingPos: Vector) {
+    
+    doMove(pieceStartingPos: BoardPos, pieceEndingPos: BoardPos) {
         const pieceToMove = this._squares[pieceStartingPos.y][pieceStartingPos.x]
         if (pieceToMove) {
             this._squares[pieceEndingPos.y][pieceEndingPos.x] = new pieceCodeClasses[pieceToMove.code](pieceToMove.team, pieceToMove.key)
@@ -130,7 +133,7 @@ class Board {
         this.enPassant = null
     }
 
-    promote(pos: Vector, pieceCode: PieceCodes, promoteTeam: Teams): void {
+    promote(pos: BoardPos, pieceCode: PieceCodes, promoteTeam: Teams): void {
         this._pieceId++
         this.setPos(pos, new pieceCodeClasses[pieceCode](promoteTeam, this._pieceId))
         this.capturedPieces[promoteTeam].push(pieceCode)
@@ -149,7 +152,7 @@ class Board {
 
     isGameOverFor(team: Teams): gameOverRespone {
         let legalMoves = false
-        let pos: Vector = { "x": 0, "y": 0 }
+        let pos: BoardPos = { "x": 0, "y": 0 }
         for (pos.x = 0; pos.x < 8 && !legalMoves; pos.x++)
             for (pos.y = 0; pos.y < 8 && !legalMoves; pos.y++) {
                 let piece = this.getPos(pos)
@@ -219,7 +222,7 @@ class Board {
     }
 
     swapPositions(): void {
-        let pos: Vector = { "x": 0, "y": 0 }
+        let pos: BoardPos = { "x": 0, "y": 0 }
         for (pos.x = 0; pos.x < 8; pos.x++)
             for (pos.y = 0; pos.y < 8; pos.y++) {
                 const pieceAtPos = this._squares[pos.y][pos.x]
@@ -229,7 +232,7 @@ class Board {
     }
 
     areLegalMoves(team: Teams): boolean {
-        let pos: Vector = { "x": 0, "y": 0 }
+        let pos: BoardPos = { "x": 0, "y": 0 }
         for (pos.x = 0; pos.x < 8; pos.x++)
             for (pos.y = 0; pos.y < 8; pos.y++) {
                 const piece = this._squares[pos.y][pos.x]
@@ -241,37 +244,37 @@ class Board {
     }
 
     inCheck(team: Teams): boolean {
-        let pos: Vector = { "x": 0, "y": 0 }
+        let pos: BoardPos = { "x": 0, "y": 0 }
         for (pos.x = 0; pos.x < 8; pos.x++)
             for (pos.y = 0; pos.y < 8; pos.y++) {
                 let piece = this._squares[pos.y][pos.x]
                 if (piece instanceof King && piece.team === team) {
                     // Now we have the correct King to check
-                    const QueenAndRookVectors: Vector[] = [
+                    const QueenAndRookBoardPoss: BoardPos[] = [
                         { "x": 0, "y": 1 },
                         { "x": 1, "y": 0 },
                         { "x": 0, "y": -1 },
                         { "x": -1, "y": 0 }
                     ]
-                    let pieces = getRayCastVectors(this, QueenAndRookVectors, pos, team).pieces;
+                    let pieces = getRayCastVectors(this, QueenAndRookBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
                         if (pieces[i] instanceof Queen || pieces[i] instanceof Rook)
                             return true;
 
-                    const QueenAndBishopVectors: Vector[] = [
+                    const QueenAndBishopBoardPoss: BoardPos[] = [
                         { "x": 1, "y": 1 },
                         { "x": 1, "y": -1 },
                         { "x": -1, "y": -1 },
                         { "x": -1, "y": 1 }
                     ]
-                    pieces = getRayCastVectors(this, QueenAndBishopVectors, pos, team).pieces;
+                    pieces = getRayCastVectors(this, QueenAndBishopBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
                         if (pieces[i] instanceof Queen || pieces[i] instanceof Bishop)
                             return true;
 
-                    const knightVectors: Vector[] = [
+                    const knightBoardPoss: BoardPos[] = [
                         { "x": 2, "y": 1 },
                         { "x": 1, "y": 2 },
                         { "x": 2, "y": -1 },
@@ -281,13 +284,13 @@ class Board {
                         { "x": -2, "y": 1 },
                         { "x": -1, "y": 2 }
                     ]
-                    pieces = getVectors(this, knightVectors, pos, team).pieces;
+                    pieces = getVectors(this, knightBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
                         if (pieces[i] instanceof Knight)
                             return true;
 
-                    const kingVectors: Vector[] = [
+                    const kingBoardPoss: BoardPos[] = [
                         { "x": 0, "y": 1 },
                         { "x": 1, "y": 1 },
                         { "x": 1, "y": 0 },
@@ -297,25 +300,25 @@ class Board {
                         { "x": -1, "y": 0 },
                         { "x": -1, "y": 1 },
                     ]
-                    pieces = getVectors(this, kingVectors, pos, team).pieces;
+                    pieces = getVectors(this, kingBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
                         if (pieces[i] instanceof King)
                             return true;
 
-                    let pawnVectors
+                    let pawnBoardPoss
                     if (team === "white")
-                        pawnVectors = [
+                        pawnBoardPoss = [
                             { "x": 1, "y": -1 },
                             { "x": -1, "y": -1 }
                         ]
                     else
-                        pawnVectors = [
+                        pawnBoardPoss = [
                             { "x": 1, "y": 1 },
                             { "x": -1, "y": 1 }
                         ]
 
-                    pieces = getVectors(this, pawnVectors, pos, team).pieces;
+                    pieces = getVectors(this, pawnBoardPoss, pos, team).pieces;
                     for (let i = 0; i < pieces.length; i++)
                         if (pieces[i] instanceof Pawn)
                             return true;
@@ -324,16 +327,16 @@ class Board {
         return false;
     }
 
-    getPos(position: Vector): PieceAtPos {
+    getPos(position: BoardPos): PieceAtPos {
         if (position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8) return null
         return this._squares[position.y][position.x]
     }
 
-    setPos(position: Vector, piece: PieceAtPos): void {
+    setPos(position: BoardPos, piece: PieceAtPos): void {
         this._squares[position.y][position.x] = piece
     }
 
-    static getShortNotation(startPos: Vector, endPos: Vector, moveType: string[], startBoard: Board, append: string, promotionChoice?: PieceCodes): string {
+    static getShortNotation(startPos: BoardPos, endPos: BoardPos, moveType: string[], startBoard: Board, append: string, promotionChoice?: PieceCodes): string {
         const startingPiece = startBoard.getPos(startPos)
         let text = ''
         if (startingPiece) {
@@ -351,7 +354,7 @@ class Board {
                 else {
                     let sameX = false
                     let sameY = false
-                    let pos: Vector = { "x": 0, "y": 0 }
+                    let pos: BoardPos = { "x": 0, "y": 0 }
                     for (pos.x = 0; pos.x < 8; pos.x++)
                         for (pos.y = 0; pos.y < 8; pos.y++)
                             if (pos.x !== startPos.x || pos.y !== startPos.y) {
