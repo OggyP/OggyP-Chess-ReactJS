@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChessBoard, ChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, Pawn } from './chessLogic'
+import { ChessBoardType, getChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector } from './chessLogic'
 import PromotePiece from './tsxAssets/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
@@ -8,8 +8,13 @@ import PreviousMoves from './tsxAssets/previousMoves'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
-import { addVectorsAndCheckPos, cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/standard/functions';
+import { cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/standard/functions';
 import { MovesAndBoard } from './chessLogic/types'
+import GameStandard from './chessLogic/standard/game'
+import GameFisherRandom from './chessLogic/960/game'
+
+type gameTypes = typeof GameStandard | typeof GameFisherRandom
+type games = GameStandard | GameFisherRandom
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -28,7 +33,7 @@ interface PlayerInfo {
 }
 
 interface GameState {
-    game: ChessGame
+    game: games
     viewingMove: number
     validMoves: MovesAndBoard[]
     selectedPiece: Vector | null
@@ -37,7 +42,7 @@ interface GameState {
     promotionSelector: {
         team: Teams
         moveType: string[]
-        board: ChessBoard
+        board: ChessBoardType
         pos: {
             start: Vector
             end: Vector
@@ -52,7 +57,7 @@ interface GameState {
         white: TimerInfo
         black: TimerInfo
     }
-    premoveBoard: ChessBoard | null
+    premoveBoard: ChessBoardType | null
     premoves: { start: Vector, end: Vector }[]
     onMobile: boolean
     piecesStyle: string
@@ -64,10 +69,13 @@ interface GameState {
     resetGameFEN: string
 }
 
+type gameModes = 'standard' | '960'
+
 interface GameProps {
     fen?: string
     pgn?: string
     multiplayerWs?: WebSocket
+    mode: gameModes
     team: Teams | "any"
     onMounted?: Function
     players?: {
@@ -89,9 +97,11 @@ class Game extends React.Component<GameProps, GameState> {
     getDraggingPiece: Function | undefined
     clearCustomSVGS: Function | undefined
     engineMoveType = 'movetime 60000'
+    gameType: gameTypes
 
     constructor(props: GameProps) {
         super(props)
+        this.gameType = getChessGame(this.props.mode)
         if (!props.multiplayerWs || (props.players && ((props.players.white.username === 'OggyP' && props.team === 'white') || (props.players.black.username === 'OggyP' && props.team === 'black')))) {
             let startingCommands = [
                 "isready",
@@ -108,7 +118,7 @@ class Game extends React.Component<GameProps, GameState> {
             height: window.innerHeight
         }
         let playerInfo = null
-        const game = new ChessGame((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
+        const game = new this.gameType((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
         if (props.pgn) {
             playerInfo = game.getPlayerInfo()
             game.isGameOver()
@@ -220,11 +230,11 @@ class Game extends React.Component<GameProps, GameState> {
     handlePromotionClick(piece: PieceCodes): void {
         const info = this.state.promotionSelector
         if (info && !this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
-            const newBoard = new ChessBoard(info.board)
+            const newBoard = new ChessBoardType(info.board)
             newBoard.promote(info.pos.end, piece, info.team)
             if (!newBoard.inCheck(info.team)) {
                 const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-                const shortNotation = ChessBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
+                const shortNotation = newBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
                 this.state.game.newMove({
                     board: newBoard,
                     text: shortNotation,
@@ -276,7 +286,7 @@ class Game extends React.Component<GameProps, GameState> {
             start: start,
             end: end
         })
-        let preMoveBoard = new ChessBoard(this.state.premoveBoard || this.latestBoard())
+        let preMoveBoard = new ChessBoardType(this.state.premoveBoard || this.latestBoard())
         preMoveBoard.setPos(end, preMoveBoard.getPos(start))
         preMoveBoard.setPos(start, null)
         this.setState({
@@ -324,7 +334,7 @@ class Game extends React.Component<GameProps, GameState> {
                     })
                 } else {
                     // Update Premove board
-                    const newBoard = new ChessBoard(this.latestBoard())
+                    const newBoard = new ChessBoardType(this.latestBoard())
                     this.state.premoves.forEach(premove => {
                         newBoard.setPos(premove.end, newBoard.getPos(premove.start))
                         newBoard.setPos(premove.start, null)
@@ -369,7 +379,7 @@ class Game extends React.Component<GameProps, GameState> {
             queries += ((queries) ? '&' : '?') + "fen=" + this.state.game.startingFEN.replace(/ /g, '_')
             console.log(queries)
         }
-        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis/' + queries);
+        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', window.location.pathname + queries);
     }
 
     handlePieceClick(posClicked: Vector): void {
@@ -388,17 +398,17 @@ class Game extends React.Component<GameProps, GameState> {
         }
     }
 
-    latestBoard(): ChessBoard {
+    latestBoard(): ChessBoardType {
         return this.state.game.getLatest().board
     }
 
-    viewingBoard(): ChessBoard {
+    viewingBoard(): ChessBoardType {
         return this.state.game.getMove(this.state.viewingMove).board
     }
 
     handleMoveClick(posClicked: Vector): void {
         if (!this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount()) {
-            let newBoard: ChessBoard | null = null
+            let newBoard: ChessBoardType | null = null
             let moveType: string[] | null = null
             let displayPos: Vector | null = null
 
@@ -420,7 +430,7 @@ class Game extends React.Component<GameProps, GameState> {
 
             if (!displayPos) throw new Error("Display pos is null");
 
-            newBoard = newBoard as ChessBoard
+            newBoard = newBoard as ChessBoardType
 
             let isPromotion = false
             if (selectedPiece && selectedPiecePos) {
@@ -448,7 +458,7 @@ class Game extends React.Component<GameProps, GameState> {
             })
             if (isPromotion) return
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-            const shortNotation = ChessBoard.getShortNotation(selectedPiecePos, displayPos, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
+            const shortNotation = newBoard.getShortNotation(selectedPiecePos, displayPos, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
             this.state.game.newMove({
                 board: newBoard,
                 text: shortNotation,
@@ -541,7 +551,7 @@ class Game extends React.Component<GameProps, GameState> {
         game.startingFEN = fen
         game.shortNotationMoves = ""
         this.setState({
-            game: new ChessGame({ fen: { val: fen } })
+            game: new this.gameType({ fen: { val: fen } })
         });
         if (this.engine) {
             this.engine.reset()

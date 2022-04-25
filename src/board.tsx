@@ -5,7 +5,7 @@ import Square from './tsxAssets/square'
 import ValidMove from './tsxAssets/validMove'
 import Coords from './tsxAssets/coords'
 import { Arrow, Circle } from './tsxAssets/custom-svgs'
-import { ChessBoard, ChessPiece, Teams, Vector } from './chessLogic'
+import { ChessBoardType, ChessPiece, Teams, Vector } from './chessLogic'
 import React from 'react';
 import EngineBestMove from './tsxAssets/engineBestMove'
 import { VecSame } from './chessLogic/standard/functions'
@@ -16,10 +16,10 @@ interface piecesArray {
 }
 
 interface BoardProps {
-    board: ChessBoard
+    board: ChessBoardType
     validMoves: {
         "move": { "x": number, "y": number },
-        "board": ChessBoard,
+        "board": ChessBoardType,
         "moveType": string[]
     }[]
     selectedPiece: { "x": number, "y": number } | null

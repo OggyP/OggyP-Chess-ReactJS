@@ -6,6 +6,7 @@ import { ChessPiece as FisherRandomPiece } from './960/pieces'
 type PieceCodes = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
 type Teams = 'white' | 'black';
 type PieceAtPos = Piece | null
+type GameModes = 'standard' | '960'
 
 
 interface Vector {
@@ -31,4 +32,4 @@ interface VectorsAndPieces {
     vectors: MovesAndBoard[];
 }
 
-export type { PieceCodes, BoardPos, Teams, Vector, MovesAndBoard, PieceAtPos, VectorsAndPieces }
+export type { GameModes, PieceCodes, BoardPos, Teams, Vector, MovesAndBoard, PieceAtPos, VectorsAndPieces }

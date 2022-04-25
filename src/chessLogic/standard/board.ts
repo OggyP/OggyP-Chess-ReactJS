@@ -335,8 +335,12 @@ class Board extends DefaultBoard {
     setPos(position: BoardPos, piece: PieceAtPos): void {
         this._squares[position.y][position.x] = piece
     }
+    
+    getShortNotation(startPos: BoardPos, endPos: BoardPos, moveType: string[], startBoard: Board, append: string, promotionChoice?: PieceCodes): string {
+        return Board.getShortNotationStatic(startPos, endPos, moveType, startBoard, append, promotionChoice)
+    }
 
-    static getShortNotation(startPos: BoardPos, endPos: BoardPos, moveType: string[], startBoard: Board, append: string, promotionChoice?: PieceCodes): string {
+    static getShortNotationStatic(startPos: BoardPos, endPos: BoardPos, moveType: string[], startBoard: Board, append: string, promotionChoice?: PieceCodes): string {
         const startingPiece = startBoard.getPos(startPos)
         let text = ''
         if (startingPiece) {

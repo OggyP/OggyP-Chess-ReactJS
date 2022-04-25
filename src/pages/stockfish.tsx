@@ -11,6 +11,7 @@ function StockfishGame() {
   if (gameStarted)
     return <Game
       team='white'
+      mode={'standard'}
       allowMoving={true}
       allowPreMoves={true}
       versusStockfish={{

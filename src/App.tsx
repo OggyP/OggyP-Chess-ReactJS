@@ -21,7 +21,7 @@ function App() {
       <NavBar />
       <Routes>
         <Route path='/' element={<WelcomePage />} />
-        <Route path='/analysis' element={<Analysis />} />
+        <Route path='/analysis/*' element={<Analysis />} />
         <Route path='/viewGame/*' element={<ViewGame url={wsURL} />} />
         <Route path='/login' element={<Login url={wsURL} />} />
         <Route path='/register' element={<Register url={wsURL} />} />

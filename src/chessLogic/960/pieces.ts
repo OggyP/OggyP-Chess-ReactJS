@@ -62,6 +62,7 @@ class Knight extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        console.log('960 knight')
         const vectors: Vector[] = [
             { "x": 2, "y": 1 },
             { "x": 1, "y": 2 },
@@ -70,7 +71,8 @@ class Knight extends ChessPiece {
             { "x": -1, "y": -2 },
             { "x": -2, "y": -1 },
             { "x": -2, "y": 1 },
-            { "x": -1, "y": 2 }
+            { "x": -1, "y": 2 },
+            { "x": 0, "y": 2 }
         ]
         let moves = getVectors(board, vectors, pos, this.team).vectors
 

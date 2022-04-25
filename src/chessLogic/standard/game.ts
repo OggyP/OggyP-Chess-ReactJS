@@ -417,7 +417,7 @@ class Game {
                 newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
             }
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-            const shortNotation = Board.getShortNotation(startPos, endPos, move.moveType, latestBoard as Board, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
+            const shortNotation = newBoard.getShortNotation(startPos, endPos, move.moveType, latestBoard as Board, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
             console.log(newBoard.capturedPieces)
             this.newMove({
                 board: newBoard,

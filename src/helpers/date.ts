@@ -19,9 +19,9 @@ function formatDate(timestamp: number) {
     let yesterDate = yesterday.toLocaleDateString(undefined, options).split(', ');
 
     let day: string;
-    if (date[1] == currentDate[1])
+    if (date[1] === currentDate[1])
         day = "Today";
-    else if (date[1] == yesterDate[1])
+    else if (date[1] === yesterDate[1])
         day = "Yesterday";
     else
         day = "on " + date[0] + ", " + date[1];

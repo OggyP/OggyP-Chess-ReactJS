@@ -67,7 +67,7 @@ class DefaultBoard {
 
     }
 
-    static getShortNotation(startPos: BoardPos, endPos: BoardPos, moveType: string[], startBoard: DefaultBoard, append: string, promotionChoice?: PieceCodes): string {
+    getShortNotation(startPos: BoardPos, endPos: BoardPos, moveType: string[], startBoard: DefaultBoard, append: string, promotionChoice?: PieceCodes): string {
         return 'a1'
     }
 }

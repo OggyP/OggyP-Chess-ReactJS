@@ -1,5 +1,7 @@
+import { sendToWs } from '../../helpers/wsHelper';
+import DefaultBoard from '../default/board';
 import Board from './board'
-import { convertToPosition, convertToChessNotation } from './functions';
+import { convertToPosition, convertToChessNotation, addVectorsAndCheckPos } from './functions';
 import { Pawn } from './pieces';
 import { Vector, Teams, PieceCodes } from './types'
 
@@ -22,7 +24,7 @@ type GameOverType = {
 } | false
 
 interface History {
-    board: Board
+    board: DefaultBoard
     text: string
     move: {
         start: Vector
@@ -415,7 +417,7 @@ class Game {
                 newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
             }
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-            const shortNotation = Board.getShortNotation(startPos, endPos, move.moveType, latestBoard, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
+            const shortNotation = newBoard.getShortNotation(startPos, endPos, move.moveType, latestBoard as Board, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
             console.log(newBoard.capturedPieces)
             this.newMove({
                 board: newBoard,
@@ -432,6 +434,32 @@ class Game {
             })
             this.setGameOver(isGameOver)
             return true
+        }
+        return false
+    }
+
+    forcedEnpassant(ws: WebSocket | undefined, team: Teams) {
+        const latestBoardDefault = this.getLatest().board
+        const latestBoard = latestBoardDefault as Board
+        if (latestBoard.enPassant) {
+            // person who just moved is white then check for black
+            const pawnMoveDirection: number = ((team === 'white') ? 1 : -1)
+            // Plus x 
+            const xOffsets = [-1, 1]
+            for (let i = 0; i < xOffsets.length; i++) {
+                const checkPos = addVectorsAndCheckPos(latestBoard.enPassant, { x: xOffsets[i], y: -pawnMoveDirection })
+                if (!checkPos) continue
+                const checkPiece = latestBoard.getPos(checkPos)
+                if (!checkPiece || checkPiece.team === team || !(checkPiece instanceof Pawn)) continue // if same as person who just moved
+                if (this.doMove(checkPos, latestBoard.enPassant)) {
+                    if (ws)
+                        sendToWs(ws, 'move', {
+                            startingPos: [checkPos.x, checkPos.y],
+                            endingPos: [latestBoard.enPassant.x, latestBoard.enPassant.y],
+                        })
+                    return true
+                }
+            }
         }
         return false
     }

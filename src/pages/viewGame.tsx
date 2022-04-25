@@ -6,6 +6,7 @@ import Game from '../game'
 import { sendToWs } from '../helpers/wsHelper'
 import { Teams } from '../chessLogic';
 import ErrorPage from './Error';
+import { GameModes } from '../chessLogic/types';
 
 interface ViewGameProps {
   url: string
@@ -15,6 +16,7 @@ interface ViewGameState {
   PGN: string | null
   error: null | JSX.Element
   termination: string
+  gameMode: string | undefined
 }
 
 class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
@@ -33,7 +35,8 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
     this.state = {
       PGN: null,
       error: null,
-      termination: 'Unknown'
+      termination: 'Unknown',
+      gameMode: undefined
     }
 
     this.ws.onmessage = (message) => {
@@ -44,7 +47,8 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
           console.log(data.pgn)
           this.setState({
             PGN: data.pgn,
-            termination: data.termination
+            termination: data.termination,
+            gameMode: data.gameMode
           })
           break
         case 'error':
@@ -83,6 +87,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
         termination={this.state.termination}
         allowMoving={false}
         allowPreMoves={false}
+        mode={this.state.gameMode as GameModes}
       />
     else
       return <div>

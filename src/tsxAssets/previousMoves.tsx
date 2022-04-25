@@ -1,5 +1,10 @@
 import React from 'react';
-import { ChessGame as game } from '../chessLogic'
+import ChessGameStandard from '../chessLogic/standard/game'
+import GameStandard from '../chessLogic/standard/game'
+import GameFisherRandom from '../chessLogic/960/game'
+
+type gameTypes = typeof GameStandard | typeof GameFisherRandom
+type games = GameStandard | GameFisherRandom
 
 interface PreviousMovesProps {
   onMobile: boolean,
@@ -10,7 +15,7 @@ interface PreviousMovesProps {
   },
   engineInfo: JSX.Element | null,
   goToMove: Function,
-  game: game,
+  game: games,
   viewingMove: number,
   latestMove: number,
 }
