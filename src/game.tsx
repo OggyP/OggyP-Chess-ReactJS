@@ -1,6 +1,6 @@
 import React from 'react';
-import { ChessBoard, ChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, Pawn } from './chessLogic'
-import PromotePiece from './tsxAssets/promotePiece'
+import { ChessBoard, ChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, Pawn, pieceStyle } from './chessLogic'
+import PromotePiece from './tsxAssets/pieces/promotePiece'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
@@ -10,6 +10,7 @@ import UserInfoDisplay from './tsxAssets/UserInfo'
 import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 import { addVectorsAndCheckPos, cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/functions';
 import { MovesAndBoard } from './chessLogic/types'
+import { pieceImageType } from './tsxAssets/pieces/pieceInfo';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -55,7 +56,7 @@ interface GameState {
     premoveBoard: ChessBoard | null
     premoves: { start: Vector, end: Vector }[]
     onMobile: boolean
-    piecesStyle: string
+    piecesStyle: pieceStyle
     boardStyle: {
         white: string,
         black: string,
@@ -167,7 +168,7 @@ class Game extends React.Component<GameProps, GameState> {
             premoveBoard: null,
             premoves: [],
             onMobile: windowSize.height * minAspectRatio > windowSize.width,
-            piecesStyle: (getCookie('pieceStyle') || 'normal'),
+            piecesStyle: (getCookie('pieceStyle') as pieceStyle|| 'normal'),
             boardStyle: boardStyle,
             loadedNNUE: (this.engine?.loadedNNUE || false),
             resetGameFEN: ""
@@ -618,6 +619,7 @@ class Game extends React.Component<GameProps, GameState> {
                 const y = (promotionSelectorVal.team === 'white') ? index : (7 - index)
                 return <PromotePiece
                     key={index}
+                    style={this.state.piecesStyle}
                     team={promotionSelectorVal.team}
                     x={(this.state.notFlipped) ? x * 12.5 : (7 - x) * 12.5}
                     y={(this.state.notFlipped) ? y * 12.5 : (7 - y) * 12.5}
@@ -688,9 +690,10 @@ class Game extends React.Component<GameProps, GameState> {
                 isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
                 onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
                 boardStyle={this.state.boardStyle}
-            />
-        } else {
-            boardToDisplay = <Board
+                pieceStyle={this.state.piecesStyle}
+                />
+            } else {
+                boardToDisplay = <Board
                 board={this.state.premoveBoard}
                 validMoves={[]}
                 selectedPiece={this.state.selectedPiece}
@@ -709,6 +712,7 @@ class Game extends React.Component<GameProps, GameState> {
                 deletePremoves={() => { this.setState({ premoves: [], premoveBoard: null }) }}
                 onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
                 boardStyle={this.state.boardStyle}
+                pieceStyle={this.state.piecesStyle}
             />
         }
 
@@ -782,10 +786,13 @@ class Game extends React.Component<GameProps, GameState> {
                 : null}
         </div>
 
-        const piecesStyleSelector = ['normal', 'medieval', 'ewan', 'sus']
-        const pieceSelector = piecesStyleSelector.map((item) => {
+        const piecesStyleSelector: pieceStyle[] = ['normal', 'medieval', 'ewan', 'sus']
+        const pieceSelector = piecesStyleSelector.map((item: pieceStyle) => {
             return <div key={item} className={'piece-style-btn ' + item + ((this.state.piecesStyle === item) ? ' current' : '')} onClick={() => { this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100) }}>
-                <div className={'display-piece n l'} />
+                <img className={'display-piece n l'} 
+                    alt={item + " style"}
+                    src={'/assets/images/svg/' + item + '/white knight' + '.' + pieceImageType[item]}
+                />
             </div>
         })
 

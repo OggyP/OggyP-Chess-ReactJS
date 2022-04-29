@@ -1,6 +1,6 @@
 import '../css/index.scss';
 import '../css/chess.scss';
-import '../svg/assets.scss'
+// import '../svg/assets.scss'
 import Game from '../game'
 import { useState } from 'react';
 

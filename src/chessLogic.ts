@@ -4,5 +4,7 @@ import { Queen, Rook, Bishop, Knight, ChessPiece, Pawn, King } from './chessLogi
 import Board from './chessLogic/board'
 import Game from './chessLogic/game'
 
+type pieceStyle = 'normal' | 'medieval' | 'ewan' | 'sus'
+
 export { Board as ChessBoard, Game as ChessGame, ChessPiece, King, Queen, Rook, Bishop, Knight, Pawn, convertToChessNotation }
-export type { Teams, Vector, PieceCodes, PieceAtPos }
+export type { Teams, Vector, PieceCodes, PieceAtPos, pieceStyle }

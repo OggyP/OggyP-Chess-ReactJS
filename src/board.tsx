@@ -1,11 +1,11 @@
-import Piece from './tsxAssets/piece'
-import DraggedPiece from './tsxAssets/draggingPiece'
-import TouchDraggedPiece from './tsxAssets/touchDraggingPiece'
+import Piece from './tsxAssets/pieces/piece'
+import DraggedPiece from './tsxAssets/pieces/draggingPiece'
+import TouchDraggedPiece from './tsxAssets/pieces/touchDraggingPiece'
 import Square from './tsxAssets/square'
 import ValidMove from './tsxAssets/validMove'
 import Coords from './tsxAssets/coords'
 import { Arrow, Circle } from './tsxAssets/custom-svgs'
-import { ChessBoard, ChessPiece, Teams, Vector } from './chessLogic'
+import { ChessBoard, ChessPiece, Teams, Vector, pieceStyle } from './chessLogic'
 import React from 'react';
 import EngineBestMove from './tsxAssets/engineBestMove'
 import { VecSame } from './chessLogic/functions'
@@ -41,6 +41,7 @@ interface BoardProps {
     premoves?: { start: Vector, end: Vector }[]
     deletePremoves?: Function
     onMounted?: Function
+    pieceStyle: pieceStyle
     boardStyle: {
         white: string,
         black: string,
@@ -332,6 +333,7 @@ class Board extends React.Component<BoardProps, BoardState> {
                     return [<DraggedPiece key={item.piece.key}
                         type={item.piece.code}
                         team={item.piece.team}
+                        style={this.props.pieceStyle}
                         startingMousePos={this.mousePos}
                         halfBoxSize={this.props.boxSize / 2}
                     />, item.piece.key]
@@ -340,12 +342,14 @@ class Board extends React.Component<BoardProps, BoardState> {
                         type={item.piece.code}
                         team={item.piece.team}
                         startingMousePos={this.mousePos}
+                        style={this.props.pieceStyle}
                         halfBoxSize={this.props.boxSize / 2}
                     />, item.piece.key]
             } else
                 return [<Piece key={item.piece.key}
                     type={item.piece.code}
                     team={item.piece.team}
+                    style={this.props.pieceStyle}
                     x={this.props.boxSize * ((this.props.notFlipped) ? item.pos.x : 7 - item.pos.x)}
                     y={this.props.boxSize * ((this.props.notFlipped) ? item.pos.y : 7 - item.pos.y)}
                     showAnimation={true}
@@ -375,6 +379,7 @@ class Board extends React.Component<BoardProps, BoardState> {
                 ghostPiece = <Piece
                     type={piece.code}
                     team={piece.team}
+                    style={this.props.pieceStyle}
                     x={this.props.boxSize * ((this.props.notFlipped) ? this.props.selectedPiece.x : 7 - this.props.selectedPiece.x)}
                     y={this.props.boxSize * ((this.props.notFlipped) ? this.props.selectedPiece.y : 7 - this.props.selectedPiece.y)}
                     showAnimation={false}
