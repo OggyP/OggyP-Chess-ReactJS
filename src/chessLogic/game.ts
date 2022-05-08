@@ -327,7 +327,8 @@ class Game {
         if (!Game.openings) return
         const moves = this.shortNotationMoves.split(' ')
         for (let i = 0; i < moves.length; i++) {
-            const opening = Game.openings[moves.slice(0, i).join(' ')]
+            const pgnToCheck = moves.slice(0, i + 1).join(' ')
+            const opening = Game.openings[pgnToCheck]
             if (!opening) continue
             this.metaValues.set('Opening', opening.Name)
             this.metaValues.set('ECO', opening.ECO)
