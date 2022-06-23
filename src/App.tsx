@@ -13,7 +13,7 @@ import VersusStockfish from './pages/stockfish'
 import './css/all.scss'
 import './css/normalise.scss'
 
-const wsURL = "wss://api.oggyp.com/ws/chess"
+const wsURL = "wss://api.oggyp.com/ws/OLDchess"
 
 function App() {
   return (
