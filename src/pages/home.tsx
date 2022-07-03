@@ -1,26 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { sendToWs } from '../helpers/wsHelper'
 import '../css/home.scss'
 import { checkForToken, deleteCookie, tokenType } from '../helpers/getToken';
 import { formatDate } from '../helpers/date'
 import PlaySelectionMenu from './home/playSelector'
+import { userInfo } from '../helpers/verifyToken'
 
 interface HomeProps {
-    url: string
-}
-
-interface HomeState {
     userInfo: userInfo | null
-    gameInfo: gameInfo[]
-    pgnInput: string
-    copiedId: null | number
-}
-
-interface userInfo {
-    username: string
-    userId: number
-    rating: number
-    signUpDate: number
+    url: string
 }
 
 interface gameInfo {
@@ -34,156 +22,123 @@ interface gameInfo {
     createdAt: string
 }
 
-class Home extends React.Component<HomeProps, HomeState>{
+function Home(props: HomeProps) {
 
-    ws = new WebSocket(this.props.url)
-    token = checkForToken()
+    const [gameInfo, setGameInfo] = useState<gameInfo[]>([])
+    const [pgnInput, setPgnInput] = useState<string>("")
+    const [copiedId, setCopiedId] = useState<null | number>(null)
 
-    constructor(props: HomeProps) {
-        super(props)
-
-        this.state = {
-            userInfo: null,
-            gameInfo: [],
-            pgnInput: '',
-            copiedId: null
-        }
-
-        if (!this.token) {
-            document.location.href = '/login';
-            return
-        }
-
-        this.ws.onmessage = (message) => {
-            const event = JSON.parse(message.data)
-            const data = event.data
-            console.log(event)
-            switch (event.type) {
-                case 'login':
-                    if (data.status === 'success') {
-                        this.setState({
-                            userInfo: {
-                                username: data.username,
-                                userId: data.userId,
-                                signUpDate: data.signUp,
-                                rating: data.rating
-                            }
-                        })
-                    } else {
-                        document.location.href = '/login';
-                        deleteCookie('token')
+    useEffect(() => {
+        const getLatestGames = async () => {
+            if (props.userInfo) {
+                let response = await fetch(props.url + "games/latest", {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json;charset=utf-8',
+                        'Token': props.userInfo.tokenInfo.token,
+                        'User-Id': props.userInfo.tokenInfo.userId.toString()
                     }
-                    break;
-                case 'recentGames':
-                    this.setState({
-                        gameInfo: data.gameList
-                    })
-                    break;
+                })
+
+                if (response.ok) {
+                    const data = await response.json()
+                    setGameInfo(data)
+                } else
+                    document.location.href = encodeURI(`/error?title=HTTP Error: ${response.status}&desc=${await response.text()}`)
             }
-
         }
 
-        this.ws.onclose = () => {
+        getLatestGames()
+    }, [props.url])
 
-        }
+    let userInfoPage = <div className='user-info'>
+        <h1>Loading User Info</h1>
+    </div>
 
-        this.ws.onerror = function () {
-        }
+    if (props.userInfo)
+        userInfoPage = <div className='user-info'>
+            <h1 className='username'>{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
+            <h3 className='rating'>Rating: {Math.round(props.userInfo.rating)}</h3>
+            <h3 className='sign-up-date'>Signed Up: {formatDate(new Date(props.userInfo.createdAt))}</h3>
+        </div>
 
-        this.ws.onopen = () => {
-            const token = this.token as tokenType
-            sendToWs(this.ws, "token", [
-                ['token', token.token],
-                ['userId', token.userId]
-            ])
-        }
+    let games: JSX.Element[] = []
+    for (let i = 0; i < gameInfo.length; i++) {
+        const value = gameInfo[i]
+        const urlToGoTo = '/viewGame/' + value.id + ((value.white === props.userInfo?.username) ? '' : '?viewAs=black')
+        const successfullyCopied = (copiedId && copiedId === value.id)
+        games.push(<tr className='game-normal-info' key={value.id * 2}>
+            <td onClick={() => document.location.href = urlToGoTo} className='username white'>{value.white}</td>
+            <td onClick={() => document.location.href = urlToGoTo} className='result'>{value.score}</td>
+            <td onClick={() => document.location.href = urlToGoTo} className='username black'>{value.black}</td>
+            <td onClick={() => {
+                navigator.clipboard.writeText("https://chess.oggyp.com" + urlToGoTo);
+                setCopiedId(value.id);
+            }
+            } className={'copy' + ((successfullyCopied) ? ' success' : '')}>
+                {(successfullyCopied) ?
+                    <span className="material-icons">done</span> :
+                    <span className="material-icons">content_copy</span>}
+            </td>
+        </tr>)
     }
 
-    render() {
-        let userInfoPage = <div className='user-info'>
-            <h1>Loading User Info</h1>
+    const defaultTimes: ([number, number] | string)[] = [
+        [0.5, 0],
+        [0.5, 1],
+        [1, 0],
+        [1, 1],
+        [3, 0],
+        [5, 0],
+        [5, 3],
+        [10, 0],
+        [10, 5],
+        [30, 0],
+        [30, 20],
+        "Custom"
+    ]
+
+    const gameModes: [string, string][] = [
+        ['standard', 'Standard Chess'],
+        ['960', 'Chess 960']
+    ]
+
+    // const fullChessModeNames = {
+    //     'standard': 'Standard Chess',
+    //     '960': 'Chess 960'
+    // }
+
+    return <div id='home-wrapper'>
+        {userInfoPage}
+        <PlaySelectionMenu
+            gameModes={gameModes}
+            timeSelections={defaultTimes}
+        />
+        <div id='pgn-input-wrapper'>
+            <label htmlFor='pgn-input'><h3>PGN Input</h3></label>
+            <textarea id='pgn-input' onChange={(event) => setPgnInput(event.target.value)}></textarea>
+            {
+                (pgnInput) ?
+                    <button onClick={() => { window.location.href = '/analysis/?pgn=' + encodeURIComponent(pgnInput) }}>Import</button>
+                    : null
+            }
         </div>
-        if (this.state.userInfo) {
-            userInfoPage = <div className='user-info'>
-                <h1 className='username'>{this.state.userInfo.username}  <span className='user-id'>ID: {this.state.userInfo.userId}</span></h1>
-                <h3 className='rating'>Rating: {Math.round(this.state.userInfo.rating)}</h3>
-                <h3 className='sign-up-date'>Signed Up: {formatDate(this.state.userInfo.signUpDate)}</h3>
-            </div>
-        }
-        let games: JSX.Element[] = []
-        for (let i = 0; i < this.state.gameInfo.length; i++) {
-            const value = this.state.gameInfo[i]
-            const urlToGoTo = '/viewGame/' + value.id + ((value.white === this.state.userInfo?.username) ? '' : '?viewAs=black')
-            const successfullyCopied = (this.state.copiedId && this.state.copiedId === value.id)
-            games.push(<tr className='game-normal-info' key={value.id * 2}>
-                <td onClick={() => document.location.href = urlToGoTo} className='username white'>{value.white}</td>
-                <td onClick={() => document.location.href = urlToGoTo} className='result'>{value.score}</td>
-                <td onClick={() => document.location.href = urlToGoTo} className='username black'>{value.black}</td>
-                <td onClick={() => { navigator.clipboard.writeText("https://chess.oggyp.com" + urlToGoTo); this.setState({ copiedId: value.id }) }} className={'copy' + ((successfullyCopied) ? ' success' : '')}>
-                    {(successfullyCopied) ?
-                        <span className="material-icons">done</span> :
-                        <span className="material-icons">content_copy</span>}
-                </td>
-            </tr>)
-        }
-
-        const defaultTimes: ([number, number] | string)[] = [
-            [0.5, 0],
-            [0.5, 1],
-            [1, 0],
-            [1, 1],
-            [3, 0],
-            [5, 0],
-            [5, 3],
-            [10, 0],
-            [10, 5],
-            [30, 0],
-            [30, 20],
-            "Custom"
-        ]
-
-        const gameModes: [string, string][] = [
-            ['standard', 'Standard Chess'],
-            ['960', 'Chess 960']
-        ]
-
-        // const fullChessModeNames = {
-        //     'standard': 'Standard Chess',
-        //     '960': 'Chess 960'
-        // }
-
-        return <div id='home-wrapper'>
-            {userInfoPage}
-            <PlaySelectionMenu
-                gameModes={gameModes}
-                timeSelections={defaultTimes}
-            />
-            <div id='pgn-input-wrapper'>
-                <label htmlFor='pgn-input'><h3>PGN Input</h3></label>
-                <textarea id='pgn-input' onChange={(event) => this.setState({ pgnInput: event.target.value })}></textarea>
-                {
-                    (this.state.pgnInput) ?
-                        <button onClick={() => { window.location.href = '/analysis/?pgn=' + encodeURIComponent(this.state.pgnInput) }}>Import</button>
-                        : null
-                }
-            </div>
-            <div id="previous-games">
-                <h3>Previous Games</h3>
-                <table>
-                    <colgroup>
-                        <col className='username white' />
-                        <col className='result' />
-                        <col className='username black' />
-                    </colgroup>
-                    <thead>
-                    </thead>
-                    <tbody>
-                        {games}
-                    </tbody>
-                </table>
-            </div>
+        <div id="previous-games">
+            <h3>Previous Games</h3>
+            <table>
+                <colgroup>
+                    <col className='username white' />
+                    <col className='result' />
+                    <col className='username black' />
+                </colgroup>
+                <thead>
+                </thead>
+                <tbody>
+                    {games}
+                </tbody>
+            </table>
         </div>
-    }
+    </div>
 }
 
 export default Home

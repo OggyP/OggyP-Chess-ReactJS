@@ -3,6 +3,7 @@ import '../css/chess.scss';
 import '../svg/assets.scss'
 import Game from '../game'
 import CheckGameMode from '../helpers/gameModeChecker'
+import LoadingPage from './loading';
 
 console.info("OggyP is awesome!")
 
@@ -14,7 +15,7 @@ function AnalysisPage() {
 
     if (!gameMode) {
         window.location.href = '/analysis/standard' + window.location.search
-        return <h1>Redirecting</h1>
+        return <LoadingPage description='Redirecting' />
     }
 
     let pgn: string = ''

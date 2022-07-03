@@ -1,150 +1,140 @@
 import React from 'react';
-import { sendToWs } from '../helpers/wsHelper'
 import '../css/login-register.scss'
 import { checkForToken, setCookie } from '../helpers/getToken';
 
 interface LoginProps {
-  url: string
+    url: string
 }
 
 interface LoginState {
-  username: string
-  password: string
-  loginError: null | string
+    username: string
+    password: string
+    loginError: null | string
 }
 
 const loginErrors = new Map<string, string>([
-  ['invalidToken', 'Invalid Session']
+    ['invalidToken', 'Invalid Session']
 ])
 
 class Login extends React.Component<LoginProps, LoginState>{
 
-  ws = new WebSocket(this.props.url)
-  token = checkForToken()
+    token = checkForToken()
 
-  constructor(props: LoginProps) {
-    super(props)
+    constructor(props: LoginProps) {
+        super(props)
 
-    const queryParams = new URLSearchParams(window.location.search);
-    const loginError = queryParams.get('error');
-    console.log(loginError)
+        const queryParams = new URLSearchParams(window.location.search);
+        const loginError = queryParams.get('error');
+        console.log(loginError)
 
-    let error: null | string = null
+        let error: null | string = null
 
-    if (loginError && loginErrors.has(loginError)) {
-      error = (loginErrors.get(loginError) || null)
-    }
-
-    this.state = {
-      loginError: error,
-      username: '',
-      password: ''
-    }
-
-    if (this.token) {
-      const ref = queryParams.get('ref')
-      if (ref)
-        document.location.href = ref
-      else
-        document.location.href = '/home';
-      return
-    }
-
-    this.ws.onmessage = (message) => {
-      const event = JSON.parse(message.data)
-      if (event.type === 'login') {
-        if (event.data.status === 'success') {
-          if (event.data.token)
-            setCookie("token", event.data.token + "|" + event.data.userId, 7)
-          const ref = queryParams.get('ref')
-          if (ref)
-            document.location.href = ref
-          else
-            document.location.href = '/home';
-        } else {
-          this.setState({
-            loginError: event.data.error
-          })
+        if (loginError && loginErrors.has(loginError)) {
+            error = (loginErrors.get(loginError) || null)
         }
-      }
-      console.log(event)
+
+        this.state = {
+            loginError: error,
+            username: '',
+            password: ''
+        }
+
+        if (this.token) {
+            const ref = queryParams.get('ref')
+            if (ref && ref.startsWith('/'))
+                document.location.href = ref
+            else
+                document.location.href = '/home';
+            return
+        }
     }
 
-    this.ws.onclose = function () {
+
+    handleInputChange(event: any) {
+        const name: 'username' | 'password' = event.target.name;
+        const value: string = event.target.value
+        var partialState: any = {};
+        partialState[name] = value;
+        this.setState(partialState);
     }
 
-    this.ws.onerror = function () {
+    async handleSubmit(event: any) {
+        event.preventDefault()
+        if (!this.state.username || !this.state.password)
+            this.setState({
+                loginError: "Please Enter your Username and Password"
+            })
+        else {
+            this.setState({
+                loginError: null
+            })
+
+            let response = await fetch(this.props.url + "account/login", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    username: this.state.username,
+                    password: this.state.password
+                })
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                setCookie("token", data.token + "|" + data.user.userId, 7)
+                const queryParams = new URLSearchParams(window.location.search);
+                const ref = queryParams.get('ref')
+                if (ref && ref.startsWith('/') && (ref[1] && ref[1] !== '/'))
+                    document.location.href = ref
+                else
+                    document.location.href = '/home';
+            } else
+                this.setState({ loginError: await response.text() })
+
+        }
     }
 
-    this.ws.onopen = () => { }
-  }
-
-
-  handleInputChange(event: any) {
-    const name: 'username' | 'password' = event.target.name;
-    const value: string = event.target.value
-    var partialState: any = {};
-    partialState[name] = value;
-    this.setState(partialState);
-  }
-
-  handleSubmit(event: any) {
-    event.preventDefault()
-    if (!this.state.username || !this.state.password)
-      this.setState({
-        loginError: "Please Enter your Username and Password"
-      })
-    else {
-      this.setState({
-        loginError: null
-      })
-      sendToWs(this.ws, 'login', [
-        ['username', this.state.username],
-        ['password', this.state.password]
-      ])
+    render() {
+        let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
+        if (this.state.loginError) passwordError = <h2 className='account-error'>{this.state.loginError}</h2>
+        return <form id='account-form' onSubmit={this.handleSubmit.bind(this)}>
+            {/* <img src="/assets/images/favicon-login-bg.png" alt="" className="bg-img" /> */}
+            <h1>Login</h1>
+            {passwordError}
+            <label htmlFor="username-input">
+                <input
+                    type='text'
+                    id='username-input'
+                    placeholder='Username'
+                    name='username'
+                    onChange={this.handleInputChange.bind(this)}
+                />
+            </label>
+            {/* <br /> */}
+            <label htmlFor='password-input'>
+                <input
+                    type='password'
+                    id='password-input'
+                    placeholder='Password'
+                    name='password'
+                    onChange={this.handleInputChange.bind(this)}
+                />
+            </label>
+            <label htmlFor='login-submit'>
+                <button>
+                    Login
+                    <span className="spacer" style={{ display: 'inline-block', width: '5px' }}></span>
+                    <span className="material-icons-round">login</span>
+                </button>
+                <input id='login-submit' type="submit" hidden value='Submit' />
+            </label>
+            <p>Don't Have an Account?</p>
+            <a href='/register' className='button-type'>
+                Register Now!
+            </a>
+        </form>
     }
-  }
-
-  render() {
-    let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
-    if (this.state.loginError) passwordError = <h2 className='account-error'>{this.state.loginError}</h2>
-    return <form id='account-form' onSubmit={this.handleSubmit.bind(this)}>
-      {/* <img src="/assets/images/favicon-login-bg.png" alt="" className="bg-img" /> */}
-      <h1>Login</h1>
-      {passwordError}
-      <label htmlFor="username-input">
-        <input
-          type='text'
-          id='username-input'
-          placeholder='Username'
-          name='username'
-          onChange={this.handleInputChange.bind(this)}
-        />
-      </label>
-      {/* <br /> */}
-      <label htmlFor='password-input'>
-        <input
-          type='password'
-          id='password-input'
-          placeholder='Password'
-          name='password'
-          onChange={this.handleInputChange.bind(this)}
-        />
-      </label>
-      <label htmlFor='login-submit'>
-        <button>
-          Login
-          <span className="spacer" style={{ display: 'inline-block', width: '5px' }}></span>
-          <span className="material-icons-round">login</span>
-        </button>
-        <input id='login-submit' type="submit" hidden value='Submit' />
-      </label>
-      <p>Don't Have an Account?</p>
-      <a href='/register' className='button-type'>
-        Register Now!
-      </a>
-    </form>
-  }
 }
 
 export default Login

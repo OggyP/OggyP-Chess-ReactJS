@@ -1,5 +1,5 @@
 // format date function
-function formatDate(timestamp: number) {
+function formatDate(timestamp: number | Date) {
     let event = new Date(timestamp);
     let today = new Date();
     let yesterday = new Date(Date.now() - 864e5);

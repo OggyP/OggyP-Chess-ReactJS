@@ -6,6 +6,10 @@ import { Teams } from '../chessLogic/types';
 import { Mutex } from 'async-mutex';
 import CheckGameMode from '../helpers/gameModeChecker'
 
+function leavePage(event: BeforeUnloadEvent) {
+    event.returnValue = `You are still in game, are you sure you want to leave?`;
+}
+
 interface PlayGameProps {
     url: string
 }
@@ -63,6 +67,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                     sendToWs(this.ws, 'queue', [['mode', queueMode.replace('|', '+')]])
                     break;
                 case 'gameFound':
+                    window.addEventListener('beforeunload', leavePage);
                     const gameMode = CheckGameMode(queueMode.split(' ')[0])
                     if (!gameMode) {
                         console.error("Invalid Game Mode: ", queueMode.split(' ')[0])
@@ -131,6 +136,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                         })
                     break;
                 case 'gameOver':
+                    window.removeEventListener('beforeunload', leavePage);
                     if (serverGameOverTypes.includes(data.info)) {
                         if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
                         const gameOverScoreToWinner = {
