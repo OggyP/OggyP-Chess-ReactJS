@@ -9,7 +9,7 @@ function LoadingPage(props: LoadingPageProps) {
         <div className='loading'>
             <h1><span className='loading-ani'>Loading</span></h1>
             <h3>{props.description}</h3>
-            <img id='oulingchess' src='/assets/images/ooooulingchessHead.png'></img>
+            <img id='oulingchess' src='/logo512.png'></img>
         </div>
     )
 }

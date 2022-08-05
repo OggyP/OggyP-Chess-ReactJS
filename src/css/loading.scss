@@ -11,10 +11,10 @@ div.loading {
         animation-duration: 2.5s;
         animation-iteration-count: infinite;
         &#oulingchess {
-            width: 75%;
-            overflow: hidden;
+            width: min(75vw, 70vh);
         }
     }
+    overflow: hidden;
 }
 
 @-webkit-keyframes roll {
