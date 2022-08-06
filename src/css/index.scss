@@ -100,12 +100,28 @@ div.piece-style-btn {
         margin-top: 5px;
         width: calc(100% - 10px);
         &.opening {
-            margin-left: 5px;
+            margin-left: 10px;
             .eco {
                 margin-right: 7px;
                 color: grey;
             }
             overflow: hidden;
+        }
+    }
+    .mobile-engline-info {
+        margin-left: 10px;
+        padding-right: 20px;
+        overflow:hidden;
+        white-space:nowrap;
+        text-overflow:ellipsis;
+
+        .eval-engine-info {
+            margin-right: 10vw;
+            width: fit-content;
+            display: inline-block;
+            background-color: rgb(100, 0, 100);
+            padding: 5px 7px;
+            border-radius: 3px;
         }
     }
     div.inline-info {

@@ -11,6 +11,7 @@ import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 import { addVectorsAndCheckPos, cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/functions';
 import { MovesAndBoard } from './chessLogic/types'
 import { pieceImageType } from './tsxAssets/pieces/pieceInfo';
+import iOS from './helpers/isIOS'
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -100,7 +101,13 @@ class Game extends React.Component<GameProps, GameState> {
             ]
             if (!props.versusStockfish)
                 startingCommands.unshift('setoption name UCI_AnalyseMode value true')
-            this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands, (props.versusStockfish) ? 1 : 3)
+
+            var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+
+            const stockfishVersion = ("undefined"!=typeof SharedArrayBuffer && !iOS()) ? '/stockfish/stockfish.js' : `/badStockfish/${wasmSupported ? 'stockfish.js' : 'stockfish.js'}`
+            console.info("Using Stockfish: ", stockfishVersion)
+
+            this.engine = new UCIengine(stockfishVersion, startingCommands, (props.versusStockfish) ? 1 : 3)
             if (props.versusStockfish)
                 this.engineMoveType = this.engine.setDifficulty(props.versusStockfish.skill, props.versusStockfish.fastGame)
         }
@@ -641,6 +648,7 @@ class Game extends React.Component<GameProps, GameState> {
             engineInfo = <EngineInfo
                 showMoves={(!this.props.versusStockfish || !!this.state.game.gameOver)}
                 showEval={(!this.props.versusStockfish || !!this.state.game.gameOver)}
+                mobile={this.state.onMobile}
             />
 
         let players: {
@@ -734,6 +742,7 @@ class Game extends React.Component<GameProps, GameState> {
             </div>
             {(this.state.onMobile) ? (!this.state.notFlipped) ? players.black : players.white : null}
             {<p className='opening'>{(this.state.game.opening.ECO) ? <span className='eco'>{this.state.game.opening.ECO}</span> : null}{this.state.game.opening.Name}</p>}
+            {(this.state.onMobile) ? engineInfo : null}
             {(!this.state.onMobile) ? <div className='inline-info'>
                 <p className='button-type'
                     onClick={() => {
@@ -791,7 +800,7 @@ class Game extends React.Component<GameProps, GameState> {
             return <div key={item} className={'piece-style-btn ' + item + ((this.state.piecesStyle === item) ? ' current' : '')} onClick={() => { this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100) }}>
                 <img className={'display-piece n l'} 
                     alt={item + " style"}
-                    src={'/assets/images/svg/' + item + '/white knight' + '.' + pieceImageType[item]}
+                    src={'/assets/images/svg/' + item + '/white knight.' + pieceImageType[item]}
                 />
             </div>
         })

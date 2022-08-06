@@ -3,7 +3,7 @@ import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
 import { Mutex } from 'async-mutex';
 
-const debugEngine = false;
+const debugEngine = true;
 
 class UCIengine {
   private _engine: Worker;
@@ -117,7 +117,6 @@ class UCIengine {
     if (debugEngine) console.log(`Receive: ${line}`)
 
     if (line.startsWith('bestmove')) {
-      if (line === 'bestmove (none)') return
       const move = line.split(' ')[1]
       const bestMove: {
         startingPos: Vector
