@@ -138,7 +138,6 @@ class Board extends React.Component<BoardProps, BoardState> {
             posSelected = { "x": Math.floor(this.mousePos.x / this.props.boxSize), "y": Math.floor(this.mousePos.y / this.props.boxSize) }
         else
             posSelected = { "x": 7 - Math.floor(this.mousePos.x / this.props.boxSize), "y": 7 - Math.floor(this.mousePos.y / this.props.boxSize) }
-        console.log("pos selected", posSelected)
         if (posSelected.x >= 0 && posSelected.x < 8 && posSelected.y >= 0 && posSelected.y < 8) {
             if (event.button === 0) {
                 this.posClicked(posSelected, 'mouse')

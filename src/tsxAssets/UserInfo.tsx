@@ -61,8 +61,6 @@ function UserInfo(props: UserInfoProps) {
             material += pieceCode.repeat(props.material[pieceCode] as number)
     }
 
-    console.log(props.material)
-
     return <div className={props.team + ' player-info' + ((props.isTurn) ? ' isTurn' : '')}>
         <h4>
             {title && title + " "}

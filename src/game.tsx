@@ -199,9 +199,11 @@ class Game extends React.Component<GameProps, GameState> {
         if (this.state.game.gameOver) return
         const move = event.detail
         this.doMove(move.startingPos, move.endingPos, move.promotion)
+        console.log("DO ENGINE MOVE: ", event.detail)
     }
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
+        console.log("MOVE: ", moveNum)
         if (this.engine)
             if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver)
                 this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
@@ -296,6 +298,7 @@ class Game extends React.Component<GameProps, GameState> {
     doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) {
         const piece = this.latestBoard().getPos(startPos)
         if (!piece) return
+        console.log(piece.team, this.props.team)
         if (piece.team === this.props.team) return
         this.state.game.doMove(startPos, endPos, promotion)
         let newViewNum = this.state.viewingMove + 1
