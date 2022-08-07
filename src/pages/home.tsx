@@ -108,6 +108,7 @@ class Home extends React.Component<HomeProps, HomeState>{
                 <h1 className='username'>{this.state.userInfo.username}  <span className='user-id'>ID: {this.state.userInfo.userId}</span></h1>
                 <h3 className='rating'>Rating: {Math.round(this.state.userInfo.rating)}</h3>
                 <h3 className='sign-up-date'>Signed Up: {formatDate(this.state.userInfo.signUpDate)}</h3>
+                <button className='button' onClick={() => {deleteCookie('token'); window.location.href = '/login'}}>Log Out</button>
             </div>
         }
         let games: JSX.Element[] = []
