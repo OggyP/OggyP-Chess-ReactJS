@@ -82,7 +82,7 @@ function getVectors(board: Board, vectors: Vector[], position: Vector, team: Tea
     };
 }
 
-function legal(this: ChessPiece, value: MovesAndBoard): boolean {
+function legal(this: ChessPiece, value: MovesAndBoard, index: number, moves: MovesAndBoard[]): boolean {
     if (this instanceof Pawn || value.moveType.includes('capture')) value.board.halfMovesSinceCaptureOrPawnMove = 0
     else value.board.halfMovesSinceCaptureOrPawnMove++
     if (value.moveType.includes('capture')) {
@@ -91,6 +91,10 @@ function legal(this: ChessPiece, value: MovesAndBoard): boolean {
                 value.board.capturedPieces[value.board.getTurn('next')].push(value.moveType[i] as PieceCodes)
     }
     value.board.halfMoveNumber++
+    if (this instanceof Pawn)
+        for (let i = 0; i < moves.length; i++)
+            if (index !== i && moves[i].moveType.includes("enpassant") && !value.moveType.includes("enpassant"))
+                return false
     return !value.board.inCheck(this.team)
 }
 

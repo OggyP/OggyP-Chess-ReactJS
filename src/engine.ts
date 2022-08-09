@@ -3,7 +3,7 @@ import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
 import { Mutex } from 'async-mutex';
 
-const debugEngine = true;
+const debugEngine = false;
 
 class UCIengine {
   private _engine: Worker;
