@@ -1,7 +1,6 @@
 import { convertToPosition } from "./chessLogic/standard/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 import { getCookie } from "./helpers/getToken";
-import { Mutex } from 'async-mutex';
 
 const debugEngine = false;
 
@@ -10,7 +9,6 @@ class UCIengine {
   private _isready: boolean;
   private _analyseFromTeam: Teams = "white";
   private _infoBuffer: any[] = []
-  private _EngineMutex = new Mutex();
   multiPV: number;
   loadedNNUE: boolean = getCookie('loadNNUE') === 'true'
   _commandsQueue: string[];
@@ -18,11 +16,7 @@ class UCIengine {
     this.multiPV = multiPV
     this._engine = new Worker(path)
     this._engine.onmessage = (event) => {
-      this._EngineMutex.acquire()
-        .then((release) => {
-          this.onMessage(event)
-          release()
-        })
+        this.onMessage(event)
     }
     this._isready = false;
     this._commandsQueue = initConfigCommands

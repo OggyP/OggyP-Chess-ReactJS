@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { checkForToken, deleteCookie } from './getToken';
 import Loading from '../pages/loading'
 import ErrorPage from '../pages/Error'
-import { tokenToString } from 'typescript';
 
 interface userInfo {
     userId: number

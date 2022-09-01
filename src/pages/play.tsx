@@ -3,7 +3,6 @@ import { sendToWs } from '../helpers/wsHelper'
 import { checkForToken, tokenType } from '../helpers/getToken';
 import Game from '../game';
 import { Teams } from '../chessLogic/types';
-import { Mutex } from 'async-mutex';
 import CheckGameMode from '../helpers/gameModeChecker'
 
 function leavePage(event: BeforeUnloadEvent) {
@@ -31,7 +30,6 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     ownTeam: Teams | null = null
     updateTimer: Function | null = null
     serverGameOver: Function | null = null
-    moveMutex = new Mutex();
 
     constructor(props: PlayGameProps) {
         super(props)
@@ -108,32 +106,28 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                     })
                     break;
                 case 'move':
-
-                    this.moveMutex
-                        .runExclusive(() => {
-                            if (!this.state.game) throw new Error("Recieved move before game start");
-                            if (!this.doMove) throw new Error("Do move function is null");
-                            const startingPos = { 'x': data.startingPos[0], 'y': data.startingPos[1] }
-                            const endingPos = { 'x': data.endingPos[0], 'y': data.endingPos[1] }
-                            if (!data.promote)
-                                this.doMove(startingPos, endingPos)
-                            else
-                                this.doMove(startingPos, endingPos, data.promote[0])
-                            if (this.updateTimer && data.timer) {
-                                this.updateTimer(
-                                    { // white
-                                        startTime: (new Date()).getTime(),
-                                        time: data.timer.whiteTimer.time,
-                                        countingDown: data.timer.whiteTimer.isCountingDown
-                                    },
-                                    { // black
-                                        startTime: (new Date()).getTime(),
-                                        time: data.timer.blackTimer.time,
-                                        countingDown: data.timer.blackTimer.isCountingDown
-                                    }
-                                )
+                    if (!this.state.game) throw new Error("Recieved move before game start");
+                    if (!this.doMove) throw new Error("Do move function is null");
+                    const startingPos = { 'x': data.startingPos[0], 'y': data.startingPos[1] }
+                    const endingPos = { 'x': data.endingPos[0], 'y': data.endingPos[1] }
+                    if (!data.promote)
+                        this.doMove(startingPos, endingPos)
+                    else
+                        this.doMove(startingPos, endingPos, data.promote[0])
+                    if (this.updateTimer && data.timer) {
+                        this.updateTimer(
+                            { // white
+                                startTime: (new Date()).getTime(),
+                                time: data.timer.whiteTimer.time,
+                                countingDown: data.timer.whiteTimer.isCountingDown
+                            },
+                            { // black
+                                startTime: (new Date()).getTime(),
+                                time: data.timer.blackTimer.time,
+                                countingDown: data.timer.blackTimer.isCountingDown
                             }
-                        })
+                        )
+                    }
                     break;
                 case 'gameOver':
                     window.removeEventListener('beforeunload', leavePage);
