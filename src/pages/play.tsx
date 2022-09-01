@@ -3,6 +3,7 @@ import { sendToWs } from '../helpers/wsHelper'
 import { checkForToken, tokenType } from '../helpers/getToken';
 import Game from '../game';
 import { Teams } from '../chessLogic/types';
+import Loading from '../pages/loading'
 
 function leavePage(event: BeforeUnloadEvent) {
     event.returnValue = `You are still in game, are you sure you want to leave?`;
@@ -151,10 +152,14 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
             }
         }
 
-        this.ws.onclose = function () {
+        this.ws.onclose = () => {
+            this.ws = new WebSocket(this.props.url)
+            console.log("Closed WS")
         }
-
-        this.ws.onerror = function () {
+        
+        this.ws.onerror = () => {
+            this.ws = new WebSocket(this.props.url)
+            console.log("WS Error")
         }
 
         this.ws.onopen = () => {
@@ -181,13 +186,11 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
         if (this.state.game)
             return this.state.game
         else if (!this.state.queueInfo)
-            return <h1>Loading Multiplayer Game</h1>
+            return <Loading title='Loading...' description='Connecting to OggyP Chess Servers' />
         else
-            return <div>
-                <h1>Queueing for</h1>
-                <h2>{fullChessModeNames[this.state.queueInfo.mode as 'standard' | '960']} {this.state.queueInfo.start}+{this.state.queueInfo.increment}</h2>
-            </div>
+            return <Loading
+                title='Queueing'
+                description={`${fullChessModeNames[this.state.queueInfo.mode as 'standard' | '960']} ${this.state.queueInfo.start}+${this.state.queueInfo.increment}`} />
     }
 }
-
 export default PlayGame

@@ -110,7 +110,6 @@ class Register extends React.Component<LoginProps, LoginState>{
     let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
     if (this.state.registerError) passwordError = <h2 className='account-error'>{this.state.registerError}</h2>
     return <form id='account-form' onSubmit={this.handleSubmit.bind(this)}>
-      <img src="/assets/images/favicon-login-bg.png" alt="" className="bg-img" />
       <h1>Register</h1>
       {passwordError}
       <label htmlFor="username-input">
