@@ -101,13 +101,7 @@ class Game extends React.Component<GameProps, GameState> {
             ]
             if (!props.versusStockfish)
                 startingCommands.unshift('setoption name UCI_AnalyseMode value true')
-
-            var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
-
-            const stockfishVersion = ("undefined"!=typeof SharedArrayBuffer && !iOS()) ? '/stockfish/stockfish.js' : `/badStockfish/${wasmSupported ? 'stockfish.js' : 'stockfish.js'}`
-            console.info("Using Stockfish: ", stockfishVersion)
-
-            this.engine = new UCIengine(stockfishVersion, startingCommands, (props.versusStockfish) ? 1 : 3)
+            this.engine = new UCIengine('/dungfish/stockfish.js', startingCommands, (props.versusStockfish) ? 1 : 3)
             if (props.versusStockfish)
                 this.engineMoveType = this.engine.setDifficulty(props.versusStockfish.skill, props.versusStockfish.fastGame)
         }
