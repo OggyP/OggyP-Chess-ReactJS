@@ -75,6 +75,7 @@ const NeedsLogin = (props: { url: string, children: React.ReactNode }) => {
     if (userInfo) {
         const childrenWithProps = React.Children.map(children, child => {
             if (React.isValidElement(child)) {
+                // @ts-ignore
                 return React.cloneElement(child, {userInfo: {...userInfo, tokenInfo: tokenInfo}})
             }
             return child
