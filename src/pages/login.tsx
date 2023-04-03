@@ -1,9 +1,9 @@
 import React from 'react';
 import '../css/login-register.scss'
 import { checkForToken, setCookie } from '../helpers/getToken';
+import { apiURL } from '../settings'
 
 interface LoginProps {
-    url: string
 }
 
 interface LoginState {
@@ -69,29 +69,34 @@ class Login extends React.Component<LoginProps, LoginState>{
                 loginError: null
             })
 
-            let response = await fetch(this.props.url + "account/login", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
-                body: JSON.stringify({
-                    username: this.state.username,
-                    password: this.state.password
+            try {
+                let response = await fetch(apiURL + "account/login", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json;charset=utf-8'
+                    },
+                    body: JSON.stringify({
+                        username: this.state.username,
+                        password: this.state.password
+                    })
                 })
-            })
 
-            if (response.ok) {
-                const data = await response.json()
-                setCookie("token", data.token + "|" + data.user.userId, 7)
-                const queryParams = new URLSearchParams(window.location.search);
-                const ref = queryParams.get('ref')
-                if (ref && ref.startsWith('/') && (ref[1] && ref[1] !== '/'))
-                    document.location.href = ref
-                else
-                    document.location.href = '/home';
-            } else
-                this.setState({ loginError: await response.text() })
+                if (response.ok) {
+                    const data = await response.json()
+                    setCookie("token", data.token + "|" + data.user.userId, 7)
+                    const queryParams = new URLSearchParams(window.location.search);
+                    const ref = queryParams.get('ref')
+                    if (ref && ref.startsWith('/') && (ref[1] && ref[1] !== '/'))
+                        document.location.href = ref
+                    else
+                        document.location.href = '/home';
+                } else {
+                    this.setState({ loginError: await response.text() })
 
+                }
+            } catch {
+                this.setState({ loginError: "Error Connecting To OggyP Chess Servers" })
+            }
         }
     }
 

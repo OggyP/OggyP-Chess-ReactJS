@@ -2,9 +2,9 @@ import React from 'react';
 import { sendToWs } from '../helpers/wsHelper'
 import '../css/login-register.scss'
 import { checkForToken } from '../helpers/getToken';
+import { wsURL } from '../settings'
 
 interface LoginProps {
-  url: string
 }
 
 interface LoginState {
@@ -20,7 +20,7 @@ const registerError = new Map<string, string>([
 
 class Register extends React.Component<LoginProps, LoginState>{
 
-  ws = new WebSocket(this.props.url)
+  ws = new WebSocket(wsURL)
   token = checkForToken()
 
   constructor(props: LoginProps) {

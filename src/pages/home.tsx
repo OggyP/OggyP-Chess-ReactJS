@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { sendToWs } from '../helpers/wsHelper'
+import { useEffect, useState } from 'react';
 import '../css/home.scss'
-import { checkForToken, deleteCookie, tokenType } from '../helpers/getToken';
 import { formatDate } from '../helpers/date'
 import PlaySelectionMenu from './home/playSelector'
+import LobbyMenu, {queueInfo} from './home/lobby'
 import { userInfo } from '../helpers/verifyToken'
+import { wsURL, apiURL } from '../settings';
+import ErrorPage from './Error';
 
 interface HomeProps {
     userInfo: userInfo | null
-    url: string
 }
 
 interface gameInfo {
@@ -27,29 +27,88 @@ function Home(props: HomeProps) {
     const [gameInfo, setGameInfo] = useState<gameInfo[]>([])
     const [pgnInput, setPgnInput] = useState<string>("")
     const [copiedId, setCopiedId] = useState<null | number>(null)
+    const [error, setError] = useState<null | {
+        title: string,
+        description: string
+    }>(null)
+    const [queues, setQueues] = useState<queueInfo[]>([])
+
 
     useEffect(() => {
-        const getLatestGames = async () => {
-            if (props.userInfo) {
-                let response = await fetch(props.url + "games/latest", {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json;charset=utf-8',
-                        'Token': props.userInfo.tokenInfo.token,
-                        'User-Id': props.userInfo.tokenInfo.userId.toString()
-                    }
-                })
+        const establishWS = () => {
+            if (props.userInfo && error === null) {
+                const wsConnectionURL = `${wsURL}home/?token=${props.userInfo.tokenInfo.token}&userId=${props.userInfo.tokenInfo.userId}`
+                let ws = new WebSocket(wsConnectionURL)
 
-                if (response.ok) {
-                    const data = await response.json()
-                    setGameInfo(data)
-                } else
-                    document.location.href = encodeURI(`/error?title=HTTP Error: ${response.status}&desc=${await response.text()}`)
+                let cancelReconnection = false
+
+                ws.onmessage = (message) => {
+                    const event = JSON.parse(message.data)
+                    const data: any = event.data
+                    console.log(event)
+
+                    switch (event.type) {
+                        case 'error':
+                            cancelReconnection = true
+                            setError(data)
+                            break;
+                        case 'queues':
+                            setQueues(data)
+                            break;
+                        case 'redirect':
+                            window.location.href = data.location
+                            break;
+                    }
+                }
+
+                ws.onclose = function () {
+                    console.log("Web socket Closed")
+                    if (!cancelReconnection)
+                        setTimeout(establishWS, 2000);
+                }
+
+                ws.onerror = function (error) {
+                    console.log("Web socket error!")
+                    console.error(error)
+                    cancelReconnection = true
+                    setError({
+                        title: "Connection Issues!",
+                        description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
+                    })
+                }
+
+                ws.onopen = () => {
+                    console.log("Web Socket Connected")
+                }
             }
+
+        }
+        
+        establishWS()
+    }, [error, props.userInfo])
+
+    useEffect(() => {
+
+        const getLatestGames = async () => {
+            if (!props.userInfo) return
+            let response = await fetch(apiURL + "games/latest", {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8',
+                    'Token': props.userInfo.tokenInfo.token,
+                    'User-Id': props.userInfo.tokenInfo.userId.toString()
+                }
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                setGameInfo(data)
+            } else
+                document.location.href = encodeURI(`/error?title=HTTP Error: ${response.status}&desc=${await response.text()}`)
         }
 
         getLatestGames()
-    }, [props.url])
+    }, [props.userInfo])
 
     let userInfoPage = <div className='user-info'>
         <h1>Loading User Info</h1>
@@ -108,20 +167,18 @@ function Home(props: HomeProps) {
     //     '960': 'Chess 960'
     // }
 
+    if (error) return <ErrorPage
+        title={error.title} description={error.description}
+    />
+
     return <div id='home-wrapper'>
         {userInfoPage}
         <PlaySelectionMenu
             gameModes={gameModes}
             timeSelections={defaultTimes}
         />
-        <div id='pgn-input-wrapper'>
-            <label htmlFor='pgn-input'><h3>PGN Input</h3></label>
-            <textarea id='pgn-input' onChange={(event) => setPgnInput(event.target.value)}></textarea>
-            {
-                (pgnInput) ?
-                    <button onClick={() => { window.location.href = '/analysis/?pgn=' + encodeURIComponent(pgnInput) }}>Import</button>
-                    : null
-            }
+        <div id='lobby'>
+            <LobbyMenu queues={queues} />
         </div>
         <div id="previous-games">
             <h3>Previous Games</h3>

@@ -30,7 +30,7 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
             if (selectedGameMode)
                 return <div
                     key={index}
-                    onClick={() => { window.location.href = '/play/?mode=' + encodeURIComponent(`${selectedGameMode} ${time[0]}|${time[1]}`) }}>
+                    onClick={() => { window.location.href = `/play/${selectedGameMode}/${Math.round(time[0]*60)}+${Math.round(time[1])}` }}>
                     {time[0]}+{time[1]}
                 </div>
             else

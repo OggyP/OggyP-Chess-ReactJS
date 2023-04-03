@@ -15,9 +15,6 @@ import NeedsLogin from './helpers/verifyToken'
 import './css/all.scss'
 import './css/normalise.scss'
 
-const wsURL = "wss://api.oggyp.com/ws/chess"
-const apiURL = "https://api.oggyp.com/chess/v1/"
-
 function App() {
     let params = new URLSearchParams(document.location.search);
     return (
@@ -26,17 +23,17 @@ function App() {
             <Routes>
                 <Route path='/' element={<WelcomePage />} />
                 <Route path='/analysis/*' element={<Analysis />} />
-                <Route path='/viewGame/*' element={<ViewGame url={wsURL} />} />
-                <Route path='/login' element={<Login url={apiURL} />} />
-                <Route path='/register' element={<Register url={wsURL} />} />
+                <Route path='/viewGame/*' element={<ViewGame />} />
+                <Route path='/login' element={<Login />} />
+                <Route path='/register' element={<Register />} />
                 <Route path='/home' element={
-                    <NeedsLogin url={apiURL}>
-                        <Home url={apiURL} userInfo={null} />
+                    <NeedsLogin>
+                        <Home userInfo={null} />
                     </NeedsLogin>
                 } />
-                <Route path='/play' element={
-                    <NeedsLogin url={apiURL}>
-                        <PlayGame url={wsURL} />
+                <Route path='/play/*' element={
+                    <NeedsLogin>
+                        <PlayGame />
                     </NeedsLogin>
                 } />
                 <Route path='/stockfish' element={<VersusStockfish />} />

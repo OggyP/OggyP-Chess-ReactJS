@@ -26,10 +26,17 @@ interface TimerInfo {
 }
 
 interface PlayerInfo {
-    username: string
-    rating: number
+    userId?: number,
+    username: string,
+    createdAt?: Date,
+    wins?: number,
+    draws?: number,
+    gamesPlayed?: number,
+    rating: number,
+    gameIds?: string,
+    ratingDeviation?: number,
+    title?: string,
     ratingChange?: number
-    title?: string
 }
 
 interface GameState {
@@ -230,7 +237,7 @@ class Game extends React.Component<GameProps, GameState> {
     handlePromotionClick(piece: PieceCodes): void {
         const info = this.state.promotionSelector
         if (info && !this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
-            const newBoard = new ChessBoardType(info.board)
+            const newBoard = new this.gameType.boardType(info.board)
             newBoard.promote(info.pos.end, piece, info.team)
             if (!newBoard.inCheck(info.team)) {
                 const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
@@ -280,13 +287,15 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     addPremove(start: Vector, end: Vector): void {
-        if (!this.props.allowPreMoves) return
+        if (!this.props.allowPreMoves || this.state.game.gameOver) return
         const premoveList = this.state.premoves.slice()
         premoveList.push({
             start: start,
             end: end
         })
-        let preMoveBoard = new ChessBoardType(this.state.premoveBoard || this.latestBoard())
+        console.log(this.state.premoveBoard || this.latestBoard())
+        console.log(new this.gameType.boardType(this.state.premoveBoard || this.latestBoard()))
+        let preMoveBoard = new this.gameType.boardType(this.state.premoveBoard || this.latestBoard())
         preMoveBoard.setPos(end, preMoveBoard.getPos(start))
         preMoveBoard.setPos(start, null)
         this.setState({
@@ -334,7 +343,7 @@ class Game extends React.Component<GameProps, GameState> {
                     })
                 } else {
                     // Update Premove board
-                    const newBoard = new ChessBoardType(this.latestBoard())
+                    const newBoard = new this.gameType.boardType(this.latestBoard())
                     this.state.premoves.forEach(premove => {
                         newBoard.setPos(premove.end, newBoard.getPos(premove.start))
                         newBoard.setPos(premove.start, null)
@@ -375,9 +384,7 @@ class Game extends React.Component<GameProps, GameState> {
                 queries = '?pgn=' + toSet
         }
         if (this.state.game.startingFEN && this.state.game.startingFEN !== "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
-            console.log(queries)
             queries += ((queries) ? '&' : '?') + "fen=" + this.state.game.startingFEN.replace(/ /g, '_')
-            console.log(queries)
         }
         window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', window.location.pathname + queries);
     }
@@ -750,9 +757,7 @@ class Game extends React.Component<GameProps, GameState> {
                             else if (fenLength === 5) finalFen += ' 1'
                             else return
                         }
-                        console.log(finalFen)
                         if (finalFen.split(' ')[0].split('/').length !== 8) return
-                        console.log('no errors')
                         this.resetGame(finalFen)
                         this.setState({ resetGameFEN: "" })
                     }}>

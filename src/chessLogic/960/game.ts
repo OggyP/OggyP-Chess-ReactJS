@@ -49,6 +49,7 @@ interface Opening {
 
 class Game {
     static openings: any;
+    static boardType = Board
     private _history: History[] = [];
     public shortNotationMoves: string = ''
     public gameOver: GameOverType = false
@@ -63,7 +64,6 @@ class Game {
         getJSON('/assets/openings.json', (data: object) => { Game.openings = data; this.checkForOpening() })
         if (input.pgn) {
             // Parse PGN
-            console.log(input.pgn)
             this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
             this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening']
             const currentDate = new Date()
@@ -94,11 +94,9 @@ class Game {
 
             lastLineParsed = lastLineParsed.replace(/\?(!|)/g, '')
             lastLineParsed = lastLineParsed.replace(/\.\.\./g, '.')
-            console.log(lastLineParsed)
 
             const moves = lastLineParsed.split(' ')
             if (moves.length === 1 && moves[0] === '') moves.pop()
-            console.log(moves)
             this.metaValuesOrder = []
             if (!moves) return
 
@@ -125,7 +123,6 @@ class Game {
             let turn: Teams = 'white'
             for (let i = 0; i < moves.length; i++) {
                 const originalPGNmove = moves[i]
-                console.log('Before ' + originalPGNmove + ' ' + board.getFen())
                 let move = moves[i].replace('+', '').replace('#', '')
                 if (!isNaN(Number(move[0]))) {
                     if (i === moves.length - 1) {
@@ -135,7 +132,6 @@ class Game {
                             ['0-1', 'black']
                         ])
                         const winner = gameOverScoreToWinner.get(move)
-                        console.log(winner)
                         if (winner)
                             this.setGameOver({
                                 winner: winner as Teams | "draw",
@@ -402,7 +398,6 @@ class Game {
     }
 
     doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined, allowPromotion = true): boolean {
-        console.log("Do move func 1")
         const latestBoard = this.getLatest().board
         const piece = latestBoard.getPos(startPos)
         if (!piece) return false
@@ -418,7 +413,6 @@ class Game {
             }
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
             const shortNotation = newBoard.getShortNotation(startPos, endPos, move.moveType, latestBoard as Board, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
-            console.log(newBoard.capturedPieces)
             this.newMove({
                 board: newBoard,
                 text: shortNotation,

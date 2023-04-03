@@ -169,8 +169,6 @@ function cancelOutCapturedMaterial(p1: PieceCodes[], p2: PieceCodes[]) {
         if (item !== 'points')
             materialP2.points += materialP2[item] * piecePoints[item as PieceCodes]
 
-    console.log(materialP1.points)
-
     let minPoints = Math.min(materialP1.points, materialP2.points)
     materialP1.points -= minPoints
     materialP2.points -= minPoints

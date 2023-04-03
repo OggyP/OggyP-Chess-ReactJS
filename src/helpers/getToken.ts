@@ -29,7 +29,6 @@ function checkForToken() {
     let token: string | string[] = getCookie("token");
     if (token !== "") {
         token = token.split('|')
-        console.log(token)
         return {
             token: token[0],
             userId: token[1]

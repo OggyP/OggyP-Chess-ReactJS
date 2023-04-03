@@ -9,38 +9,70 @@
     background-size: min(100vh - 40px - 60px, 100vw - 60px);
     background-repeat: no-repeat;
     background-position: calc((100vw - min(100vh - 40px - 60px, 100vw - 60px)) / 2), calc(((100vh - 40px) - min(100vh - 40px - 60px, 100vw - 60px)) / 2);
+
     display: grid;
-    row-gap: 20px;
-    column-gap: 50px;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 0px 0px;
+    grid-template-areas:
+        "user-info play-selector play-selector past-games"
+        "user-info play-selector play-selector past-games"
+        "user-info play-selector play-selector past-games"
+        "user-info play-selector play-selector past-games"
+        "user-info lobby lobby past-games"
+        "user-info lobby lobby past-games"
+        "user-info lobby lobby past-games";
+
+
+    @media screen and (max-width: 1200px) {
+        display: grid;
+        grid-auto-columns: 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+        gap: 0px 0px;
+        grid-template-areas:
+            "user-info past-games past-games"
+            "user-info past-games past-games"
+            "lobby lobby lobby"
+            "play-selector play-selector play-selector"
+            "play-selector play-selector play-selector";
+    }
+
     .user-info {
         padding: 20px;
-        grid-area: 1 / 1 / 3 / 2;
+        grid-area: user-info;
+
         .username {
             font-size: max(1.5em, 3vw);
         }
+
         .rating {
             font-size: max(0.7em, 1.3vw);
         }
+
         .sign-up-date {
             font-size: max(0.4em, 1vw);
         }
+
         .user-id {
             color: grey;
             font-size: medium;
         }
     }
+
     #play-selector {
         display: flex;
         flex-direction: column;
+
         div:nth-of-type(1) {
             flex-grow: 1;
         }
+
         text-align: center;
         // background-color: #413f3f80;
         padding: 20px;
         font-size: xx-large;
+
         .time-selections {
             div {
                 cursor: pointer;
@@ -48,14 +80,17 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
+
                 // opacity: 0.80;
                 &.disabled {
                     opacity: 0.25;
                     cursor: not-allowed;
                 }
+
                 border: 3px solid #a1a1a1;
                 transform: scale(1);
                 transition: .15s;
+
                 &:hover:not(.disabled) {
                     transform: scale(1.05);
                     background-color: rgb(26, 26, 26);
@@ -63,19 +98,25 @@
                 }
             }
         }
+
         .game-modes {
             div:nth-of-type(1) {
                 flex-grow: 1;
             }
+
             div:nth-of-type(2) {
                 flex-grow: 1;
             }
+
             display: flex;
+
             div {
                 cursor: pointer;
+
                 &:last-child {
                     margin-right: 0;
                 }
+
                 margin-bottom: 20px;
                 margin-right: 20px;
                 background-color: black;
@@ -84,59 +125,75 @@
                 align-items: center;
                 transform: scale(1);
                 transition: .15s;
+
                 &:hover {
                     transform: scale(1.1);
                     background-color: rgb(26, 26, 26);
                     border: 5px solid red;
                 }
+
                 &.selected {
                     background-color: rgb(75, 75, 75);
                     border: 5px solid red;
                     cursor: not-allowed;
                 }
+
                 border: 5px solid #a1a1a1;
             }
         }
     }
+
     #previous-games {
         h3 {
             text-align: center;
         }
+
         padding: 20px;
+
         table {
             border-spacing: 0 3px;
+
             .username {
                 width: 47%;
             }
+
             .result {
                 width: 3%;
             }
+
             // width: 25vw;
             font-size: medium;
+
             tr {
                 cursor: pointer;
                 // background-color: rgba(0, 0, 0, 0.25);
                 padding-bottom: 3px;
+
                 td {
                     &.username {
                         &.white {
                             text-align: right;
                             padding: 3px;
                         }
+
                         &.black {
                             text-align: left;
                             padding: 3px;
                         }
                     }
+
                     &.result {
                         text-align: center;
                     }
+
                     max-width: 60px;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+
                     &.copy {
                         cursor: copy;
+
                         &.success {
                             transform: scale(1.3);
                             animation-duration: 0.75s;
@@ -144,68 +201,112 @@
                         }
                     }
                 }
+
                 transition: 0.08s;
+
                 &:hover {
                     transform: scale(1.05);
                 }
             }
         }
-        height: calc(100vh - 40px);
-        // overflow-x: hidden;
+
         overflow-y: auto;
-        grid-area: 1 / 4 / 5 / 5;
+        grid-area: past-games;
     }
+
     #play-selector {
-        grid-area: 1 / 2 / 4 / 4;
+        grid-area: play-selector;
     }
-    #pgn-input-wrapper {
-        h3 {
-            font-size: 1em;
+
+    #lobby {
+        grid-area: lobby;
+
+        margin: 20px;
+
+        table {
+            margin: 0;
+            border-collapse: collapse;
+            width: 100%;
         }
-        padding: 20px;
-        grid-area: 4 / 2 / 5 / 4;
-        textarea {
-            width: 80%;
-            height: 75%;
+
+        td,
+        th {
+            padding: 8px;
+            margin: 0;
         }
-    }
-    @media screen and (max-width: 1200px) {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(5, 1fr);
-        grid-column-gap: 10px;
-        grid-row-gap: 10px;
-        .user-info {
-            grid-area: 1 / 1 / 2 / 2;
+
+        td {
+            font-weight: 400;
         }
-        #previous-games {
-            height: calc((100vh - 40px) / 2.5);
-            grid-area: 1 / 2 / 3 / 4;
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 30%;
         }
-        #pgn-input-wrapper {
-            grid-area: 2 / 1 / 3 / 2;
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 20%;
         }
-        #play-selector {
-            grid-area: 3 / 1 / 6 / 4;
+
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 20%;
+        }
+
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 30%;
+        }
+
+        tr {
+            border-bottom: 1px solid rgb(0, 0, 0);
+            transition: 300ms;
+        }
+
+        thead {
+            tr {
+                border-bottom: 3px solid black;
+            }
+        }
+
+        tbody {
+            tr {
+                cursor: pointer;
+                transition: 300ms;
+            }
+
+            tr:hover {
+                background-color: rgba(118, 0, 244, 0.333);
+                border-bottom: 2px solid rgb(78, 0, 162);
+                border-top: 2px solid rgb(78, 0, 162);
+                z-index: 100;
+            }
         }
     }
 }
+
 
 @keyframes copySuccess {
     0% {
         colour: white;
     }
+
     10% {
         transform: scale(0);
         colour: white;
     }
+
     50% {
         transform: scale(2);
         color: green;
     }
+
     90% {
         color: green;
         transform: scale(1.3);
     }
+
     100% {
         color: white;
         transform: scale(1.3);
@@ -217,8 +318,10 @@
     width: 50%;
     display: flex;
     flex-direction: row;
+
     label {
         width: 100%;
+
         input {
             width: auto;
         }

@@ -9,7 +9,6 @@ function getChessGame(mode: GameModes) {
     if (mode === 'standard')
         return GameStandard
     if (mode === '960') {
-        console.log('960 Choosen')
         return GameFisherRandom
 
     }
