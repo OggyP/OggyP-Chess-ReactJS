@@ -15,5 +15,7 @@ function getChessGame(mode: GameModes) {
     return GameStandard
 }
 
+type pieceStyle = 'normal' | 'medieval' | 'ewan' | 'sus'
+
 export { Board as ChessBoardType, getChessGame, ChessPiece, King, Queen, Rook, Bishop, Knight, Pawn, convertToChessNotation }
-export type { Teams, Vector, PieceCodes, PieceAtPos }
+export type { Teams, Vector, PieceCodes, PieceAtPos, pieceStyle }

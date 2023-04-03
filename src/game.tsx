@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChessBoardType, getChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector } from './chessLogic'
-import PromotePiece from './tsxAssets/promotePiece'
+import { ChessBoardType, getChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, pieceStyle } from './chessLogic'
+import PromotePiece from './tsxAssets/pieces/promotePiece'
+import { pieceImageType } from './tsxAssets/pieces/pieceInfo'
 import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
@@ -11,6 +12,7 @@ import { cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/sta
 import { MovesAndBoard } from './chessLogic/types'
 import GameStandard from './chessLogic/standard/game'
 import GameFisherRandom from './chessLogic/960/game'
+import iOS from './helpers/isIOS'
 
 type gameTypes = typeof GameStandard | typeof GameFisherRandom
 type games = GameStandard | GameFisherRandom
@@ -66,7 +68,7 @@ interface GameState {
     premoveBoard: ChessBoardType | null
     premoves: { start: Vector, end: Vector }[]
     onMobile: boolean
-    piecesStyle: string
+    piecesStyle: pieceStyle
     boardStyle: {
         white: string,
         black: string,
@@ -115,7 +117,13 @@ class Game extends React.Component<GameProps, GameState> {
             ]
             if (!props.versusStockfish)
                 startingCommands.unshift('setoption name UCI_AnalyseMode value true')
-            this.engine = new UCIengine('/stockfish/stockfish.js', startingCommands, (props.versusStockfish) ? 1 : 3)
+
+            var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+
+            const stockfishVersion = ("undefined" != typeof SharedArrayBuffer && !iOS()) ? '/stockfish/stockfish.js' : `/badStockfish/${wasmSupported ? 'stockfish.js' : 'stockfish.js'}`
+            console.info("Using Stockfish: ", stockfishVersion)
+
+            this.engine = new UCIengine(stockfishVersion, startingCommands, (props.versusStockfish) ? 1 : 3)
             if (props.versusStockfish)
                 this.engineMoveType = this.engine.setDifficulty(props.versusStockfish.skill, props.versusStockfish.fastGame)
         }
@@ -183,7 +191,7 @@ class Game extends React.Component<GameProps, GameState> {
             premoveBoard: null,
             premoves: [],
             onMobile: windowSize.height * minAspectRatio > windowSize.width,
-            piecesStyle: (localStorage.getItem('pieceStyle') || 'normal'),
+            piecesStyle: (localStorage.getItem('pieceStyle') as pieceStyle || 'normal'),
             boardStyle: boardStyle,
             loadedNNUE: (this.engine?.loadedNNUE || false),
             resetGameFEN: ""
@@ -616,6 +624,7 @@ class Game extends React.Component<GameProps, GameState> {
                 const y = (promotionSelectorVal.team === 'white') ? index : (7 - index)
                 return <PromotePiece
                     key={index}
+                    style={this.state.piecesStyle}
                     team={promotionSelectorVal.team}
                     x={(this.state.notFlipped) ? x * 12.5 : (7 - x) * 12.5}
                     y={(this.state.notFlipped) ? y * 12.5 : (7 - y) * 12.5}
@@ -637,6 +646,7 @@ class Game extends React.Component<GameProps, GameState> {
             engineInfo = <EngineInfo
                 showMoves={(!this.props.versusStockfish || !!this.state.game.gameOver)}
                 showEval={(!this.props.versusStockfish || !!this.state.game.gameOver)}
+                mobile={this.state.onMobile}
             />
 
         let players: {
@@ -686,9 +696,10 @@ class Game extends React.Component<GameProps, GameState> {
                 isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
                 onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
                 boardStyle={this.state.boardStyle}
-            />
-        } else {
-            boardToDisplay = <Board
+                pieceStyle={this.state.piecesStyle}
+                />
+            } else {
+                boardToDisplay = <Board
                 board={this.state.premoveBoard}
                 validMoves={[]}
                 selectedPiece={this.state.selectedPiece}
@@ -707,6 +718,7 @@ class Game extends React.Component<GameProps, GameState> {
                 deletePremoves={() => { this.setState({ premoves: [], premoveBoard: null }) }}
                 onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
                 boardStyle={this.state.boardStyle}
+                pieceStyle={this.state.piecesStyle}
             />
         }
 
@@ -728,6 +740,7 @@ class Game extends React.Component<GameProps, GameState> {
             </div>
             {(this.state.onMobile) ? (!this.state.notFlipped) ? players.black : players.white : null}
             {<p className='opening'>{(this.state.game.opening.ECO) ? <span className='eco'>{this.state.game.opening.ECO}</span> : null}{this.state.game.opening.Name}</p>}
+            {(this.state.onMobile) ? engineInfo : null}
             {(!this.state.onMobile) ? <div className='inline-info'>
                 <p className='button-type'
                     onClick={() => {
@@ -756,7 +769,9 @@ class Game extends React.Component<GameProps, GameState> {
                             else if (fenLength === 5) finalFen += ' 1'
                             else return
                         }
+                        console.log(finalFen)
                         if (finalFen.split(' ')[0].split('/').length !== 8) return
+                        console.log('no errors')
                         this.resetGame(finalFen)
                         this.setState({ resetGameFEN: "" })
                     }}>
@@ -778,10 +793,13 @@ class Game extends React.Component<GameProps, GameState> {
                 : null}
         </div>
 
-        const piecesStyleSelector = ['normal', 'medieval', 'ewan', 'sus']
-        const pieceSelector = piecesStyleSelector.map((item) => {
+        const piecesStyleSelector: pieceStyle[] = ['normal', 'medieval', 'ewan', 'sus']
+        const pieceSelector = piecesStyleSelector.map((item: pieceStyle) => {
             return <div key={item} className={'piece-style-btn ' + item + ((this.state.piecesStyle === item) ? ' current' : '')} onClick={() => { this.setState({ piecesStyle: item }); localStorage.setItem('pieceStyle', item) }}>
-                <div className={'display-piece n l'} />
+                <img className={'display-piece n l'} 
+                    alt={item + " style"}
+                    src={'/assets/images/svg/' + item + '/white knight.' + pieceImageType[item]}
+                />
             </div>
         })
 

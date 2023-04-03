@@ -7,7 +7,8 @@ interface PVinfo {
 
 function EngineInfo(props: {
   showMoves: boolean,
-  showEval: boolean
+  showEval: boolean,
+  mobile: boolean
 }) {
   const [info, setInfo] = useState<{
     info: any,
@@ -61,6 +62,7 @@ function EngineInfo(props: {
   }, [PVlist]);
 
   if (info) {
+    if (!props.mobile) {
     if (info.eval !== 'Checkmate' && info.eval !== 'Stalemate') {
       const movesList = (props.showMoves) ?
         <div id='eval-pvs'>
@@ -87,6 +89,19 @@ function EngineInfo(props: {
       return <div className='engine-info'>
         <h3>{info.eval}</h3>
       </div>
+    } else {
+        if (info.eval !== 'Checkmate' && info.eval !== 'Stalemate') {
+            const movesList = (props.showMoves && PVlist[0]) ?
+            <span className='pv'>{PVlist[0].pv}</span> : null
+            return <div className='engine-info'>
+              <p className='mobile-engline-info'>{(props.showEval) ? <strong><div className='eval-engine-info'>Eval: {info.eval}</div></strong> : null}{(props.showEval) ? "\t\t" : null}Depth: {info.info.depth} {movesList}</p>
+            </div>
+          }
+          else
+            return <div className='engine-info'>
+              <p className='mobile-engline-info'><strong>{info.eval}</strong></p>
+            </div>
+    }
   }
   else
     return <div className='engine-info'>
