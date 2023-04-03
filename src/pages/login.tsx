@@ -1,6 +1,6 @@
 import React from 'react';
 import '../css/login-register.scss'
-import { checkForToken, setCookie } from '../helpers/getToken';
+import { checkForToken } from '../helpers/getToken';
 import { apiURL } from '../settings'
 
 interface LoginProps {
@@ -83,7 +83,8 @@ class Login extends React.Component<LoginProps, LoginState>{
 
                 if (response.ok) {
                     const data = await response.json()
-                    setCookie("token", data.token + "|" + data.user.userId, 7)
+                    localStorage.setItem("token", data.token + "|" + data.user.userId)
+                    console.log('Settings cookie')
                     const queryParams = new URLSearchParams(window.location.search);
                     const ref = queryParams.get('ref')
                     if (ref && ref.startsWith('/') && (ref[1] && ref[1] !== '/'))

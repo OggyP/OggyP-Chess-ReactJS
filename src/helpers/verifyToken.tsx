@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { checkForToken, deleteCookie } from './getToken';
+import { checkForToken } from './getToken';
 import Loading from '../pages/loading'
 import ErrorPage from '../pages/Error'
 import { apiURL } from '../settings'
@@ -64,7 +64,7 @@ const NeedsLogin = (props: { children: React.ReactNode }) => {
                         })
                         setUserInfo(data)
                     } else if (response.status === 401) {
-                        deleteCookie('token')
+                        localStorage.removeItem('token')
                         document.location.href = '/login/?ref=' + document.location.pathname + document.location.search;
                     } else
                         setErrorInfo(`HTTP Error: ${response.status}. ${await response.text()}`)

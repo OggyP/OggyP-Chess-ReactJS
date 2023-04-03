@@ -7,7 +7,6 @@ import UCIengine from './engine'
 import PreviousMoves from './tsxAssets/previousMoves'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
-import { deleteCookie, getCookie, setCookie } from './helpers/getToken';
 import { cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/standard/functions';
 import { MovesAndBoard } from './chessLogic/types'
 import GameStandard from './chessLogic/standard/game'
@@ -148,7 +147,7 @@ class Game extends React.Component<GameProps, GameState> {
             }
         }
 
-        const boardStyleSavedVal = getCookie('boardStyle')
+        const boardStyleSavedVal = localStorage.getItem('boardStyle')
         let boardStyle: {
             white: string,
             black: string,
@@ -173,7 +172,7 @@ class Game extends React.Component<GameProps, GameState> {
 
         this.state = {
             game: game,
-            viewingMove: 0, // make it `game.getMoveCount()` to go to the lastest move
+            viewingMove: (this.props.multiplayerWs) ? game.getMoveCount() : 0, // make it `game.getMoveCount()` to go to the lastest move
             validMoves: [],
             notFlipped: (props.team === 'any' || props.team === 'white'),
             selectedPiece: null,
@@ -184,12 +183,12 @@ class Game extends React.Component<GameProps, GameState> {
             premoveBoard: null,
             premoves: [],
             onMobile: windowSize.height * minAspectRatio > windowSize.width,
-            piecesStyle: (getCookie('pieceStyle') || 'normal'),
+            piecesStyle: (localStorage.getItem('pieceStyle') || 'normal'),
             boardStyle: boardStyle,
             loadedNNUE: (this.engine?.loadedNNUE || false),
             resetGameFEN: ""
         }
-        this.boardMoveChanged(0, true, true)
+        this.boardMoveChanged((this.props.multiplayerWs) ? game.getMoveCount() : 0, true, true)
         if (props.pgnAndFenChange) this.updateURLtoHavePGN()
     }
 
@@ -269,7 +268,7 @@ class Game extends React.Component<GameProps, GameState> {
                     sendToWs(this.props.multiplayerWs, 'move', {
                         startingPos: [info.pos.start.x, info.pos.start.y],
                         endingPos: [info.pos.end.x, info.pos.end.y],
-                        promote: piece + ((info.team === 'white') ? 'l' : 'd')
+                        promote: piece
                     })
                 if (this.props.pgnAndFenChange) this.updateURLtoHavePGN()
             }
@@ -781,7 +780,7 @@ class Game extends React.Component<GameProps, GameState> {
 
         const piecesStyleSelector = ['normal', 'medieval', 'ewan', 'sus']
         const pieceSelector = piecesStyleSelector.map((item) => {
-            return <div key={item} className={'piece-style-btn ' + item + ((this.state.piecesStyle === item) ? ' current' : '')} onClick={() => { this.setState({ piecesStyle: item }); setCookie('pieceStyle', item, 100) }}>
+            return <div key={item} className={'piece-style-btn ' + item + ((this.state.piecesStyle === item) ? ' current' : '')} onClick={() => { this.setState({ piecesStyle: item }); localStorage.setItem('pieceStyle', item) }}>
                 <div className={'display-piece n l'} />
             </div>
         })
@@ -798,10 +797,10 @@ class Game extends React.Component<GameProps, GameState> {
                                 black: '#b58863',
                             }
                         });
-                        setCookie('boardStyle', JSON.stringify({
+                        localStorage.setItem('boardStyle', JSON.stringify({
                             white: '#f0d9b5',
                             black: '#b58863',
-                        }), 100)
+                        }))
                     }
                     }>Lichess Colours</button>
                     <button onClick={() => {
@@ -811,10 +810,10 @@ class Game extends React.Component<GameProps, GameState> {
                                 black: '#779556',
                             }
                         });
-                        setCookie('boardStyle', JSON.stringify({
+                        localStorage.setItem('boardStyle', JSON.stringify({
                             white: '#ebecd0',
                             black: '#779556',
-                        }), 100)
+                        }))
                     }
                     }>Chess.com Colours</button>
                     <br />
@@ -823,13 +822,13 @@ class Game extends React.Component<GameProps, GameState> {
                         <label className='button-type' htmlFor="white-tile-color">Custom White Tile Colour</label>
                         <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white}
                             onChange={(event) => {
-                                setCookie('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }), 100);
+                                localStorage.setItem('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }));
                                 this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } })
                             }} />
                         <label className='button-type' htmlFor="black-tile-color">Custom Black Tile Colour</label>
                         <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black}
                             onChange={(event) => {
-                                setCookie('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }), 100);
+                                localStorage.setItem('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }));
                                 this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } })
                             }} />
                     </div> : null}
@@ -842,7 +841,7 @@ class Game extends React.Component<GameProps, GameState> {
                     {resumeButton}
                     <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
                     <button onClick={() => this.flipBoard()}>Flip Board</button>
-                    {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); setCookie('loadNNUE', 'true', 100) }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); deleteCookie('loadNNUE') }}>Stop Loading NNUE</button>}
+                    {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); localStorage.setItem('loadNNUE', 'true') }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); localStorage.removeItem('loadNNUE') }}>Stop Loading NNUE</button>}
                     {(!this.props.multiplayerWs && this.state.game.getMoveCount() > 0) ? <button onClick={() => {
                         this.resetGame()
                     }}>Reset Game</button> : null}

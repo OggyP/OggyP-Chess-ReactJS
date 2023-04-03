@@ -3,11 +3,15 @@ import '../css/chess.scss';
 import '../svg/assets.scss'
 import Game from '../game'
 import { useState } from 'react';
+import checkIfRedirectNeeded from '../helpers/redirect'
 
 function StockfishGame() {
   const [difficulty, setDifficulty] = useState<number>(5);
   const [fastGame, setFastGame] = useState<boolean>(true);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
+
+  checkIfRedirectNeeded()
+
   if (gameStarted)
     return <Game
       team='white'

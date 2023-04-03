@@ -4,10 +4,11 @@ import '../svg/assets.scss'
 import Game from '../game'
 import CheckGameMode from '../helpers/gameModeChecker'
 import LoadingPage from './loading';
-
-console.info("OggyP is awesome!")
+import checkIfRedirectNeeded from '../helpers/redirect';
 
 function AnalysisPage() {
+
+    checkIfRedirectNeeded()
 
     const urlParams = new URLSearchParams(window.location.search);
     console.log(window.location.pathname.split('/')[2])

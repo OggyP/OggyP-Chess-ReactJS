@@ -1,6 +1,5 @@
 import { convertToPosition } from "./chessLogic/standard/functions";
 import { Teams, Vector, PieceCodes } from "./chessLogic/types";
-import { getCookie } from "./helpers/getToken";
 
 const debugEngine = false;
 
@@ -10,7 +9,7 @@ class UCIengine {
   private _analyseFromTeam: Teams = "white";
   private _infoBuffer: any[] = []
   multiPV: number;
-  loadedNNUE: boolean = getCookie('loadNNUE') === 'true'
+  loadedNNUE: boolean = localStorage.getItem('loadNNUE') === 'true'
   _commandsQueue: string[];
   constructor(path: string, initConfigCommands: string[] = [], multiPV: number = 1) {
     this.multiPV = multiPV
