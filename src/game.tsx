@@ -99,6 +99,7 @@ interface GameProps {
         fastGame: boolean
     } | undefined
     allowOverridingMoves: boolean
+    resetGameReloads: boolean
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -581,6 +582,11 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     resetGame(fen: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+        if (this.props.resetGameReloads) {
+            window.location.reload()
+            return
+        }
+
         const game = this.state.game
         // Need to run this becuase 
         game.startingFEN = fen

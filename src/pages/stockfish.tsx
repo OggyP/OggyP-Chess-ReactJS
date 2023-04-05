@@ -19,6 +19,7 @@ function StockfishGame() {
       mode={'standard'}
       allowMoving={true}
       allowPreMoves={true}
+      resetGameReloads={false}
       versusStockfish={{
         skill: difficulty,
         fastGame: fastGame

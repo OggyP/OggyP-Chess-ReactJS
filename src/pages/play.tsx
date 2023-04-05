@@ -202,6 +202,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                 mode={game.mode}
                 pgn={game.pgn}
                 allowOverridingMoves={false}
+                resetGameReloads={false}
                 multiplayerWs={this.ws}
                 onMounted={(callbacks: Function) => this.gameMounted(callbacks)}
                 players={{

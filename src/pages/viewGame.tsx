@@ -72,9 +72,10 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
             return this.state.error
         if (this.state.PGN)
             return <Game
+            resetGameReloads={true}
                 pgn={this.state.PGN}
                 team={viewAs}
-                allowOverridingMoves={false}
+                allowOverridingMoves={true}
                 termination={this.state.termination}
                 allowMoving={false}
                 allowPreMoves={false}
