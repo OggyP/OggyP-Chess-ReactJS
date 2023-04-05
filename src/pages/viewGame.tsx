@@ -7,6 +7,7 @@ import { Teams } from '../chessLogic';
 import ErrorPage from './Error';
 import { GameModes } from '../chessLogic/types';
 import Loading from '../pages/loading';
+import { apiURL } from '../settings';
 
 interface ViewGameProps {
 }
@@ -37,7 +38,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
             gameMode: undefined
         }
 
-        let response = fetch("https://api.oggyp.com/chess/v1/games/view/" + this.gameId, {
+        let response = fetch(apiURL + "games/view/" + this.gameId, {
             method: 'GET',
         })
 
@@ -73,6 +74,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
             return <Game
                 pgn={this.state.PGN}
                 team={viewAs}
+                allowOverridingMoves={false}
                 termination={this.state.termination}
                 allowMoving={false}
                 allowPreMoves={false}

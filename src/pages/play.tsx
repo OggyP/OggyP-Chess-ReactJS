@@ -144,8 +144,9 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                         window.removeEventListener('beforeunload', leavePage);
                         if (serverGameOverTypes.includes(data.by)) {
                             if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
-                            this.serverGameOver(data.winner, data.by, data.info)
+                            this.serverGameOver(data.winner, data.by, data.info)                            
                         }
+                        window.history.pushState('OggyP Chess View Game', 'View Game', window.location.origin + '/viewGame/' + data.gameId);
                         break
                     case 'timerUpdate':
                         if (this.updateTimer)
@@ -180,10 +181,12 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                         description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
                     }
                 })
+                window.location.reload()
             }
 
             this.ws.onopen = () => {
                 console.log("Web Socket Connected")
+                cancelReconnection = false
             }
         }
 
@@ -198,6 +201,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                 team={game.team}
                 mode={game.mode}
                 pgn={game.pgn}
+                allowOverridingMoves={false}
                 multiplayerWs={this.ws}
                 onMounted={(callbacks: Function) => this.gameMounted(callbacks)}
                 players={{
@@ -214,6 +218,22 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
         this.doMove = callbacks.doMove
         this.updateTimer = callbacks.updateTimer
         this.serverGameOver = callbacks.gameOver
+    }
+
+    regainedFocus() {
+        if (!document.hidden) {
+            console.log('Focus!')
+            if (this.state.error)
+                window.location.reload()
+        }
+    }
+
+    componentDidMount(): void {
+        document.addEventListener('visibilitychange', this.regainedFocus);
+    }
+
+    componentWillUnmount(): void {
+        window.removeEventListener("visibilitychange", this.regainedFocus);
     }
 
     render() {

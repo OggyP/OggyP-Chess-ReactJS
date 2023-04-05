@@ -33,6 +33,7 @@ function AnalysisPage() {
 
     return <Game
         team='any'
+        allowOverridingMoves={true}
         mode={gameMode}
         allowMoving={true}
         allowPreMoves={false}

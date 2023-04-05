@@ -1,8 +1,7 @@
 import React from 'react';
-import { sendToWs } from '../helpers/wsHelper'
 import '../css/login-register.scss'
 import { checkForToken } from '../helpers/getToken';
-import { wsURL } from '../settings'
+import { apiURL, wsURL } from '../settings'
 
 interface LoginProps {
 }
@@ -51,28 +50,6 @@ class Register extends React.Component<LoginProps, LoginState>{
         document.location.href = '/home';
       return
     }
-
-    this.ws.onmessage = (message) => {
-      const event = JSON.parse(message.data)
-      if (event.type === 'register') {
-        if (event.data.status === 'success') {
-          document.location.href = '/login';
-        } else {
-          this.setState({
-            registerError: event.data.error
-          })
-        }
-      }
-      console.log(event)
-    }
-
-    this.ws.onclose = function () {
-    }
-
-    this.ws.onerror = function () {
-    }
-
-    this.ws.onopen = () => { }
   }
 
 
@@ -84,33 +61,77 @@ class Register extends React.Component<LoginProps, LoginState>{
     this.setState(partialState);
   }
 
-  handleSubmit(event: any) {
+  async handleSubmit(event: any) {
     event.preventDefault()
     if (!this.state.username || !this.state.password || !this.state.passwordCheck)
-      this.setState({
-        registerError: "Please Fill in all of the details."
-      })
-    else if (this.state.password !== this.state.passwordCheck) {
-      this.setState({
-        registerError: "Passwords do not match"
-      })
-    }
+        this.setState({
+            registerError: "Please Enter your Username and Password"
+        })
+    else if (this.state.password !== this.state.passwordCheck)
+        this.setState({
+            registerError: "Passwords do not match"
+        })
     else {
-      this.setState({
-        registerError: null
-      })
-      sendToWs(this.ws, 'register', [
-        ['username', this.state.username],
-        ['password', this.state.password]
-      ])
+        this.setState({
+            registerError: null
+        })
+
+        try {
+            let response = await fetch(apiURL + "account/register", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    username: this.state.username,
+                    password: this.state.password
+                })
+            })
+
+            if (response.ok) {
+                try {
+                    let response = await fetch(apiURL + "account/login", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json;charset=utf-8'
+                        },
+                        body: JSON.stringify({
+                            username: this.state.username,
+                            password: this.state.password
+                        })
+                    })
+    
+                    if (response.ok) {
+                        console.log('REGISTER DONE')
+                        const data = await response.json()
+                        localStorage.setItem("token", data.token + "|" + data.user.userId)
+                        const queryParams = new URLSearchParams(window.location.search);
+                        const ref = queryParams.get('ref')
+                        if (ref && ref.startsWith('/') && (ref[1] && ref[1] !== '/'))
+                            document.location.href = ref
+                        else
+                            document.location.href = '/home';
+                    } else {
+                        this.setState({ registerError: await response.text() })
+    
+                    }
+                } catch {
+                    this.setState({ registerError: "Error Connecting To OggyP Chess Servers" })
+                }
+            } else {
+                this.setState({ registerError: await response.text() })
+
+            }
+        } catch {
+            this.setState({ registerError: "Error Connecting To OggyP Chess Servers" })
+        }
     }
-  }
+}
 
   render() {
     let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
     if (this.state.registerError) passwordError = <h2 className='account-error'>{this.state.registerError}</h2>
     return <form id='account-form' onSubmit={this.handleSubmit.bind(this)}>
-      <img src="/assets/images/favicon-login-bg.png" alt="" className="bg-img" />
       <h1>Register</h1>
       {passwordError}
       <label htmlFor="username-input">

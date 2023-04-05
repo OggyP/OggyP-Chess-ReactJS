@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import '../css/home.scss'
-import { formatDate } from '../helpers/date'
 import PlaySelectionMenu from './home/playSelector'
-import LobbyMenu, {queueInfo} from './home/lobby'
+import LobbyMenu, { queueInfo } from './home/lobby'
 import { userInfo } from '../helpers/verifyToken'
 import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
@@ -13,19 +12,20 @@ interface HomeProps {
 
 interface gameInfo {
     id: number
+    gameMode: string
     white: string
     black: string
-    score: string
-    reason: string
-    gameMode: string
-    opening: string
-    createdAt: string
+    winner: 'white' | 'black' | 'draw',
+    gameOverReason: string,
+    openingECO: string
+    openingName: string
+    timeOption: string
 }
 
 function Home(props: HomeProps) {
 
     const [gameInfo, setGameInfo] = useState<gameInfo[]>([])
-    const [pgnInput, setPgnInput] = useState<string>("")
+    // const [pgnInput, setPgnInput] = useState<string>("")
     const [copiedId, setCopiedId] = useState<null | number>(null)
     const [error, setError] = useState<null | {
         title: string,
@@ -63,11 +63,11 @@ function Home(props: HomeProps) {
 
                 ws.onclose = function () {
                     console.log("Web socket Closed")
-                    if (!cancelReconnection)
+                    if (!cancelReconnection && !error)
                         setTimeout(establishWS, 2000);
                 }
 
-                ws.onerror = function (error) {
+                ws.onerror = (error) => {
                     console.log("Web socket error!")
                     console.error(error)
                     cancelReconnection = true
@@ -75,6 +75,7 @@ function Home(props: HomeProps) {
                         title: "Connection Issues!",
                         description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
                     })
+                    window.location.reload()
                 }
 
                 ws.onopen = () => {
@@ -83,7 +84,7 @@ function Home(props: HomeProps) {
             }
 
         }
-        
+
         establishWS()
     }, [error, props.userInfo])
 
@@ -101,45 +102,108 @@ function Home(props: HomeProps) {
             })
 
             if (response.ok) {
-                const data = await response.json()
-                setGameInfo(data)
-            } else
+                const rawText = await response.text()
+                if (rawText) {
+                    const data = await JSON.parse(rawText)
+                    setGameInfo(data)
+                }
+            } else if (response.status === 401) {
+                localStorage.removeItem('token')
+                document.location.href = '/login/?ref=' + document.location.pathname + document.location.search;
+            }
+            else
                 document.location.href = encodeURI(`/error?title=HTTP Error: ${response.status}&desc=${await response.text()}`)
         }
 
         getLatestGames()
     }, [props.userInfo])
 
+    useEffect(() => {
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                console.log('Focus!')
+                if (error)
+                    window.location.reload()
+            }
+        });
+    }, [error])
+
     let userInfoPage = <div className='user-info'>
         <h1>Loading User Info</h1>
     </div>
 
-    if (props.userInfo)
-        userInfoPage = <div className='user-info'>
-            <h1 className='username'>{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
-            <h3 className='rating'>Rating: {Math.round(props.userInfo.rating)}</h3>
-            <h3 className='sign-up-date'>Signed Up: {formatDate(new Date(props.userInfo.createdAt))}</h3>
-        </div>
+    if (!props.userInfo) throw new Error('What how')
+
+    userInfoPage = <div className='user-info'>
+        <h1 className='username'>{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
+        <h3 className='user-stats'>Rating | {Math.round(props.userInfo.rating)}</h3>
+        <h3 className='user-stats'>Win% | {Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</h3>
+        <h3 className='user-stats'>Win:Loss | {props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</h3>
+        <h3 className='user-stats'>#Games | {props.userInfo.gamesPlayed}</h3>
+        <button className='button' onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }}>Log Out</button>
+    </div>
 
     let games: JSX.Element[] = []
     for (let i = 0; i < gameInfo.length; i++) {
         const value = gameInfo[i]
         const urlToGoTo = '/viewGame/' + value.id + ((value.white === props.userInfo?.username) ? '' : '?viewAs=black')
         const successfullyCopied = (copiedId && copiedId === value.id)
-        games.push(<tr className='game-normal-info' key={value.id * 2}>
-            <td onClick={() => document.location.href = urlToGoTo} className='username white'>{value.white}</td>
-            <td onClick={() => document.location.href = urlToGoTo} className='result'>{value.score}</td>
-            <td onClick={() => document.location.href = urlToGoTo} className='username black'>{value.black}</td>
-            <td onClick={() => {
+
+        let winSymbol
+        const ownTeam = (value.white === props.userInfo.username) ? 'white' : 'black'
+        if (ownTeam === value.winner)
+            winSymbol = 'win'
+        else if (value.winner === 'draw')
+            winSymbol = 'draw'
+        else
+            winSymbol = 'loss'
+
+        let symbols = {
+            white: '1/2',
+            black: '1/2'
+        }
+
+        if (value.winner === 'white') {
+            symbols.white = '1'
+            symbols.black = '0'
+        } else {
+            symbols.white = '0'
+            symbols.black = '1'
+        }
+
+
+        games.push(<li className='game-normal-info' key={value.id * 2} onClick={() => window.location.href = urlToGoTo}>
+            <div className='container'>
+                <div className='result'>
+                    <img src={`/assets/images/previousGameMenu/${winSymbol}.svg`} alt={winSymbol} />
+                </div>
+                <div className='username'>
+                    <div className='white'>
+                        <p>{symbols.white}  {value.white}</p>
+                    </div>
+                    <div className='black'>
+                        <p>{symbols.black}  {value.black}</p>
+                    </div>
+                </div>
+                <div className='game-info'>
+                    <div className='game-mode'>
+                        <p>{value.gameMode}</p>
+                    </div>
+                    <div className='time-controls'>
+                        <p>{`${Number(value.timeOption.split('+')[0]) / 60}+${value.timeOption.split('+')[1]}`}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* <td onClick={() => {
                 navigator.clipboard.writeText("https://chess.oggyp.com" + urlToGoTo);
                 setCopiedId(value.id);
             }
             } className={'copy' + ((successfullyCopied) ? ' success' : '')}>
                 {(successfullyCopied) ?
                     <span className="material-icons">done</span> :
-                    <span className="material-icons">content_copy</span>}
-            </td>
-        </tr>)
+                    <span className="material-icons">content_copy</span>} */}
+        </li>)
     }
 
     const defaultTimes: ([number, number] | string)[] = [
@@ -171,7 +235,9 @@ function Home(props: HomeProps) {
         title={error.title} description={error.description}
     />
 
-    return <div id='home-wrapper'>
+    return <div id='home-wrapper' onFocus={() => {
+
+    }}>
         {userInfoPage}
         <PlaySelectionMenu
             gameModes={gameModes}
@@ -181,19 +247,8 @@ function Home(props: HomeProps) {
             <LobbyMenu queues={queues} />
         </div>
         <div id="previous-games">
-            <h3>Previous Games</h3>
-            <table>
-                <colgroup>
-                    <col className='username white' />
-                    <col className='result' />
-                    <col className='username black' />
-                </colgroup>
-                <thead>
-                </thead>
-                <tbody>
-                    {games}
-                </tbody>
-            </table>
+            <h2>Previous Games</h2>
+            <ul>{games}</ul>
         </div>
     </div>
 }

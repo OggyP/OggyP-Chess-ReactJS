@@ -94,7 +94,7 @@ function EngineInfo(props: {
             const movesList = (props.showMoves && PVlist[0]) ?
             <span className='pv'>{PVlist[0].pv}</span> : null
             return <div className='engine-info'>
-              <p className='mobile-engline-info'>{(props.showEval) ? <strong><div className='eval-engine-info'>Eval: {info.eval}</div></strong> : null}{(props.showEval) ? "\t\t" : null}Depth: {info.info.depth} {movesList}</p>
+              <div className='mobile-engline-info'>{(props.showEval) ? <div className='eval-engine-info'><strong>Eval: {info.eval}</strong></div> : null}{(props.showEval) ? "\t\t" : null}Depth: {info.info.depth} {movesList}</div>
             </div>
           }
           else

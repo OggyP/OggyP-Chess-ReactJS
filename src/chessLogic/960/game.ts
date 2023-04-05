@@ -57,15 +57,15 @@ class Game {
     public metaValues: Map<string, string>;
     public metaValuesOrder: string[];
     public opening: Opening = {
-        "Name": "Starting Position",
+        "Name": "Custom Position",
         "ECO": null
     }
     constructor(input: GameConstuctorInput) {
         getJSON('/assets/openings.json', (data: object) => { Game.openings = data; this.checkForOpening() })
+        this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'WhiteElo', 'BlackElo', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening', 'FEN']
         if (input.pgn) {
             // Parse PGN
             this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-            this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening']
             const currentDate = new Date()
             this.metaValues = new Map([
                 ['Event', '?'],
@@ -291,7 +291,6 @@ class Game {
             }
         }
         else if (input.fen) {
-            this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening']
             if (input.fen.meta)
                 this.metaValues = input.fen.meta
             else {
@@ -322,15 +321,6 @@ class Game {
     }
 
     checkForOpening(): void {
-        if (!Game.openings) return
-        const moves = this.shortNotationMoves.split(' ')
-        for (let i = 0; i < moves.length; i++) {
-            const opening = Game.openings[moves.slice(0, i).join(' ')]
-            if (!opening) continue
-            this.metaValues.set('Opening', opening.Name)
-            this.metaValues.set('ECO', opening.ECO)
-            this.opening = opening as Opening
-        }
     }
 
     getPlayerInfo(): {
@@ -397,18 +387,19 @@ class Game {
         return gameOverInfo
     }
 
-    doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined, allowPromotion = true): boolean {
+    doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined, allowPromotion = true): true | string {
         const latestBoard = this.getLatest().board
         const piece = latestBoard.getPos(startPos)
-        if (!piece) return false
-        if (piece.team !== latestBoard.getTurn('next')) return false
+        if (!piece) return `Wrong piece being moved\n${latestBoard.getFen()}`
+        if (piece.team !== latestBoard.getTurn('next')) return `It is not your turn\n${latestBoard.getFen()}`
         const moves = piece.getMoves(startPos, latestBoard)
         for (let i = 0; i < moves.length; i++) {
             const move = moves[i]
-            if (!allowPromotion && move.moveType.includes('promote')) return false
+            if (!allowPromotion && move.moveType.includes('promote')) return `Attempted to promote\n${latestBoard.getFen()}`
             if (move.move.x !== endPos.x || move.move.y !== endPos.y) continue
             const newBoard = new Board(move.board)
             if (promotion) {
+                if (!['p', 'r', 'n', 'b', 'q', 'k'].includes(promotion)) return `Invalid promotion piece ${promotion}`
                 newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
             }
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
@@ -429,7 +420,7 @@ class Game {
             this.setGameOver(isGameOver)
             return true
         }
-        return false
+        return `No legal move found\n${latestBoard.getFen()}`
     }
 
     forcedEnpassant(ws: WebSocket | undefined, team: Teams) {
@@ -469,6 +460,23 @@ class Game {
             }
             this.shortNotationMoves += ' ' + moveInfo.notation.short
         }
+    }
+
+    resetToMove(moveNum: number) {
+        const newHistory = this._history.slice(0, moveNum + 1)
+        this._history = newHistory
+
+        this.shortNotationMoves = ''
+        for (let i = 0; i < this._history.length; i++) {
+            const move = this._history[i]
+            const moveInfo = move.move
+            if (moveInfo) {
+                if (i % 2 === 1) {
+                    this.shortNotationMoves += ((i !== 1) ? ' ' : '') + ((i - 1) / 2 + 1) + '.'
+                }
+                this.shortNotationMoves += ' ' + moveInfo.notation.short
+            }
+        }
 
         if (!Game.openings) return
         const opening: { Name: string, ECO: string } = Game.openings[this.shortNotationMoves]
@@ -477,7 +485,6 @@ class Game {
             this.metaValues.set('ECO', opening.ECO)
             this.opening = opening as Opening
         }
-
     }
 
     getPGN(): string {

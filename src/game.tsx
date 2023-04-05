@@ -98,6 +98,7 @@ interface GameProps {
         skill: number
         fastGame: boolean
     } | undefined
+    allowOverridingMoves: boolean
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -397,8 +398,23 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     handlePieceClick(posClicked: Vector): void {
-        if (!this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next') && (this.props.team === 'any' || this.latestBoard().getTurn('next') === this.props.team)) {
+        console.log(this.props.allowOverridingMoves)
+        if (!this.state.game.gameOver
+            && this.state.viewingMove === this.state.game.getMoveCount()
+            && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next')
+            && (this.props.team === 'any'
+                || this.latestBoard().getTurn('next') === this.props.team)) {
             const newValidMoves = this.latestBoard().getPos(posClicked)?.getMoves(posClicked, this.latestBoard())
+            if (newValidMoves)
+                this.setState({
+                    validMoves: newValidMoves,
+                    selectedPiece: posClicked
+                })
+        } else if (this.props.allowOverridingMoves
+            && this.viewingBoard().getPos(posClicked)?.team === this.viewingBoard().getTurn('next')
+            && (this.props.team === 'any'
+                || this.viewingBoard().getTurn('next') === this.props.team)) {
+            const newValidMoves = this.viewingBoard().getPos(posClicked)?.getMoves(posClicked, this.viewingBoard())
             if (newValidMoves)
                 this.setState({
                     validMoves: newValidMoves,
@@ -421,7 +437,9 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     handleMoveClick(posClicked: Vector): void {
-        if (!this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount()) {
+        if ((!this.state.game.gameOver
+            && this.state.viewingMove === this.state.game.getMoveCount())
+            || (this.props.allowOverridingMoves)) {
             let newBoard: ChessBoardType | null = null
             let moveType: string[] | null = null
             let displayPos: Vector | null = null
@@ -432,7 +450,7 @@ class Game extends React.Component<GameProps, GameState> {
 
             let selectedPiece: PieceAtPos = null
             if (selectedPiecePos)
-                selectedPiece = this.latestBoard().getPos(selectedPiecePos)
+                selectedPiece = this.viewingBoard().getPos(selectedPiecePos)
             for (let i = 0; i < this.state.validMoves.length; i++) {
                 const checkMove = this.state.validMoves[i]
                 if (checkMove.move.x === posClicked.x && checkMove.move.y === posClicked.y) {
@@ -445,6 +463,9 @@ class Game extends React.Component<GameProps, GameState> {
             if (!displayPos) throw new Error("Display pos is null");
 
             newBoard = newBoard as ChessBoardType
+
+            if (this.state.viewingMove !== this.state.game.getMoveCount())
+                this.state.game.resetToMove(this.state.viewingMove)
 
             let isPromotion = false
             if (selectedPiece && selectedPiecePos) {
@@ -564,6 +585,7 @@ class Game extends React.Component<GameProps, GameState> {
         // Need to run this becuase 
         game.startingFEN = fen
         game.shortNotationMoves = ""
+        game.metaValues = new Map()
         this.setState({
             game: new this.gameType({ fen: { val: fen } })
         });
@@ -574,6 +596,7 @@ class Game extends React.Component<GameProps, GameState> {
         }
         this.goToMove(0)
         this.updateURLtoHavePGN()
+        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis');
     }
 
     preventContextMenu(e: any) {
@@ -635,12 +658,6 @@ class Game extends React.Component<GameProps, GameState> {
             promotionSelector = <div id="promotion-choice">{promotionOptionsDisplay}</div>
         }
 
-        let resumeButton = null
-        if (this.state.viewingMove !== this.state.game.getMoveCount())
-            resumeButton = <button onClick={() => this.setState({
-                viewingMove: this.state.game.getMoveCount()
-            })}>Resume</button>
-
         let engineInfo = null
         if (this.engine)
             engineInfo = <EngineInfo
@@ -697,9 +714,9 @@ class Game extends React.Component<GameProps, GameState> {
                 onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
                 boardStyle={this.state.boardStyle}
                 pieceStyle={this.state.piecesStyle}
-                />
-            } else {
-                boardToDisplay = <Board
+            />
+        } else {
+            boardToDisplay = <Board
                 board={this.state.premoveBoard}
                 validMoves={[]}
                 selectedPiece={this.state.selectedPiece}
@@ -796,7 +813,7 @@ class Game extends React.Component<GameProps, GameState> {
         const piecesStyleSelector: pieceStyle[] = ['normal', 'medieval', 'ewan', 'sus']
         const pieceSelector = piecesStyleSelector.map((item: pieceStyle) => {
             return <div key={item} className={'piece-style-btn ' + item + ((this.state.piecesStyle === item) ? ' current' : '')} onClick={() => { this.setState({ piecesStyle: item }); localStorage.setItem('pieceStyle', item) }}>
-                <img className={'display-piece n l'} 
+                <img className={'display-piece n l'}
                     alt={item + " style"}
                     src={'/assets/images/svg/' + item + '/white knight.' + pieceImageType[item]}
                 />
@@ -856,25 +873,26 @@ class Game extends React.Component<GameProps, GameState> {
                 <br /><hr /><br />
                 <div id="game-controls">
                     <h3>Game Controls</h3>
-                    {resumeButton}
                     <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
-                    <button onClick={() => this.flipBoard()}>Flip Board</button>
                     {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); localStorage.setItem('loadNNUE', 'true') }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); localStorage.removeItem('loadNNUE') }}>Stop Loading NNUE</button>}
-                    {(!this.props.multiplayerWs && this.state.game.getMoveCount() > 0) ? <button onClick={() => {
-                        this.resetGame()
-                    }}>Reset Game</button> : null}
-                    {(this.props.multiplayerWs && !this.state.game.gameOver) ? <button onClick={() => {
-                        if (this.props.multiplayerWs)
-                            sendToWs(this.props.multiplayerWs, 'game', [
-                                ['option', 'resign']
-                            ])
-                    }}>Resign</button> : null}
                 </div>
             </div>
         </div>
 
         let previousMovesList = <PreviousMoves
+            analyseFunc={() => { }}
+            allowAnalyse={((!!this.props.multiplayerWs && !!this.state.game.gameOver) || (!this.props.multiplayerWs))}
             onMobile={this.state.onMobile}
+            allowResetGame={(!this.props.multiplayerWs && this.state.game.getMoveCount() > 0)}
+            ResetGameFunc={() => this.resetGame()}
+            allowResign={(!!this.props.multiplayerWs && !this.state.game.gameOver)}
+            resignFunc={() => {
+                if (this.props.multiplayerWs)
+                    sendToWs(this.props.multiplayerWs, 'game', [
+                        ['option', 'resign']
+                    ])
+            }}
+            flipBoardFunc={() => this.flipBoard()}
             notFlipped={this.state.notFlipped}
             players={players}
             engineInfo={engineInfo}
@@ -882,6 +900,7 @@ class Game extends React.Component<GameProps, GameState> {
             game={this.state.game}
             viewingMove={this.state.viewingMove}
             latestMove={this.state.game.getMoveCount()}
+            allowCopy={(!this.props.multiplayerWs)}
         />
 
         return (

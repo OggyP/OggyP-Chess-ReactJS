@@ -263,9 +263,10 @@ div.piece-style-btn {
             border-style: solid;
         }
     }
-    #game-viewmove-controls {
+    .game-controls {
         display: flex;
         flex-direction: row;
+        // height: 4em;
         p {
             -webkit-touch-callout: none;
             /* iOS Safari */
@@ -287,7 +288,7 @@ div.piece-style-btn {
             margin-top: 10px;
             background-color: var(--grey);
             border-radius: 5px;
-            width: calc(25% - 15px);
+            width: 100%;
             text-align: center;
             margin-left: 5px;
             margin-right: 5px;
@@ -300,7 +301,42 @@ div.piece-style-btn {
                 background-color: rgb(39, 39, 39);
                 cursor: not-allowed;
             }
+            span {
+                padding-top: 4px;
+                &.done {
+                    animation-duration: 0.75s;
+                    animation-name: copySuccess;
+                    transform: scale(1);
+                }
+                // font-size: small;
+            }
         }
+    }
+}
+
+@keyframes copySuccess {
+    0% {
+        colour: white;
+    }
+
+    10% {
+        transform: scale(0);
+        colour: white;
+    }
+
+    50% {
+        transform: scale(2);
+        color: green;
+    }
+
+    90% {
+        color: green;
+        // transform: ;
+    }
+
+    100% {
+        color: white;
+        transform: scale(1);
     }
 }
 

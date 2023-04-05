@@ -15,6 +15,7 @@ function StockfishGame() {
   if (gameStarted)
     return <Game
       team='white'
+      allowOverridingMoves={true}
       mode={'standard'}
       allowMoving={true}
       allowPreMoves={true}

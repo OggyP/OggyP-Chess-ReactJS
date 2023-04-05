@@ -52,7 +52,7 @@ class Board extends DefaultBoard {
             this.capturedPieces.white = Object.assign([], board.capturedPieces.white)
             this.capturedPieces.black = Object.assign([], board.capturedPieces.black)
             this._pieceId = board._pieceId
-            this._repitions = board._repitions
+            this._repitions = new Map(board._repitions)
         } else {
             let FENparts = input.split(' ')
             if (FENparts.length !== 6) {

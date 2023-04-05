@@ -374,6 +374,7 @@ class Game {
     }
 
     getMove(moveNum: number): History {
+        console.log(this._history)
         return this._history[moveNum]
     }
 
@@ -477,7 +478,31 @@ class Game {
             this.metaValues.set('ECO', opening.ECO)
             this.opening = opening as Opening
         }
+    }
 
+    resetToMove(moveNum: number) {
+        const newHistory = this._history.slice(0, moveNum + 1)
+        this._history = newHistory
+
+        this.shortNotationMoves = ''
+        for (let i = 0; i < this._history.length; i++) {
+            const move = this._history[i]
+            const moveInfo = move.move
+            if (moveInfo) {
+                if (i % 2 === 1) {
+                    this.shortNotationMoves += ((i !== 1) ? ' ' : '') + ((i - 1) / 2 + 1) + '.'
+                }
+                this.shortNotationMoves += ' ' + moveInfo.notation.short
+            }
+        }
+
+        if (!Game.openings) return
+        const opening: { Name: string, ECO: string } = Game.openings[this.shortNotationMoves]
+        if (this.getMoveCount() < 25 && opening) {
+            this.metaValues.set('Opening', opening.Name)
+            this.metaValues.set('ECO', opening.ECO)
+            this.opening = opening as Opening
+        }
     }
 
     getPGN(): string {

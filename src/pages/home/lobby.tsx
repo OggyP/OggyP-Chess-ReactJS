@@ -1,5 +1,3 @@
-import React, { useState } from 'react';
-
 interface user {
     userId: number,
     username: string,
@@ -54,7 +52,7 @@ function LobbyMenu(props: LobbyMenuProps) {
             {props.queues.map((data, index) => (
                 <tr key={index} onClick={() => window.location.href = `/play/${data.gameInfo.mode}/${data.gameInfo.time.base}+${data.gameInfo.time.increment}`}>
                     <td>{data.player.username}</td>
-                    <td>{data.player.rating}{(data.player.ratingDeviation > 125) ? '?' : ''}</td>
+                    <td>{Math.round(data.player.rating)}{(data.player.ratingDeviation > 125) ? '?' : ''}</td>
                     <td>{data.gameInfo.time.base / 60}+{data.gameInfo.time.increment}</td>
                     <td>{fullChessModeNames[data.gameInfo.mode]}</td>
                 </tr>
