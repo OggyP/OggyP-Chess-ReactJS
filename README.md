@@ -1,10 +1,11 @@
 # OggyP Chess in React JS
 
-This is [OggyP Chess](https://chess.oggyp.com) being recreated in React JS. This will repalce OggyP Chess when it has caught up in design and features. 
+This is the code for the website [OggyP Chess](https://chess.oggyp.com) built using React JS with a Node JS backend. This allows for multiplayer chess with several game modes
 
 ## Credit
 
-(Stockfish WASM nmrugg/stockfish.js/)[https://github.com/nmrugg/stockfish.js/]
+[kElnaDev](https://github.com/kElnaDev) for the CSS yayayayay
+[Stockfish WASM nmrugg/stockfish.js/](https://github.com/nmrugg/stockfish.js/)
 
 # Getting Started with Create React App
 
