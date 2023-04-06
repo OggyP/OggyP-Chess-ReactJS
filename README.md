@@ -4,8 +4,8 @@ This is the code for the website [OggyP Chess](https://chess.oggyp.com) built us
 
 ## Credit
 
-(kElnaDev)[https://github.com/kElnaDev] for the CSS yayayayay
-(Stockfish WASM nmrugg/stockfish.js/)[https://github.com/nmrugg/stockfish.js/]
+[kElnaDev](https://github.com/kElnaDev) for the CSS yayayayay
+[Stockfish WASM nmrugg/stockfish.js/](https://github.com/nmrugg/stockfish.js/)
 
 # Getting Started with Create React App
 
