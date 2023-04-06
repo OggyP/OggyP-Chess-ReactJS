@@ -33,6 +33,7 @@ function AnalysisPage() {
 
     return <Game
         team='any'
+        viewAs='white'
         resetGameReloads={false}
         allowOverridingMoves={true}
         mode={gameMode}

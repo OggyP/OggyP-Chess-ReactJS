@@ -102,9 +102,9 @@ function PreviousMoves(props: PreviousMovesProps) {
                 flag
             </span>
         </p> : null}
-        {(props.allowResetGame) ? <p onClick={() => props.ResetGameFunc()} >
+        {(props.allowResetGame || props.allowAnalyse) ? <p onClick={() => props.ResetGameFunc()} >
             <span className="material-icons-sharp">
-                refresh
+                {(props.allowAnalyse) ? 'query_stats' : 'refresh'}
             </span>
         </p> : null}
         {(props.allowCopy !== false) ? <p onClick={() => {

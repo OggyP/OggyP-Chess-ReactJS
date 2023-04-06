@@ -49,7 +49,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
                 console.log(data.pgn)
                 this.setState({
                     PGN: data.pgn,
-                    termination: data.reason,
+                    termination: data.gameOverReason,
                     gameMode: data.gameMode
                 })
             } catch {
@@ -64,17 +64,18 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
     }
 
     render() {
-        let viewAs: Teams | 'any' = 'any'
+        let viewAs: Teams = 'white'
         const viewAsFromURL = this.urlParams.get('viewAs')
-        if (viewAsFromURL === 'white' || viewAsFromURL === 'black' || viewAsFromURL === 'any')
+        if (viewAsFromURL === 'white' || viewAsFromURL === 'black')
             viewAs = viewAsFromURL
         if (this.state.error)
             return this.state.error
         if (this.state.PGN)
             return <Game
-            resetGameReloads={true}
+                resetGameReloads={true}
                 pgn={this.state.PGN}
-                team={viewAs}
+                team='any'
+                viewAs={viewAs}
                 allowOverridingMoves={true}
                 termination={this.state.termination}
                 allowMoving={false}

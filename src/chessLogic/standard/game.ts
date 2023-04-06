@@ -62,10 +62,10 @@ class Game {
     }
     constructor(input: GameConstuctorInput) {
         getJSON('/assets/openings.json', (data: object) => { Game.openings = data; this.checkForOpening() })
+        this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'WhiteElo', 'BlackElo', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening', 'FEN']
         if (input.pgn) {
             // Parse PGN
             this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-            this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening']
             const currentDate = new Date()
             this.metaValues = new Map([
                 ['Event', '?'],
@@ -291,7 +291,6 @@ class Game {
             }
         }
         else if (input.fen) {
-            this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening']
             if (input.fen.meta)
                 this.metaValues = input.fen.meta
             else {
@@ -398,18 +397,19 @@ class Game {
         return gameOverInfo
     }
 
-    doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined, allowPromotion = true): boolean {
+    doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined, allowPromotion = true): true | string {
         const latestBoard = this.getLatest().board
         const piece = latestBoard.getPos(startPos)
-        if (!piece) return false
-        if (piece.team !== latestBoard.getTurn('next')) return false
+        if (!piece) return `Wrong piece being moved\n${latestBoard.getFen()}`
+        if (piece.team !== latestBoard.getTurn('next')) return `It is not your turn\n${latestBoard.getFen()}`
         const moves = piece.getMoves(startPos, latestBoard)
         for (let i = 0; i < moves.length; i++) {
             const move = moves[i]
-            if (!allowPromotion && move.moveType.includes('promote')) return false
+            if (!allowPromotion && move.moveType.includes('promote')) return `Attempted to promote\n${latestBoard.getFen()}`
             if (move.move.x !== endPos.x || move.move.y !== endPos.y) continue
             const newBoard = new Board(move.board)
             if (promotion) {
+                if (!['p', 'r', 'n', 'b', 'q', 'k'].includes(promotion)) return `Invalid promotion piece ${promotion}`
                 newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
             }
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
@@ -430,7 +430,7 @@ class Game {
             this.setGameOver(isGameOver)
             return true
         }
-        return false
+        return `No legal move found\n${latestBoard.getFen()}`
     }
 
     forcedEnpassant(ws: WebSocket | undefined, team: Teams) {

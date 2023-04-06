@@ -100,6 +100,7 @@ interface GameProps {
     } | undefined
     allowOverridingMoves: boolean
     resetGameReloads: boolean
+    viewAs: Teams
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -314,6 +315,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) {
+        console.log('doing move')
         const piece = this.latestBoard().getPos(startPos)
         if (!piece) return
         if (piece.team === this.props.team) return
@@ -322,6 +324,7 @@ class Game extends React.Component<GameProps, GameState> {
 
         // Forced Enpassant
         if (this.state.game.forcedEnpassant(this.props.multiplayerWs, piece.team)) {
+            console.log('force enpassant inc')
             newViewNum++
             this.setState({
                 premoves: [],
@@ -337,7 +340,7 @@ class Game extends React.Component<GameProps, GameState> {
             const piece = this.latestBoard().getPos(premove.start)
             if (!piece) premoveError = true
             if (piece && piece.team !== this.props.team) premoveError = true
-            if (!this.state.game.doMove(premove.start, premove.end, undefined, false)) premoveError = true
+            if (this.state.game.doMove(premove.start, premove.end, undefined, false) !== true) premoveError = true
             if (premoveError)
                 this.setState({
                     premoves: [],
@@ -345,6 +348,7 @@ class Game extends React.Component<GameProps, GameState> {
                 })
             else if (this.props.allowPreMoves) {
                 newViewNum++
+                console.log('premove inc')
                 if (!this.state.premoves.length) {
                     this.setState({
                         premoves: [],
@@ -368,6 +372,8 @@ class Game extends React.Component<GameProps, GameState> {
                     })
             }
         }
+
+        console.log('saving view num')
         this.setState({
             game: this.state.game,
             viewingMove: newViewNum
@@ -434,6 +440,8 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     viewingBoard(): ChessBoardType {
+        console.log(this.state.viewingMove)
+        console.log(this.state.game)
         return this.state.game.getMove(this.state.viewingMove).board
     }
 
@@ -887,7 +895,7 @@ class Game extends React.Component<GameProps, GameState> {
 
         let previousMovesList = <PreviousMoves
             analyseFunc={() => { }}
-            allowAnalyse={((!!this.props.multiplayerWs && !!this.state.game.gameOver) || (!this.props.multiplayerWs))}
+            allowAnalyse={(!!this.props.multiplayerWs && !!this.state.game.gameOver)}
             onMobile={this.state.onMobile}
             allowResetGame={(!this.props.multiplayerWs && this.state.game.getMoveCount() > 0)}
             ResetGameFunc={() => this.resetGame()}
