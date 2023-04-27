@@ -47,7 +47,6 @@ function SpectateMenu(props: SpectateMenuProps) {
             <tr>
                 <th className='player'>White</th>
                 <th className='player'>Black</th>
-                <th className='rating'>Rating</th>
                 <th className='time'>Game Mode</th>
             </tr>
         </thead>
