@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import ChessGameStandard from '../chessLogic/standard/game'
 import GameStandard from '../chessLogic/standard/game'
 import GameFisherRandom from '../chessLogic/960/game'
 
-type gameTypes = typeof GameStandard | typeof GameFisherRandom
 type games = GameStandard | GameFisherRandom
 
 interface PreviousMovesProps {

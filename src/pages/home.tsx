@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import '../css/home.scss'
 import PlaySelectionMenu from './home/playSelector'
 import LobbyMenu, { queueInfo } from './home/lobby'
+import SpectateMenu, { spectateInfo } from './home/spectateList'
 import { userInfo } from '../helpers/verifyToken'
 import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
@@ -25,13 +26,12 @@ interface gameInfo {
 function Home(props: HomeProps) {
 
     const [gameInfo, setGameInfo] = useState<gameInfo[]>([])
-    // const [pgnInput, setPgnInput] = useState<string>("")
-    const [copiedId, setCopiedId] = useState<null | number>(null)
     const [error, setError] = useState<null | {
         title: string,
         description: string
     }>(null)
     const [queues, setQueues] = useState<queueInfo[]>([])
+    const [currentGames, setCurrentGames] = useState<spectateInfo[]>([])
 
 
     useEffect(() => {
@@ -54,6 +54,9 @@ function Home(props: HomeProps) {
                             break;
                         case 'queues':
                             setQueues(data)
+                            break;
+                        case 'spectateGames':
+                            setCurrentGames(data)
                             break;
                         case 'redirect':
                             window.location.href = data.location
@@ -147,7 +150,6 @@ function Home(props: HomeProps) {
     for (let i = 0; i < gameInfo.length; i++) {
         const value = gameInfo[i]
         const urlToGoTo = '/viewGame/' + value.id + ((value.white === props.userInfo?.username) ? '' : '?viewAs=black')
-        const successfullyCopied = (copiedId && copiedId === value.id)
 
         let winSymbol
         const ownTeam = (value.white === props.userInfo.username) ? 'white' : 'black'
@@ -194,15 +196,6 @@ function Home(props: HomeProps) {
                     </div>
                 </div>
             </div>
-
-            {/* <td onClick={() => {
-                navigator.clipboard.writeText("https://chess.oggyp.com" + urlToGoTo);
-                setCopiedId(value.id);
-            }
-            } className={'copy' + ((successfullyCopied) ? ' success' : '')}>
-                {(successfullyCopied) ?
-                    <span className="material-icons">done</span> :
-                    <span className="material-icons">content_copy</span>} */}
         </li>)
     }
 
@@ -244,7 +237,11 @@ function Home(props: HomeProps) {
             timeSelections={defaultTimes}
         />
         <div id='lobby'>
+            <h2>Lobby</h2>
             <LobbyMenu queues={queues} />
+            <br />
+            <h2>Spectate</h2>
+            <SpectateMenu currentGames={currentGames} />
         </div>
         <div id="previous-games">
             <h2>Previous Games</h2>

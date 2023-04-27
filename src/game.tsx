@@ -84,7 +84,7 @@ interface GameProps {
     pgn?: string
     multiplayerWs?: WebSocket
     mode: gameModes
-    team: Teams | "any"
+    team: Teams | "any" | "none"
     onMounted?: Function
     players?: {
         white: PlayerInfo
@@ -113,7 +113,7 @@ class Game extends React.Component<GameProps, GameState> {
     constructor(props: GameProps) {
         super(props)
         this.gameType = getChessGame(this.props.mode)
-        if (!props.multiplayerWs || (props.players && ((props.players.white.username === 'OggyP' && props.team === 'white') || (props.players.black.username === 'OggyP' && props.team === 'black')))) {
+        if (!(props.multiplayerWs && props.team !== 'none') || (props.players && ((props.players.white.username === 'OggyP' && props.team === 'white') || (props.players.black.username === 'OggyP' && props.team === 'black')))) {
             let startingCommands = [
                 "isready",
                 "ucinewgame"
@@ -185,7 +185,7 @@ class Game extends React.Component<GameProps, GameState> {
             game: game,
             viewingMove: (this.props.multiplayerWs) ? game.getMoveCount() : 0, // make it `game.getMoveCount()` to go to the lastest move
             validMoves: [],
-            notFlipped: (props.team === 'any' || props.team === 'white'),
+            notFlipped: (props.team !== 'black'),
             selectedPiece: null,
             promotionSelector: null,
             boxSize: Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8),
@@ -316,11 +316,14 @@ class Game extends React.Component<GameProps, GameState> {
 
     doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) {
         console.log('doing move')
+        const viewingLatestMove = this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber
         const piece = this.latestBoard().getPos(startPos)
         if (!piece) return
         if (piece.team === this.props.team) return
         this.state.game.doMove(startPos, endPos, promotion)
         let newViewNum = this.state.viewingMove + 1
+
+        console.log(this.viewingBoard().halfMoveNumber)
 
         // Forced Enpassant
         if (this.state.game.forcedEnpassant(this.props.multiplayerWs, piece.team)) {
@@ -376,13 +379,17 @@ class Game extends React.Component<GameProps, GameState> {
         console.log('saving view num')
         this.setState({
             game: this.state.game,
-            viewingMove: newViewNum
         })
-        this.boardMoveChanged(newViewNum, false, true)
-        if (this.getDraggingPiece) {
-            const draggingPiece = this.getDraggingPiece()
-            if (draggingPiece)
-                this.handlePieceClick(draggingPiece as Vector)
+        if (viewingLatestMove) {
+            this.setState({
+                viewingMove: newViewNum
+            })
+            this.boardMoveChanged(newViewNum, false, true)
+            if (this.getDraggingPiece) {
+                const draggingPiece = this.getDraggingPiece()
+                if (draggingPiece)
+                    this.handlePieceClick(draggingPiece as Vector)
+            }
         }
     }
 
@@ -405,6 +412,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     handlePieceClick(posClicked: Vector): void {
+        if (this.props.team === 'none') return
         console.log(this.props.allowOverridingMoves)
         if (!this.state.game.gameOver
             && this.state.viewingMove === this.state.game.getMoveCount()
@@ -446,6 +454,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     handleMoveClick(posClicked: Vector): void {
+        if (this.props.team === 'none') return
         if ((!this.state.game.gameOver
             && this.state.viewingMove === this.state.game.getMoveCount())
             || (this.props.allowOverridingMoves)) {
