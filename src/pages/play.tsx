@@ -62,6 +62,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     ownTeam: Teams | null = null
     updateTimer: Function | null = null
     serverGameOver: Function | null = null
+    setSpectators: Function | null = null
 
     constructor(props: PlayGameProps) {
         super(props)
@@ -144,7 +145,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                         window.removeEventListener('beforeunload', leavePage);
                         if (serverGameOverTypes.includes(data.by)) {
                             if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
-                            this.serverGameOver(data.winner, data.by, data.info)                            
+                            this.serverGameOver(data.winner, data.by, data.info)
                         }
                         window.history.pushState('OggyP Chess View Game', 'View Game', window.location.origin + '/viewGame/' + data.gameId);
                         break
@@ -162,6 +163,11 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                                     countingDown: data.blackTimer.isCountingDown
                                 }
                             )
+                        break
+                    case 'spectators':
+                        if (this.setSpectators)
+                            this.setSpectators(data)
+                        break
                 }
             }
 
@@ -220,6 +226,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
         this.doMove = callbacks.doMove
         this.updateTimer = callbacks.updateTimer
         this.serverGameOver = callbacks.gameOver
+        this.setSpectators = callbacks.setSpectators
     }
 
     regainedFocus() {

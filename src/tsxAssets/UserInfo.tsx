@@ -5,7 +5,7 @@ import { Teams } from '../chessLogic/types'
 interface UserInfoProps {
     team: Teams
     username: string
-    rating?: number
+    rating?: string
     ratingChange?: number
     title?: string
     timer?: {
@@ -65,7 +65,7 @@ function UserInfo(props: UserInfoProps) {
         <h4>
             {title && title + " "}
             {props.username + " "}
-            {props.rating ? <span className='rating'>{Math.round(props.rating).toString() + " "}</span> : null}{ratingChange}
+            {props.rating ? <span className='rating'>{props.rating + " "}</span> : null}{ratingChange}
         </h4>
         <div className='material pieces'>{material.toUpperCase().split('').map(((item: string, index: number) => {
             return <img key={item + index} src={'/assets/images/materialCount/' + item + '.svg'} alt={item}></img>

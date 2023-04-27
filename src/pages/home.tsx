@@ -6,6 +6,7 @@ import SpectateMenu, { spectateInfo } from './home/spectateList'
 import { userInfo } from '../helpers/verifyToken'
 import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
+import displayRating from '../helpers/displayRating';
 
 interface HomeProps {
     userInfo: userInfo | null
@@ -139,7 +140,7 @@ function Home(props: HomeProps) {
 
     userInfoPage = <div className='user-info'>
         <h1 className='username'>{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
-        <h3 className='user-stats'>Rating | {Math.round(props.userInfo.rating)}</h3>
+        <h3 className='user-stats'>Rating | {displayRating(props.userInfo)}</h3>
         <h3 className='user-stats'>Win% | {Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</h3>
         <h3 className='user-stats'>Win:Loss | {props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</h3>
         <h3 className='user-stats'>#Games | {props.userInfo.gamesPlayed}</h3>

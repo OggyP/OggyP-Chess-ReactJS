@@ -13,6 +13,8 @@ import { MovesAndBoard } from './chessLogic/types'
 import GameStandard from './chessLogic/standard/game'
 import GameFisherRandom from './chessLogic/960/game'
 import iOS from './helpers/isIOS'
+import { userInfo } from './helpers/verifyToken';
+import displayRating from './helpers/displayRating'
 
 type gameTypes = typeof GameStandard | typeof GameFisherRandom
 type games = GameStandard | GameFisherRandom
@@ -75,6 +77,7 @@ interface GameState {
     }
     loadedNNUE: boolean,
     resetGameFEN: string
+    spectators: userInfo[]
 }
 
 type gameModes = 'standard' | '960'
@@ -197,7 +200,8 @@ class Game extends React.Component<GameProps, GameState> {
             piecesStyle: (localStorage.getItem('pieceStyle') as pieceStyle || 'normal'),
             boardStyle: boardStyle,
             loadedNNUE: (this.engine?.loadedNNUE || false),
-            resetGameFEN: ""
+            resetGameFEN: "",
+            spectators: []
         }
         this.boardMoveChanged((this.props.multiplayerWs) ? game.getMoveCount() : 0, true, true)
         if (props.pgnAndFenChange) this.updateURLtoHavePGN()
@@ -231,6 +235,12 @@ class Game extends React.Component<GameProps, GameState> {
             })
         if (this.clearCustomSVGS)
             this.clearCustomSVGS()
+    }
+
+    setSpectators(spectators: userInfo[]) {
+        this.setState({
+            spectators: spectators
+        })
     }
 
     customGameOver(winner: Teams | 'draw', by: string, extraInfo?: string) {
@@ -448,8 +458,6 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     viewingBoard(): ChessBoardType {
-        console.log(this.state.viewingMove)
-        console.log(this.state.game)
         return this.state.game.getMove(this.state.viewingMove).board
     }
 
@@ -631,7 +639,8 @@ class Game extends React.Component<GameProps, GameState> {
             this.props.onMounted({
                 doMove: (startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) => this.doMove(startPos, endPos, promotion),
                 gameOver: (winner: Teams | 'draw', by: string, extraInfo?: string) => this.customGameOver(winner, by, extraInfo),
-                updateTimer: (white: TimerInfo, black: TimerInfo) => this.updateTimer(white, black)
+                updateTimer: (white: TimerInfo, black: TimerInfo) => this.updateTimer(white, black),
+                setSpectators: (spectators: userInfo[]) => this.setSpectators(spectators)
             });
         }
         document.addEventListener('contextmenu', this.preventContextMenu)
@@ -709,7 +718,7 @@ class Game extends React.Component<GameProps, GameState> {
             players[team] = <UserInfoDisplay
                 team={team}
                 username={this.state.players?.[team].username || team.charAt(0).toUpperCase() + team.slice(1)}
-                rating={this.state.players?.[team].rating}
+                rating={(this.state.players) ? displayRating(this.state.players[team]) : undefined}
                 timer={timers?.[team]}
                 material={cancelledOutTakenMaterial[team]}
                 isTurn={(currentTurn === team)}
@@ -843,8 +852,17 @@ class Game extends React.Component<GameProps, GameState> {
             </div>
         })
 
+        console.log(this.state.spectators)
         let leftSideInfo = <div className="game-controls-info">
             <div className='col-down'>
+                {(this.state.spectators.length) ? <div id="spectators-in-game-display">
+                    <h1>Spectators ({this.state.spectators.length})</h1>
+                    <ul>
+                        {this.state.spectators.map(spectator => {
+                            return <li key={spectator.userId}>{spectator.username}<span className='rating'>{displayRating(spectator)}</span></li>
+                        })}
+                    </ul>
+                </div> : null}
                 <br /><hr /><br />
                 <div>
                     <h3>Board Colour Selector</h3>
