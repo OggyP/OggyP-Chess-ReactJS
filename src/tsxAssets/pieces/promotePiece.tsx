@@ -16,6 +16,7 @@ function PromotePiece(props: PromotePieceProps) {
     return (
         <div className='square' style={{ "top": props.y + "%", "left": props.x + "%" }}>
             <img onClick={props.onClick} className={classes}
+                alt={pieceTypeToName[props.type]}
                 src={'/assets/images/svg/' + props.style + '/' + props.team + " " + pieceTypeToName[props.type] + '.' + pieceImageType[props.style]}
             />
         </div>

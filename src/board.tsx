@@ -27,7 +27,7 @@ interface BoardProps {
     onPieceClick: Function
     onValidMoveClick: Function
     deselectPiece: Function
-    ownTeam: Teams | "any"
+    ownTeam: Teams | "any" | "none"
     moveInfo: {
         start: Vector
         end: Vector
