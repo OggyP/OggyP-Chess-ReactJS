@@ -62,7 +62,6 @@ class Knight extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
-        console.log('standard kngiht move')
         const vectors: Vector[] = [
             { "x": 2, "y": 1 },
             { "x": 1, "y": 2 },

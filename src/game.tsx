@@ -188,7 +188,7 @@ class Game extends React.Component<GameProps, GameState> {
             game: game,
             viewingMove: (this.props.multiplayerWs) ? game.getMoveCount() : 0, // make it `game.getMoveCount()` to go to the lastest move
             validMoves: [],
-            notFlipped: (props.team !== 'black'),
+            notFlipped: props.viewAs === 'white',
             selectedPiece: null,
             promotionSelector: null,
             boxSize: Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8),
@@ -852,7 +852,6 @@ class Game extends React.Component<GameProps, GameState> {
             </div>
         })
 
-        console.log(this.state.spectators)
         let leftSideInfo = <div className="game-controls-info">
             <div className='col-down'>
                 {(this.state.spectators.length) ? <div id="spectators-in-game-display">

@@ -56,6 +56,7 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
     ownTeam: Teams | null = null
     updateTimer: Function | null = null
     serverGameOver: Function | null = null
+    setSpectators: Function | null = null
 
     constructor(props: SpectateGameProps) {
         super(props)
@@ -146,6 +147,11 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
                                     countingDown: data.blackTimer.isCountingDown
                                 }
                             )
+                        break
+                    case 'spectators':
+                        if (this.setSpectators)
+                            this.setSpectators(data)
+                        break
                 }
             }
 
@@ -202,6 +208,7 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
         this.doMove = callbacks.doMove
         this.updateTimer = callbacks.updateTimer
         this.serverGameOver = callbacks.gameOver
+        this.setSpectators = callbacks.setSpectators
     }
 
     regainedFocus() {

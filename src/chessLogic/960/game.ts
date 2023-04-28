@@ -180,7 +180,6 @@ class Game {
                         break;
                     }
                 } else if (move[0] === move[0].toLowerCase()) {
-                    console.log('Pawn Move ' + originalPGNmove + '|' + move)
                     // pawn move
                     let startingPos: Vector = { 'x': convertToPosition(move[0], 'x') as number, 'y': -1 }
                     let endingPos: Vector
