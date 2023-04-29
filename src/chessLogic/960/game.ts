@@ -140,42 +140,47 @@ class Game {
                     continue
                 }
                 if (move === 'O-O-O' || move === '0-0-0' || move === 'O-O' || move === '0-0') { // O and 0 just to be sure 
-                    const kingPos = {
-                        'x': 4,
-                        'y': (turn === 'white') ? 7 : 0
-                    }
-                    const endingPos = Object.assign({}, kingPos)
-                    endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 2
-                    let piece = board.getPos(kingPos)
-                    if (!piece) {
-                        console.log('No legal castle found. ', board.getFen())
-                        break;
-                    }
-                    const moves = piece.getMoves(kingPos, board)
+
+                    console.log('king castle')
+                    const kingRow = (turn === 'white') ? 7 : 0
+                    const lookingForTag = (move === 'O-O' || move === '0-0') ? 'castleKingSide' : 'castleQueenSide'
                     let moveFound = false;
-                    for (let i = 0; i < moves.length; i++) {
-                        const checkMove = moves[i]
-                        if (checkMove.move.x === endingPos.x && checkMove.move.y === endingPos.y) {
-                            board = new Board(checkMove.board)
-                            this.newMove({
-                                board: checkMove.board,
-                                text: originalPGNmove,
-                                move: {
-                                    start: kingPos,
-                                    end: endingPos,
-                                    type: checkMove.moveType,
-                                    notation: {
-                                        short: originalPGNmove,
-                                        long: convertToChessNotation(kingPos) + convertToChessNotation(endingPos)
-                                    }
+                    
+                    for (let x = 0; x < 8; x++) {
+                        const pos = {
+                            x: x,
+                            y: kingRow
+                        }
+                        console.log(pos)
+                        const piece = board.getPos(pos)
+                        if (piece && piece.team === turn) {
+                            const movesList = piece.getMoves(pos, board)
+                            for (let i = 0; i < movesList.length; i++) {
+                                const checkMove = movesList[i]
+                                console.log(turn, checkMove)
+                                if (checkMove.moveType.includes(lookingForTag)) {
+                                    board = new Board(checkMove.board)
+                                    this.newMove({
+                                        board: checkMove.board,
+                                        text: originalPGNmove,
+                                        move: {
+                                            start: pos,
+                                            end: checkMove.move,
+                                            type: checkMove.moveType,
+                                            notation: {
+                                                short: originalPGNmove,
+                                                long: convertToChessNotation(pos) + convertToChessNotation(checkMove.move)
+                                            }
+                                        }
+                                    })
+                                    moveFound = true;
+                                    break;
                                 }
-                            })
-                            moveFound = true;
-                            break;
+                            }
                         }
                     }
                     if (!moveFound) {
-                        console.log('No legal castle found. ', board.getFen())
+                        console.warn('No legal castle found. ', board.getFen())
                         break;
                     }
                 } else if (move[0] === move[0].toLowerCase()) {

@@ -124,6 +124,8 @@ class Game extends React.Component<GameProps, GameState> {
             ]
             if (!props.versusStockfish)
                 startingCommands.unshift('setoption name UCI_AnalyseMode value true')
+            if (props.mode === '960')
+                startingCommands.unshift('setoption name UCI_Chess960 value true')
 
             var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
 
@@ -227,8 +229,10 @@ class Game extends React.Component<GameProps, GameState> {
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
         if (this.engine)
-            if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver)
+            if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver) {
+                console.log(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
                 this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
+            }
         if (this.state.game.getMoveCount() !== moveNum && !firstMove)
             this.setState({
                 premoves: [],
@@ -616,7 +620,7 @@ class Game extends React.Component<GameProps, GameState> {
         }
         this.goToMove(0)
         this.updateURLtoHavePGN()
-        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis');
+        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', window.location.pathname);
     }
 
     preventContextMenu(e: any) {
@@ -782,13 +786,14 @@ class Game extends React.Component<GameProps, GameState> {
             {(!this.state.onMobile) ? <div className='inline-info'>
                 <p className='button-type'
                     onClick={() => {
-                        navigator.clipboard.writeText(this.viewingBoard().getFen())
-                            .then(() => {
-                                alert('Copied FEN to clipboard.');
-                            })
-                            .catch(err => {
-                                alert('Error in copying text: ' + err);
-                            });
+                        if (navigator.clipboard)
+                            navigator.clipboard.writeText(this.viewingBoard().getFen())
+                                .then(() => {
+                                    alert('Copied FEN to clipboard.');
+                                })
+                                .catch(err => {
+                                    alert('Error in copying text: ' + err);
+                                });
                     }}>
                     Copy Fen
                 </p>
