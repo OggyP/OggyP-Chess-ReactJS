@@ -110,7 +110,14 @@ class Game extends React.Component<GameProps, GameState> {
     constructor(props: GameProps) {
         super(props)
         this.gameType = getChessGame(this.props.mode)
-        if (!(props.multiplayerWs && props.team !== 'none') || (props.players && ((props.players.white.username === 'OggyP' && props.team === 'white') || (props.players.black.username === 'OggyP' && props.team === 'black')))) {
+        if (
+            !(('fourkings').includes(this.props.mode)) && (
+                !(props.multiplayerWs && props.team !== 'none')
+                || (props.players &&
+                    ((props.players.white.username === 'OggyP' && props.team === 'white')
+                        || (props.players.black.username === 'OggyP' && props.team === 'black')))
+            )
+        ) {
             let startingCommands = [
                 "isready",
                 "ucinewgame"

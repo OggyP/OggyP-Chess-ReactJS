@@ -141,11 +141,11 @@ class Game {
                 }
                 if (move === 'O-O-O' || move === '0-0-0' || move === 'O-O' || move === '0-0') { // O and 0 just to be sure 
                     const kingPos = {
-                        'x': 4,
+                        'x': (move === 'O-O' || move === '0-0') ? 4 : 3,
                         'y': (turn === 'white') ? 7 : 0
                     }
                     const endingPos = Object.assign({}, kingPos)
-                    endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 2
+                    endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 1
                     let piece = board.getPos(kingPos)
                     if (!piece) {
                         console.log('No legal castle found. ', board.getFen())

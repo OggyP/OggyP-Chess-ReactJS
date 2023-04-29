@@ -251,7 +251,7 @@ class King extends ChessPiece {
         }
 
         if (!board.inCheck(this.team)) {
-            if (board.castleInfo[this.team].kingSide) {
+            if (board.castleInfo[this.team].kingSide && pos.x === 4 && (pos.y === 0 || pos.y === 7)) {
                 let piecesInWay: PieceCodes[] = []
                 for (let i = 4; i < 8; i++) {
                     const piece = board.getPos({ "x": i, "y": pos.y })
@@ -267,7 +267,6 @@ class King extends ChessPiece {
                             if (!newBoard.inCheck(this.team)) {
                                 newBoard.doMove({ "x": 7, "y": pos.y }, { "x": 5, "y": pos.y })
                                 newBoard.castleInfo[this.team].kingSide = false
-                                newBoard.castleInfo[this.team].queenSide = false
                                 moves.push({
                                     move: vectorToDisplay,
                                     board: newBoard,
@@ -285,22 +284,21 @@ class King extends ChessPiece {
                     }
                 }
             }
-            if (board.castleInfo[this.team].queenSide) {
+            if (board.castleInfo[this.team].queenSide && pos.x === 3 && (pos.y === 0 || pos.y === 7)) {
                 let piecesInWay: PieceCodes[] = []
-                for (let i = 4; i >= 0; i--) {
+                for (let i = 3; i >= 0; i--) {
                     const piece = board.getPos({ "x": i, "y": pos.y })
                     if (piece && piece.team === this.team) piecesInWay.push(piece.code)
                 }
                 if (piecesInWay.length === 2 && piecesInWay.includes('k') && piecesInWay.includes('r')) {
                     const newBoard = new Board(board)
-                    const vectorToDisplay = { "x": 2, "y": pos.y }
-                    if (vectorToDisplay && !board.getPos({ "x": 3, "y": pos.y }) && !board.getPos({ "x": 2, "y": pos.y }) && !board.getPos({ "x": 1, "y": pos.y })) {
-                        newBoard.doMove(pos, { "x": 3, "y": pos.y })
+                    const vectorToDisplay = { "x": 1, "y": pos.y }
+                    if (vectorToDisplay && !board.getPos({ "x": 2, "y": pos.y }) && !board.getPos({ "x": 1, "y": pos.y })) {
+                        newBoard.doMove(pos, { "x": 2, "y": pos.y })
                         if (!newBoard.inCheck(this.team)) {
-                            newBoard.doMove({ "x": 3, "y": pos.y }, vectorToDisplay)
+                            newBoard.doMove({ "x": 2, "y": pos.y }, vectorToDisplay)
                             if (!newBoard.inCheck(this.team)) {
-                                newBoard.doMove({ "x": 0, "y": pos.y }, { "x": 3, "y": pos.y })
-                                newBoard.castleInfo[this.team].kingSide = false
+                                newBoard.doMove({ "x": 0, "y": pos.y }, { "x": 2, "y": pos.y })
                                 newBoard.castleInfo[this.team].queenSide = false
                                 moves.push({
                                     move: vectorToDisplay,
