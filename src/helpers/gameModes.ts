@@ -13,7 +13,7 @@ const gameModeToShortName: Map<string, string> = new Map([
 ])
 
 const gameModesList: [string, string][] = [
-    ['standard', 'Standard Chess'],
+    ['standard', 'Standard'],
     ['960', 'Chess 960'],
     ['fourkings', 'Four Kings']
 ]

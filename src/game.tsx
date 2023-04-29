@@ -228,6 +228,15 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
+        if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
+            this.engineMoveType = 'movetime 60000'
+            this.engine = new UCIengine('/stockfish/stockfish.js', [
+                'setoption name UCI_AnalyseMode value true',
+                "isready",
+                "ucinewgame"
+            ], 3)
+        }
+
         if (this.engine)
             if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver)
                 this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
@@ -262,9 +271,9 @@ class Game extends React.Component<GameProps, GameState> {
         if (info && !this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
             const newBoard = new this.gameType.boardType(info.board)
             newBoard.promote(info.pos.end, piece, info.team)
-            if (!newBoard.inCheck(info.team)) {
+            if (!newBoard.inCheck(info.team).length) {
                 const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-                const shortNotation = newBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
+                const shortNotation = newBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : (((newBoard.inCheck(newBoard.getTurn('next')).length) ? '+' : '')), piece)
                 this.state.game.newMove({
                     board: newBoard,
                     text: shortNotation,
@@ -504,7 +513,7 @@ class Game extends React.Component<GameProps, GameState> {
             })
             if (isPromotion) return
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-            const shortNotation = newBoard.getShortNotation(selectedPiecePos, displayPos, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
+            const shortNotation = newBoard.getShortNotation(selectedPiecePos, displayPos, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')).length ? '+' : '')))
             this.state.game.newMove({
                 board: newBoard,
                 text: shortNotation,
@@ -646,16 +655,6 @@ class Game extends React.Component<GameProps, GameState> {
     render() {
         let promotionSelector
         const promotionSelectorVal = this.state.promotionSelector
-
-        if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
-            this.engineMoveType = 'movetime 60000'
-            this.engine = new UCIengine('/stockfish/stockfish.js', [
-                'setoption name UCI_AnalyseMode value true',
-                "isready",
-                "ucinewgame"
-            ], 3)
-            this.boardMoveChanged(this.state.viewingMove)
-        }
 
         if (promotionSelectorVal) {
             const promotionChoices: PieceCodes[] = ['q', 'n', 'b', 'r']

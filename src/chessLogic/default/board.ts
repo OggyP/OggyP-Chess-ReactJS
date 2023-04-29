@@ -52,8 +52,8 @@ class DefaultBoard {
         return true
     }
 
-    inCheck(team: Teams): boolean {
-        return false
+    inCheck(team: Teams): Vector[] {
+        return []
     }
 
     getPos(position: BoardPos): PieceAtPos {

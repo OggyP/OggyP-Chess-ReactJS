@@ -322,8 +322,15 @@ class Board extends React.Component<BoardProps, BoardState> {
         let highlightedSquares: Vector[] = []
 
         let unsortedPieces: ([JSX.Element, number] | [null, number])[] = pieces.map((item, index) => {
-            if (inCheck && item.piece.code === 'k' && item.piece.team === currentTurn)
-                highlightedSquares.push(item.pos)
+            if (inCheck.length
+                && item.piece.code === 'k'
+                && item.piece.team === currentTurn
+            ) {
+                for (let check of inCheck) {
+                    if (check.x === item.pos.x && check.y === item.pos.y)
+                        highlightedSquares.push(item.pos)
+                }
+            }
             if (this.props.board.enPassant && item.piece.code === 'p') {
                 const moves = item.piece.getMoves(item.pos, this.props.board)
                 if (moves.length && moves[0].moveType.includes('enpassant'))
@@ -397,6 +404,7 @@ class Board extends React.Component<BoardProps, BoardState> {
         for (let value of highlightedSquares) {
             highlightedSquaresElements.push(
                 <div
+                    key={`${value.x}${value.y}`}
                     className='square check'
                     style={
                         {

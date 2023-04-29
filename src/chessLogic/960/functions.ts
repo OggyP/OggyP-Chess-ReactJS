@@ -95,7 +95,7 @@ function legal(this: ChessPiece, value: MovesAndBoard): boolean {
                 value.board.capturedPieces[value.board.getTurn('next')].push(value.moveType[i] as PieceCodes)
     }
     value.board.halfMoveNumber++
-    return !value.board.inCheck(this.team)
+    return !value.board.inCheck(this.team).length
 }
 
 function addVectorsAndCheckPos(vector1: Vector, vector2: Vector): Vector | null {

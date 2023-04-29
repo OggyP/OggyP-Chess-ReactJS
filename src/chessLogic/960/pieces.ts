@@ -283,7 +283,7 @@ class King extends ChessPiece {
             moves[i].board.castleInfo[this.team].queenSide = false
         }
 
-        if (!board.inCheck(this.team) && (pos.y === 0 || pos.y === 7)) {
+        if (!board.inCheck(this.team).length && (pos.y === 0 || pos.y === 7)) {
             if (board.castleInfo[this.team].kingSide) {
 
                 // Find the rook's position
@@ -293,6 +293,7 @@ class King extends ChessPiece {
                     y: pos.y
                 }
                 while (checkPos.x > pos.x) {
+                    console.log(1)
                     console.log(checkPos, pos)
                     const piece = board.getPos(checkPos)
                     if (piece) {
@@ -317,6 +318,7 @@ class King extends ChessPiece {
                         y: pos.y
                     }
                     while (kingCheckPos.x !== 6 + normalisedDirForKing) {
+                        console.log(2)
                         const piece = board.getPos(kingCheckPos)
                         if (piece)
                             piecesInWayForKing.push(piece)
@@ -332,6 +334,7 @@ class King extends ChessPiece {
                             y: pos.y
                         }
                         while (rookCheckPos.x !== 5 + normalisedDirForRook) {
+                            console.log(3)
                             const piece = board.getPos(rookCheckPos)
                             if (piece)
                                 piecesInWayForRook.push(piece)
@@ -351,13 +354,14 @@ class King extends ChessPiece {
                             newBoard.setPos(rookPos, null)
 
                             while (kingCheckPos.x !== 6 + normalisedDirForKing) {
+                                console.log(4)
                                 newBoard.doMove({
                                     x: kingCheckPos.x - normalisedDirForKing,
                                     y: pos.y
                                 }, kingCheckPos)
-                                inCheck = newBoard.inCheck(this.team)
+                                inCheck = !!(newBoard.inCheck(this.team).length)
                                 if (inCheck) break
-                                kingCheckPos.x++
+                                kingCheckPos.x += normalisedDirForKing
                             }
                             if (!inCheck) {
                                 newBoard.setPos({ "x": 5, "y": pos.y }, rook)
@@ -383,6 +387,7 @@ class King extends ChessPiece {
                     y: pos.y
                 }
                 while (checkPos.x < pos.x) {
+                    console.log(11)
                     const piece = board.getPos(checkPos)
                     if (piece) {
                         if (piece.code === 'r' && piece.team === this.team) {
@@ -393,7 +398,7 @@ class King extends ChessPiece {
                             break;
                         }
                     }
-                    checkPos.x--
+                    checkPos.x++
                 }
 
                 if (rookPos) {
@@ -405,6 +410,7 @@ class King extends ChessPiece {
                         y: pos.y
                     }
                     while (kingCheckPos.x !== 2 + normalisedDirForKing) {
+                        console.log(12)
                         const piece = board.getPos(kingCheckPos)
                         if (piece)
                             piecesInWayForKing.push(piece)
@@ -420,6 +426,7 @@ class King extends ChessPiece {
                             y: pos.y
                         }
                         while (rookCheckPos.x !== 3 + normalisedDirForRook) {
+                            console.log(13)
                             const piece = board.getPos(rookCheckPos)
                             if (piece)
                                 piecesInWayForRook.push(piece)
@@ -439,13 +446,14 @@ class King extends ChessPiece {
                             newBoard.setPos(rookPos, null)
 
                             while (kingCheckPos.x !== 2 + normalisedDirForKing) {
+                                console.log(14)
                                 newBoard.doMove({
                                     x: kingCheckPos.x - normalisedDirForKing,
                                     y: pos.y
                                 }, kingCheckPos)
-                                inCheck = newBoard.inCheck(this.team)
+                                inCheck = !!(newBoard.inCheck(this.team).length)
                                 if (inCheck) break
-                                kingCheckPos.x++
+                                kingCheckPos.x += normalisedDirForKing
                             }
                             if (!inCheck) {
                                 newBoard.setPos({ "x": 3, "y": pos.y }, rook)

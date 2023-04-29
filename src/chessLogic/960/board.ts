@@ -2,6 +2,7 @@ import { PieceCodes, Teams, BoardPos, PieceAtPos } from './types'
 import { getRayCastVectors, getVectors, convertToPosition, convertToChessNotation } from './functions'
 import { Queen, Rook, Bishop, Knight, King, Pawn, pieceCodeClasses } from './pieces'
 import DefaultBoard from '../default/board'
+import { Vector } from '../types';
 
 interface CastleInfoOfTeam {
     kingSide: boolean;
@@ -123,7 +124,7 @@ class Board extends DefaultBoard {
             }
         }
     }
-    
+
     doMove(pieceStartingPos: BoardPos, pieceEndingPos: BoardPos) {
         const pieceToMove = this._squares[pieceStartingPos.y][pieceStartingPos.x]
         if (pieceToMove) {
@@ -173,7 +174,7 @@ class Board extends DefaultBoard {
             }
             return false
         } else {
-            if (this.inCheck(team))
+            if (this.inCheck(team).length)
                 return { by: "checkmate", winner: (team === 'white') ? "black" : "white" }
             else
                 return { by: "stalemate", extraInfo: team + " in stalemate", winner: "draw" }
@@ -243,7 +244,9 @@ class Board extends DefaultBoard {
 
     }
 
-    inCheck(team: Teams): boolean {
+    inCheck(team: Teams): Vector[] {
+        let checkPositions: Vector[] = []
+
         let pos: BoardPos = { "x": 0, "y": 0 }
         for (pos.x = 0; pos.x < 8; pos.x++)
             for (pos.y = 0; pos.y < 8; pos.y++) {
@@ -259,8 +262,10 @@ class Board extends DefaultBoard {
                     let pieces = getRayCastVectors(this, QueenAndRookBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Queen || pieces[i] instanceof Rook)
-                            return true;
+                        if (pieces[i] instanceof Queen || pieces[i] instanceof Rook) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
 
                     const QueenAndBishopBoardPoss: BoardPos[] = [
                         { "x": 1, "y": 1 },
@@ -271,8 +276,11 @@ class Board extends DefaultBoard {
                     pieces = getRayCastVectors(this, QueenAndBishopBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Queen || pieces[i] instanceof Bishop)
-                            return true;
+                        if (pieces[i] instanceof Queen || pieces[i] instanceof Bishop) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
+
 
                     const knightBoardPoss: BoardPos[] = [
                         { "x": 2, "y": 1 },
@@ -287,8 +295,11 @@ class Board extends DefaultBoard {
                     pieces = getVectors(this, knightBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Knight)
-                            return true;
+                        if (pieces[i] instanceof Knight) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
+
 
                     const kingBoardPoss: BoardPos[] = [
                         { "x": 0, "y": 1 },
@@ -303,8 +314,11 @@ class Board extends DefaultBoard {
                     pieces = getVectors(this, kingBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof King)
-                            return true;
+                        if (pieces[i] instanceof King) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
+
 
                     let pawnBoardPoss
                     if (team === "white")
@@ -320,11 +334,13 @@ class Board extends DefaultBoard {
 
                     pieces = getVectors(this, pawnBoardPoss, pos, team).pieces;
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Pawn)
-                            return true;
+                        if (pieces[i] instanceof Pawn) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
                 }
             }
-        return false;
+        return checkPositions;
     }
 
     getPos(position: BoardPos | null): PieceAtPos {

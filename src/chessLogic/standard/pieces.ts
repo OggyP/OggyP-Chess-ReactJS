@@ -250,7 +250,7 @@ class King extends ChessPiece {
             moves[i].board.castleInfo[this.team].queenSide = false
         }
 
-        if (!board.inCheck(this.team)) {
+        if (!board.inCheck(this.team).length) {
             if (board.castleInfo[this.team].kingSide) {
                 let piecesInWay: PieceCodes[] = []
                 for (let i = 4; i < 8; i++) {
@@ -262,9 +262,9 @@ class King extends ChessPiece {
                     const vectorToDisplay = { "x": 6, "y": pos.y }
                     if (vectorToDisplay && !board.getPos({ "x": 5, "y": pos.y }) && !board.getPos({ "x": 6, "y": pos.y })) {
                         newBoard.doMove(pos, { "x": 5, "y": pos.y })
-                        if (!newBoard.inCheck(this.team)) {
+                        if (!newBoard.inCheck(this.team).length) {
                             newBoard.doMove({ "x": 5, "y": pos.y }, vectorToDisplay)
-                            if (!newBoard.inCheck(this.team)) {
+                            if (!newBoard.inCheck(this.team).length) {
                                 newBoard.doMove({ "x": 7, "y": pos.y }, { "x": 5, "y": pos.y })
                                 newBoard.castleInfo[this.team].kingSide = false
                                 newBoard.castleInfo[this.team].queenSide = false
@@ -296,9 +296,9 @@ class King extends ChessPiece {
                     const vectorToDisplay = { "x": 2, "y": pos.y }
                     if (vectorToDisplay && !board.getPos({ "x": 3, "y": pos.y }) && !board.getPos({ "x": 2, "y": pos.y }) && !board.getPos({ "x": 1, "y": pos.y })) {
                         newBoard.doMove(pos, { "x": 3, "y": pos.y })
-                        if (!newBoard.inCheck(this.team)) {
+                        if (!newBoard.inCheck(this.team).length) {
                             newBoard.doMove({ "x": 3, "y": pos.y }, vectorToDisplay)
-                            if (!newBoard.inCheck(this.team)) {
+                            if (!newBoard.inCheck(this.team).length) {
                                 newBoard.doMove({ "x": 0, "y": pos.y }, { "x": 3, "y": pos.y })
                                 newBoard.castleInfo[this.team].kingSide = false
                                 newBoard.castleInfo[this.team].queenSide = false
