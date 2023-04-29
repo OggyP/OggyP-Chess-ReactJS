@@ -1,4 +1,4 @@
-import {BoardPos, PieceAtPos, PieceCodes, Teams } from '../types'
+import {BoardPos, PieceAtPos, PieceCodes, Teams, Vector } from '../types'
 
 type gameOverRespone = {
     winner: Teams | "draw"
@@ -17,6 +17,7 @@ class DefaultBoard {
         white: [],
         black: []
     }
+    enPassant: Vector | null = null
     halfMoveNumber: number = 0
     constructor(input: string | DefaultBoard) {
         if (typeof input === 'string')
@@ -25,10 +26,6 @@ class DefaultBoard {
 
     promote(pos: BoardPos, pieceCode: PieceCodes, promoteTeam: Teams): void {
 
-    }
-
-    forcedEnpassant(ws: WebSocket | undefined, team: Teams) {
-        return false
     }
 
     doMove(pieceStartingPos: BoardPos, pieceEndingPos: BoardPos) {

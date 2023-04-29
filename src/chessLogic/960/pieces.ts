@@ -1,5 +1,5 @@
 import { Teams, Vector, MovesAndBoard, PieceCodes } from './types'
-import Board from './board'
+import  Board from './board'
 import { getVectors, legal, getRayCastVectors, addVectorsAndCheckPos } from './functions'
 import ChessPiece from '../default/pieces'
 
@@ -21,6 +21,8 @@ class Queen extends ChessPiece {
 
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+        
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 1 },
@@ -44,6 +46,8 @@ class Bishop extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+
         const vectors: Vector[] = [
             { "x": 1, "y": 1 },
             { "x": 1, "y": -1 },
@@ -62,6 +66,8 @@ class Knight extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+
         const vectors: Vector[] = [
             { "x": 2, "y": 1 },
             { "x": 1, "y": 2 },
@@ -70,7 +76,7 @@ class Knight extends ChessPiece {
             { "x": -1, "y": -2 },
             { "x": -2, "y": -1 },
             { "x": -2, "y": 1 },
-            { "x": -1, "y": 2 },
+            { "x": -1, "y": 2 }
         ]
         let moves = getVectors(board, vectors, pos, this.team).vectors
 
@@ -84,6 +90,8 @@ class Rook extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 0 },
@@ -169,8 +177,6 @@ class Pawn extends ChessPiece {
             }
         }
 
-
-
         // Single Move
         vectorToCheck = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
         if (vectorToCheck && !board.getPos(vectorToCheck)) {
@@ -188,7 +194,10 @@ class Pawn extends ChessPiece {
                 if (vectorToCheck && !board.getPos(vectorToCheck)) {
                     const newBoard = new Board(board)
                     newBoard.doMove(pos, vectorToCheck)
-                    newBoard.enPassant = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
+                    let minusPos = newBoard.getPos(addVectorsAndCheckPos(pos, { "x": -1, "y": 2 * yMoveVal }))
+                    let plusPos = newBoard.getPos(addVectorsAndCheckPos(pos, { "x": 1, "y": 2 * yMoveVal }))
+                    if ((minusPos && minusPos.team !== ownTeam && minusPos.code === 'p') || (plusPos && plusPos.team !== ownTeam && plusPos.code === 'p'))
+                        newBoard.enPassant = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
                     moves.push({
                         "move": vectorToCheck,
                         "board": newBoard,
@@ -197,6 +206,16 @@ class Pawn extends ChessPiece {
                 }
             }
         }
+
+        if (board.enPassant) {
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].moveType.includes("enpassant")) {
+                    return [moves[i]].filter(legal, this)
+                }
+            }
+            return []
+        }
+
         if (((this.team === "white") ? 1 : 6) === pos.y)
             return moves.filter(legal, this).map((item, index) => {
                 item.moveType.push('promote')
@@ -213,6 +232,8 @@ class King extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+        
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 1 },

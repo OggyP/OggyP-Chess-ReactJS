@@ -327,7 +327,8 @@ class Board extends DefaultBoard {
         return false;
     }
 
-    getPos(position: BoardPos): PieceAtPos {
+    getPos(position: BoardPos | null): PieceAtPos {
+        if (!position) return null
         if (position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8) return null
         return this._squares[position.y][position.x]
     }

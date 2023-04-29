@@ -1,7 +1,6 @@
-import { sendToWs } from '../../helpers/wsHelper';
 import DefaultBoard from '../default/board';
 import Board from './board'
-import { convertToPosition, convertToChessNotation, addVectorsAndCheckPos } from './functions';
+import { convertToPosition, convertToChessNotation } from './functions';
 import { Pawn } from './pieces';
 import { Vector, Teams, PieceCodes } from './types'
 
@@ -429,32 +428,6 @@ class Game {
             return true
         }
         return `No legal move found\n${latestBoard.getFen()}`
-    }
-
-    forcedEnpassant(ws: WebSocket | undefined, team: Teams) {
-        const latestBoardDefault = this.getLatest().board
-        const latestBoard = latestBoardDefault as Board
-        if (latestBoard.enPassant) {
-            // person who just moved is white then check for black
-            const pawnMoveDirection: number = ((team === 'white') ? 1 : -1)
-            // Plus x 
-            const xOffsets = [-1, 1]
-            for (let i = 0; i < xOffsets.length; i++) {
-                const checkPos = addVectorsAndCheckPos(latestBoard.enPassant, { x: xOffsets[i], y: -pawnMoveDirection })
-                if (!checkPos) continue
-                const checkPiece = latestBoard.getPos(checkPos)
-                if (!checkPiece || checkPiece.team === team || !(checkPiece instanceof Pawn)) continue // if same as person who just moved
-                if (this.doMove(checkPos, latestBoard.enPassant)) {
-                    if (ws)
-                        sendToWs(ws, 'move', {
-                            startingPos: [checkPos.x, checkPos.y],
-                            endingPos: [latestBoard.enPassant.x, latestBoard.enPassant.y],
-                        })
-                    return true
-                }
-            }
-        }
-        return false
     }
 
     newMove(move: History) {

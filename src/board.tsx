@@ -318,10 +318,17 @@ class Board extends React.Component<BoardProps, BoardState> {
         const currentTurn = this.props.board.getTurn('next')
         const prevTurnInReferenceToSelf = (this.props.ownTeam === 'any') ? (this.props.board.getTurn('prev') === 'white') ? "self" : "other" : (this.props.ownTeam === this.props.board.getTurn('prev')) ? "self" : "other"
         const inCheck = this.props.board.inCheck(currentTurn)
-        let inCheckPos: Vector | React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> | null = null
+
+        let highlightedSquares: Vector[] = []
+
         let unsortedPieces: ([JSX.Element, number] | [null, number])[] = pieces.map((item, index) => {
             if (inCheck && item.piece.code === 'k' && item.piece.team === currentTurn)
-                inCheckPos = item.pos
+                highlightedSquares.push(item.pos)
+            if (this.props.board.enPassant && item.piece.code === 'p') {
+                const moves = item.piece.getMoves(item.pos, this.props.board)
+                if (moves.length && moves[0].moveType.includes('enpassant'))
+                    highlightedSquares.push(item.pos)
+            }
             if (pieceBeingDragged && (pieceBeingDragged.x === item.pos.x && pieceBeingDragged.y === item.pos.y)) {
                 if (item.piece.key !== this.state.beingDraggedPieceKey)
                     return [null, 1000]
@@ -385,9 +392,18 @@ class Board extends React.Component<BoardProps, BoardState> {
                 />;
         }
 
-        if (inCheckPos) {
-            inCheckPos = inCheckPos as Vector
-            inCheckPos = <div className='square check' style={{ "top": ((this.props.notFlipped) ? 12.5 * inCheckPos.y : 12.5 * (7 - inCheckPos.y)) + "%", "left": ((this.props.notFlipped) ? 12.5 * inCheckPos.x : 12.5 * (7 - inCheckPos.x)) + "%" }}></div>
+        let highlightedSquaresElements: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>[] = []
+
+        for (let value of highlightedSquares) {
+            highlightedSquaresElements.push(
+                <div
+                    className='square check'
+                    style={
+                        {
+                            top: ((this.props.notFlipped) ? 12.5 * value.y : 12.5 * (7 - value.y)) + "%",
+                            left: ((this.props.notFlipped) ? 12.5 * value.x : 12.5 * (7 - value.x)) + "%"
+                        }
+                    }></div>)
         }
 
         let squares: JSX.Element[] | null = null
@@ -466,7 +482,7 @@ class Board extends React.Component<BoardProps, BoardState> {
                 </div>
                 <div id='legal-moves-layer'>
                     {legalMovesToDisplay}
-                    {inCheckPos}
+                    {highlightedSquaresElements}
                     {squares}
                     {preMoveSquaresStart}
                     {preMoveSquaresEnd}

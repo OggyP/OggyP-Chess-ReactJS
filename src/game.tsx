@@ -333,18 +333,6 @@ class Game extends React.Component<GameProps, GameState> {
         this.state.game.doMove(startPos, endPos, promotion)
         let newViewNum = this.state.viewingMove + 1
 
-        console.log(this.viewingBoard().halfMoveNumber)
-
-        // Forced Enpassant
-        if (this.state.game.forcedEnpassant(this.props.multiplayerWs, piece.team)) {
-            console.log('force enpassant inc')
-            newViewNum++
-            this.setState({
-                premoves: [],
-                premoveBoard: null
-            })
-        }
-
         // Pre Moves
         if (this.state.premoves.length > 0) {
             const premove = this.state.premoves.shift()
