@@ -53,6 +53,7 @@ interface GameState {
         team: Teams
         moveType: string[]
         board: ChessBoardType
+        pieceKey: number
         pos: {
             start: Vector
             end: Vector
@@ -258,7 +259,7 @@ class Game extends React.Component<GameProps, GameState> {
         const info = this.state.promotionSelector
         if (info && !this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
             const newBoard = new this.gameType.boardType(info.board)
-            newBoard.promote(info.pos.end, piece, info.team)
+            newBoard.promote(info.pos.end, piece, info.team, info.pieceKey)
             if (!newBoard.inCheck(info.team)) {
                 const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
                 const shortNotation = newBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
@@ -490,6 +491,7 @@ class Game extends React.Component<GameProps, GameState> {
                             team: selectedPiece.team,
                             moveType: moveType,
                             board: newBoard,
+                            pieceKey: selectedPiece.key,
                             pos: {
                                 start: selectedPiecePos,
                                 end: displayPos,
