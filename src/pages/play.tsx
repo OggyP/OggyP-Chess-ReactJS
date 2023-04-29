@@ -5,15 +5,15 @@ import { Teams } from '../chessLogic/types';
 import LoadingPage from './loading';
 import ErrorPage from './Error';
 import { wsURL } from '../settings';
+import { GameModes } from '../chessLogic/types';
+import {gameModeToName} from '../helpers/gameModes'
 
 function leavePage(event: BeforeUnloadEvent) {
     event.returnValue = `You are still in game, are you sure you want to leave?`;
 }
 
-type gameModesType = 'standard' | '960'
-
 interface gameOptions {
-    mode: gameModesType,
+    mode: GameModes,
     time: {
         base: number,
         increment: number
@@ -246,11 +246,6 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     }
 
     render() {
-        const fullChessModeNames = {
-            'standard': 'Standard Chess',
-            '960': 'Chess 960'
-        }
-
         if (this.state.error)
             return <ErrorPage
                 title={this.state.error.title}
@@ -261,7 +256,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
         else if (this.state.queueInfo)
             return <LoadingPage
                 title='Queueing'
-                description={`${fullChessModeNames[this.state.queueInfo.mode as 'standard' | '960']} ${this.state.queueInfo.time.base / 60}+${this.state.queueInfo.time.increment}`}
+                description={`${gameModeToName.get(this.state.queueInfo.mode as GameModes)} ${this.state.queueInfo.time.base / 60}+${this.state.queueInfo.time.increment}`}
             />
         else
             return <LoadingPage description='Connecting to OggyP Chess Web Socket' />

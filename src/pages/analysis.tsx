@@ -2,7 +2,7 @@ import '../css/index.scss';
 import '../css/chess.scss';
 import '../svg/assets.scss'
 import Game from '../game'
-import CheckGameMode from '../helpers/gameModeChecker'
+import { checkGameMode } from '../helpers/gameModes'
 import LoadingPage from './loading';
 import checkIfRedirectNeeded from '../helpers/redirect';
 
@@ -12,7 +12,7 @@ function AnalysisPage() {
 
     const urlParams = new URLSearchParams(window.location.search);
     console.log(window.location.pathname.split('/')[2])
-    const gameMode = CheckGameMode(window.location.pathname.split('/')[2])
+    const gameMode = checkGameMode(window.location.pathname.split('/')[2])
 
     if (!gameMode) {
         window.location.href = '/analysis/standard' + window.location.search

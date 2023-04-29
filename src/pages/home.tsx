@@ -7,6 +7,7 @@ import { userInfo } from '../helpers/verifyToken'
 import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
 import displayRating from '../helpers/displayRating';
+import { gameModesList, gameModeToShortName } from '../helpers/gameModes';
 
 interface HomeProps {
     userInfo: userInfo | null
@@ -190,7 +191,7 @@ function Home(props: HomeProps) {
                 </div>
                 <div className='game-info'>
                     <div className='game-mode'>
-                        <p>{value.gameMode}</p>
+                        <p>{gameModeToShortName.get(value.gameMode)}</p>
                     </div>
                     <div className='time-controls'>
                         <p>{`${Number(value.timeOption.split('+')[0]) / 60}+${value.timeOption.split('+')[1]}`}</p>
@@ -215,16 +216,6 @@ function Home(props: HomeProps) {
         "Custom"
     ]
 
-    const gameModes: [string, string][] = [
-        ['standard', 'Standard Chess'],
-        ['960', 'Chess 960']
-    ]
-
-    // const fullChessModeNames = {
-    //     'standard': 'Standard Chess',
-    //     '960': 'Chess 960'
-    // }
-
     if (error) return <ErrorPage
         title={error.title} description={error.description}
     />
@@ -234,7 +225,7 @@ function Home(props: HomeProps) {
     }}>
         {userInfoPage}
         <PlaySelectionMenu
-            gameModes={gameModes}
+            gameModes={gameModesList}
             timeSelections={defaultTimes}
         />
         <div id='lobby'>

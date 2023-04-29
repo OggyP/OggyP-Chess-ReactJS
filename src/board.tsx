@@ -5,7 +5,7 @@ import Square from './tsxAssets/square'
 import ValidMove from './tsxAssets/validMove'
 import Coords from './tsxAssets/coords'
 import { Arrow, Circle } from './tsxAssets/custom-svgs'
-import { ChessBoardType, ChessPiece, Teams, Vector, pieceStyle } from './chessLogic'
+import { ChessBoardType, ChessPiece, Teams, Vector, pieceStyle } from './chessLogic/chessLogic'
 import React from 'react';
 import EngineBestMove from './tsxAssets/engineBestMove'
 import { VecSame } from './chessLogic/standard/functions'

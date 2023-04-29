@@ -1,7 +1,7 @@
 import React from 'react';
-import { pieceStyle, Teams } from '../../chessLogic'
+import { pieceStyle, Teams } from '../../chessLogic/chessLogic'
 import { pieceImageType, pieceTypeToName } from './pieceInfo'
-import { PieceCodes } from '../../chessLogic'
+import { PieceCodes } from '../../chessLogic/chessLogic'
 
 interface PromotePieceProps {
     type: PieceCodes

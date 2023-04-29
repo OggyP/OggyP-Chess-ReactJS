@@ -147,7 +147,7 @@ function cancelOutCapturedMaterial(p1: PieceCodes[], p2: PieceCodes[]) {
     let materialP1 = arrayToCountObj(p1)
     let materialP2 = arrayToCountObj(p2)
 
-    let checkedPieces = []
+    let checkedPieces: string[] = []
 
     for (let item in materialP1) {
         if (materialP2[item]) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChessBoardType, getChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, pieceStyle } from './chessLogic'
+import { gameTypeTypes, gameTypes, ChessBoardType, getChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, pieceStyle } from './chessLogic/chessLogic'
 import PromotePiece from './tsxAssets/pieces/promotePiece'
 import { pieceImageType } from './tsxAssets/pieces/pieceInfo'
 import Board from './board'
@@ -10,14 +10,10 @@ import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/standard/functions';
 import { MovesAndBoard } from './chessLogic/types'
-import GameStandard from './chessLogic/standard/game'
-import GameFisherRandom from './chessLogic/960/game'
 import iOS from './helpers/isIOS'
 import { userInfo } from './helpers/verifyToken';
 import displayRating from './helpers/displayRating'
-
-type gameTypes = typeof GameStandard | typeof GameFisherRandom
-type games = GameStandard | GameFisherRandom
+import { gameModeNamesType } from './helpers/gameModes';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -43,7 +39,7 @@ interface PlayerInfo {
 }
 
 interface GameState {
-    game: games
+    game: gameTypes
     viewingMove: number
     validMoves: MovesAndBoard[]
     selectedPiece: Vector | null
@@ -80,13 +76,11 @@ interface GameState {
     spectators: userInfo[]
 }
 
-type gameModes = 'standard' | '960'
-
 interface GameProps {
     fen?: string
     pgn?: string
     multiplayerWs?: WebSocket
-    mode: gameModes
+    mode: gameModeNamesType
     team: Teams | "any" | "none"
     onMounted?: Function
     players?: {
@@ -111,7 +105,7 @@ class Game extends React.Component<GameProps, GameState> {
     getDraggingPiece: Function | undefined
     clearCustomSVGS: Function | undefined
     engineMoveType = 'movetime 60000'
-    gameType: gameTypes
+    gameType: gameTypeTypes
 
     constructor(props: GameProps) {
         super(props)

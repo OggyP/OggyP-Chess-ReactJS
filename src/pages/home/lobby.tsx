@@ -1,4 +1,5 @@
 import displayRating from '../../helpers/displayRating';
+import { gameModeToName } from '../../helpers/gameModes';
 import { userInfo } from '../../helpers/verifyToken';
 
 type gameModesType = 'standard' | '960'
@@ -22,12 +23,6 @@ interface LobbyMenuProps {
 }
 
 function LobbyMenu(props: LobbyMenuProps) {
-
-    const fullChessModeNames = {
-        'standard': 'Standard',
-        '960': '960'
-    }
-
     return <table>
         <thead>
             <tr>
@@ -43,7 +38,7 @@ function LobbyMenu(props: LobbyMenuProps) {
                     <td>{data.player.username}</td>
                     <td>{displayRating(data.player)}</td>
                     <td>{data.gameInfo.time.base / 60}+{data.gameInfo.time.increment}</td>
-                    <td>{fullChessModeNames[data.gameInfo.mode]}</td>
+                    <td>{gameModeToName.get(data.gameInfo.mode)}</td>
                 </tr>
             ))}
         </tbody>

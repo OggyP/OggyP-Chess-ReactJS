@@ -1,9 +1,9 @@
-import { pieceStyle, Teams, Vector } from "../../chessLogic"
+import { pieceStyle, Teams, Vector } from "../../chessLogic/chessLogic"
 import { useEffect, useState } from 'react';
 import { fromEvent } from 'rxjs'
 import { map, tap, throttleTime } from 'rxjs/operators'
 import { pieceImageType, pieceTypeToName } from './pieceInfo'
-import { PieceCodes } from '../../chessLogic'
+import { PieceCodes } from '../../chessLogic/chessLogic'
 
 interface DragProps {
     type: PieceCodes
