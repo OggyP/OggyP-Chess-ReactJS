@@ -229,10 +229,8 @@ class Game extends React.Component<GameProps, GameState> {
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
         if (this.engine)
-            if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver) {
-                console.log(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
+            if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver)
                 this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
-            }
         if (this.state.game.getMoveCount() !== moveNum && !firstMove)
             this.setState({
                 premoves: [],
@@ -318,8 +316,6 @@ class Game extends React.Component<GameProps, GameState> {
             start: start,
             end: end
         })
-        console.log(this.state.premoveBoard || this.latestBoard())
-        console.log(new this.gameType.boardType(this.state.premoveBoard || this.latestBoard()))
         let preMoveBoard = new this.gameType.boardType(this.state.premoveBoard || this.latestBoard())
         preMoveBoard.setPos(end, preMoveBoard.getPos(start))
         preMoveBoard.setPos(start, null)
@@ -330,7 +326,6 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) {
-        console.log('doing move')
         const viewingLatestMove = this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber
         const piece = this.latestBoard().getPos(startPos)
         if (!piece) return
@@ -354,7 +349,6 @@ class Game extends React.Component<GameProps, GameState> {
                 })
             else if (this.props.allowPreMoves) {
                 newViewNum++
-                console.log('premove inc')
                 if (!this.state.premoves.length) {
                     this.setState({
                         premoves: [],
@@ -379,7 +373,6 @@ class Game extends React.Component<GameProps, GameState> {
             }
         }
 
-        console.log('saving view num')
         this.setState({
             game: this.state.game,
         })
@@ -416,7 +409,6 @@ class Game extends React.Component<GameProps, GameState> {
 
     handlePieceClick(posClicked: Vector): void {
         if (this.props.team === 'none') return
-        console.log(this.props.allowOverridingMoves)
         if (!this.state.game.gameOver
             && this.state.viewingMove === this.state.game.getMoveCount()
             && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next')
