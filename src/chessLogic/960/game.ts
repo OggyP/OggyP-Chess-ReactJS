@@ -148,7 +148,7 @@ class Game {
                     endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 2
                     let piece = board.getPos(kingPos)
                     if (!piece) {
-                        console.warn('No legal castle found. ', board.getFen())
+                        console.log('No legal castle found. ', board.getFen())
                         break;
                     }
                     const moves = piece.getMoves(kingPos, board)
@@ -175,7 +175,7 @@ class Game {
                         }
                     }
                     if (!moveFound) {
-                        console.warn('No legal castle found. ', board.getFen())
+                        console.log('No legal castle found. ', board.getFen())
                         break;
                     }
                 } else if (move[0] === move[0].toLowerCase()) {
@@ -216,16 +216,11 @@ class Game {
                         }
                     }
                     if (!moveInfo) {
-                        console.warn("No legal pawn move was found. ", board.getFen())
+                        console.log("No legal pawn move was found. ", board.getFen())
                         break;
                     }
                     if (move[2] === '=') {
-                        const piece = board.getPos(endingPos)
-                        if (!piece) {
-                            console.warn("No piece found to promote", board.getFen())
-                            break
-                        }
-                        moveInfo.board.promote(endingPos, move.split('=')[1].toLowerCase() as PieceCodes, turn, piece.key)
+                        moveInfo.board.promote(endingPos, move.split('=')[1].toLowerCase() as PieceCodes, turn)
                         if (moveInfo.move)
                             moveInfo.move.notation.long += move.split('=')[1].toLowerCase() as string
                         board = new Board(moveInfo.board)
@@ -285,7 +280,7 @@ class Game {
                                 }
                             }
                     if (!foundMove) {
-                        console.warn("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '')
+                        console.log("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '')
                         break;
                     }
                 }
@@ -403,7 +398,7 @@ class Game {
             const newBoard = new Board(move.board)
             if (promotion) {
                 if (!['p', 'r', 'n', 'b', 'q', 'k'].includes(promotion)) return `Invalid promotion piece ${promotion}`
-                newBoard.promote(endPos, promotion, newBoard.getTurn('prev'), piece.key)
+                newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
             }
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
             const shortNotation = newBoard.getShortNotation(startPos, endPos, move.moveType, latestBoard as Board, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)

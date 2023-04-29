@@ -24,7 +24,7 @@ class DefaultBoard {
             this.gameMode = input
     }
 
-    promote(pos: BoardPos, pieceCode: PieceCodes, promoteTeam: Teams, oldPieceId: number): void {
+    promote(pos: BoardPos, pieceCode: PieceCodes, promoteTeam: Teams): void {
 
     }
 

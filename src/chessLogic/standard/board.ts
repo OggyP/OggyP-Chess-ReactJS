@@ -133,8 +133,9 @@ class Board extends DefaultBoard {
         this.enPassant = null
     }
 
-    promote(pos: BoardPos, pieceCode: PieceCodes, promoteTeam: Teams, oldPieceId: number): void {
-        this.setPos(pos, new pieceCodeClasses[pieceCode](promoteTeam, oldPieceId))
+    promote(pos: BoardPos, pieceCode: PieceCodes, promoteTeam: Teams): void {
+        this._pieceId++
+        this.setPos(pos, new pieceCodeClasses[pieceCode](promoteTeam, this._pieceId))
         this.capturedPieces[promoteTeam].push(pieceCode)
         this.capturedPieces[(promoteTeam === 'white') ? 'black' : 'white'].push('p')
     }
