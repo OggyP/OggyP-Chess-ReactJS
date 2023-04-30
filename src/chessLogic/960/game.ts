@@ -3,6 +3,7 @@ import Board from './board'
 import { convertToPosition, convertToChessNotation } from './functions';
 import { Pawn } from './pieces';
 import { Vector, Teams, PieceCodes } from './types'
+import genBoard from './startingPosition'
 
 async function getJSON(path: string, callback: Function) {
     return callback(await fetch(path).then(r => r.json()));
@@ -49,6 +50,7 @@ interface Opening {
 class Game {
     static openings: any;
     static boardType = Board
+    static genBoard = () => genBoard(Math.floor(Math.random() * 961))
     private _history: History[] = [];
     public shortNotationMoves: string = ''
     public gameOver: GameOverType = false
@@ -64,7 +66,7 @@ class Game {
         this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'WhiteElo', 'BlackElo', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening', 'FEN']
         if (input.pgn) {
             // Parse PGN
-            this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+            this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1"
             const currentDate = new Date()
             this.metaValues = new Map([
                 ['Event', '?'],
@@ -140,8 +142,6 @@ class Game {
                     continue
                 }
                 if (move === 'O-O-O' || move === '0-0-0' || move === 'O-O' || move === '0-0') { // O and 0 just to be sure 
-
-                    console.log('king castle')
                     const kingRow = (turn === 'white') ? 7 : 0
                     const lookingForTag = (move === 'O-O' || move === '0-0') ? 'castleKingSide' : 'castleQueenSide'
                     let moveFound = false;
@@ -151,13 +151,11 @@ class Game {
                             x: x,
                             y: kingRow
                         }
-                        console.log(pos)
                         const piece = board.getPos(pos)
                         if (piece && piece.team === turn) {
                             const movesList = piece.getMoves(pos, board)
                             for (let i = 0; i < movesList.length; i++) {
                                 const checkMove = movesList[i]
-                                console.log(turn, checkMove)
                                 if (checkMove.moveType.includes(lookingForTag)) {
                                     board = new Board(checkMove.board)
                                     this.newMove({
@@ -221,7 +219,7 @@ class Game {
                         }
                     }
                     if (!moveInfo) {
-                        console.log("No legal pawn move was found. ", board.getFen())
+                        console.warn("No legal pawn move was found. ", board.getFen())
                         break;
                     }
                     if (move[2] === '=') {
@@ -285,7 +283,7 @@ class Game {
                                 }
                             }
                     if (!foundMove) {
-                        console.log("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '')
+                        console.warn("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '')
                         break;
                     }
                 }

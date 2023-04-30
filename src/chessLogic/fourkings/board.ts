@@ -56,14 +56,14 @@ class Board extends DefaultBoard {
         } else {
             let FENparts = input.split(' ')
             if (FENparts.length !== 6) {
-                console.log("Invalid FEN, There should be 6 segments. The input FEN was " + input)
+                console.error("Invalid FEN, There should be 6 segments. The input FEN was " + input)
                 input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
                 FENparts = input.split(' ')
             }
 
             let rows = FENparts[0].split('/')
             if (rows.length !== 8) {
-                console.log("Invalid FEN, there needs to be 8 rows specified.")
+                console.error("Invalid FEN, there needs to be 8 rows specified.")
                 input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
                 FENparts = input.split(' ')
                 rows = FENparts[0].split('/')

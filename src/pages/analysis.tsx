@@ -39,7 +39,7 @@ function AnalysisPage() {
         mode={gameMode}
         allowMoving={true}
         allowPreMoves={false}
-        pgn={(pgn) ? pgn : undefined}
+        pgn={(pgn.length) ? pgn : undefined}
         pgnAndFenChange={true}
     />
 }

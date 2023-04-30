@@ -75,7 +75,6 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
 
         const match = window.location.pathname.match(/^\/play\/([^/]+)\/(\d+)\+(\d+)$/);
         if (!match) {
-            console.log(window.location.pathname)
             document.location.href = '/home';
             return
         }

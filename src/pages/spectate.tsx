@@ -68,7 +68,6 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
 
         const match = window.location.pathname.match(/\/spectate\/(?<game>[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})/);
         if (!match || !match.groups) {
-            console.log(window.location.pathname)
             document.location.href = '/home';
             return
         }

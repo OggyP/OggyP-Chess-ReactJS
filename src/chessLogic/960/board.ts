@@ -4,11 +4,6 @@ import { Queen, Rook, Bishop, Knight, King, Pawn, pieceCodeClasses } from './pie
 import DefaultBoard from '../default/board'
 import { Vector } from '../types';
 
-interface CastleInfoOfTeam {
-    kingSide: boolean;
-    queenSide: boolean;
-}
-
 interface CapturedPieces {
     white: PieceCodes[]
     black: PieceCodes[]
@@ -25,9 +20,9 @@ class Board extends DefaultBoard {
     enPassant: BoardPos | null = null;
     halfMoveNumber: number;
     halfMovesSinceCaptureOrPawnMove: number;
-    castleInfo: { white: CastleInfoOfTeam, black: CastleInfoOfTeam } = {
-        "white": { "kingSide": false, "queenSide": false },
-        "black": { "kingSide": false, "queenSide": false }
+    castleInfo: { white: number[], black: number[] } = {
+        "white": [],
+        "black": []
     };
     capturedPieces: CapturedPieces = {
         white: [],
@@ -36,7 +31,7 @@ class Board extends DefaultBoard {
     private _pieceId = 0;
     private _repitions = new Map<string, number>()
 
-    constructor(input: string | DefaultBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+    constructor(input: string | DefaultBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1") {
         super('standard')
         this._squares = []
         for (let i = 0; i < 8; i++)
@@ -47,8 +42,8 @@ class Board extends DefaultBoard {
                 this._squares[i] = Object.assign([], board._squares[i])
             this.halfMoveNumber = board.halfMoveNumber
             this.halfMovesSinceCaptureOrPawnMove = board.halfMovesSinceCaptureOrPawnMove
-            this.castleInfo.white = Object.assign({}, board.castleInfo.white)
-            this.castleInfo.black = Object.assign({}, board.castleInfo.black)
+            this.castleInfo.white = Object.assign([], board.castleInfo.white)
+            this.castleInfo.black = Object.assign([], board.castleInfo.black)
             this.enPassant = board.enPassant
             this.capturedPieces.white = Object.assign([], board.capturedPieces.white)
             this.capturedPieces.black = Object.assign([], board.capturedPieces.black)
@@ -57,15 +52,15 @@ class Board extends DefaultBoard {
         } else {
             let FENparts = input.split(' ')
             if (FENparts.length !== 6) {
-                console.log("Invalid FEN, There should be 6 segments. The input FEN was " + input)
-                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                console.error("Invalid FEN, There should be 6 segments. The input FEN was " + input)
+                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1"
                 FENparts = input.split(' ')
             }
 
             let rows = FENparts[0].split('/')
             if (rows.length !== 8) {
-                console.log("Invalid FEN, there needs to be 8 rows specified.")
-                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                console.error("Invalid FEN, there needs to be 8 rows specified.")
+                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1"
                 FENparts = input.split(' ')
                 rows = FENparts[0].split('/')
             }
@@ -78,12 +73,24 @@ class Board extends DefaultBoard {
             }
 
             // Set Castling
+            const letterToCol: any = {
+                a: 0,
+                b: 1,
+                c: 2,
+                q: 2,
+                d: 3,
+                e: 4,
+                f: 5,
+                g: 6,
+                k: 6,
+                h: 7
+            }
+
             for (let i = 0; i < FENparts[2].length; i++) {
                 let char = FENparts[2][i]
                 if (char !== '-') {
                     let teamOfCastlingInfo: Teams = (char === char.toUpperCase()) ? "white" : "black";
-                    let sideOfCastlingInfo: "kingSide" | "queenSide" = (char.toLowerCase() === 'k') ? "kingSide" : "queenSide";
-                    this.castleInfo[teamOfCastlingInfo][sideOfCastlingInfo] = true
+                    this.castleInfo[teamOfCastlingInfo].push(letterToCol[char.toLowerCase()])
                 }
             }
 
@@ -206,10 +213,14 @@ class Board extends DefaultBoard {
         FEN = FEN.slice(0, -1) // Remove excess '/'
         FEN += ` ${this.getTurn('next')[0]}`
         let castlingToAdd = ''
-        if (this.castleInfo.white.kingSide) castlingToAdd += 'K'
-        if (this.castleInfo.white.queenSide) castlingToAdd += 'Q'
-        if (this.castleInfo.black.kingSide) castlingToAdd += 'k'
-        if (this.castleInfo.black.queenSide) castlingToAdd += 'q'
+
+        const colToLetter: any = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+        for (let col of this.castleInfo.white) {
+            castlingToAdd += colToLetter[col].toUpperCase()
+        }
+        for (let col of this.castleInfo.black) {
+            castlingToAdd += colToLetter[col]
+        }
         if (castlingToAdd.length)
             FEN += ' ' + castlingToAdd
         else

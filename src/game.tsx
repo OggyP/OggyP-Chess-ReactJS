@@ -141,7 +141,7 @@ class Game extends React.Component<GameProps, GameState> {
             height: window.innerHeight
         }
         let playerInfo = null
-        const game = new this.gameType((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
+        const game = new this.gameType((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: this.gameType.genBoard() } })
         if (props.pgn) {
             playerInfo = game.getPlayerInfo()
             game.isGameOver()
@@ -803,9 +803,9 @@ class Game extends React.Component<GameProps, GameState> {
                             else if (fenLength === 5) finalFen += ' 1'
                             else return
                         }
-                        console.log(finalFen)
+                        console.info(finalFen)
                         if (finalFen.split(' ')[0].split('/').length !== 8) return
-                        console.log('no errors')
+                        console.info('no errors')
                         this.resetGame(finalFen)
                         this.setState({ resetGameFEN: "" })
                     }}>

@@ -85,8 +85,6 @@ class Knight extends ChessPiece {
 }
 
 class Rook extends ChessPiece {
-    hasMoved = false
-
     constructor(team: Teams, pieceId: number) {
         super(team, 'r', pieceId)
     }
@@ -102,43 +100,14 @@ class Rook extends ChessPiece {
         ]
         let moves = getRayCastVectors(board, vectors, pos, this.team).vectors
 
-        if (!this.hasMoved && (pos.y === 0 || pos.y === 7)) {
-            if (board.castleInfo[this.team].kingSide) {
-                let checkPos = {
-                    x: pos.x,
-                    y: pos.y
-                }
-                while (checkPos.x >= 0) {
-                    const piece = board.getPos(checkPos)
-                    if (piece && piece.code === 'k' && piece.team === this.team) {
-                        for (let i = 0; i < moves.length; i++) {
-                            moves[i].board.castleInfo[this.team].kingSide = false
-                        }
-                        break
-                    }
-                    checkPos.x--
+        if ((pos.y === 0 && this.team === 'black') || (pos.y === 7 && this.team === 'white')) {
+            if (board.castleInfo[this.team].includes(pos.x)) {
+                for (let i = 0; i < moves.length; i++) {
+                    moves[i].board.castleInfo[this.team] = moves[i].board.castleInfo[this.team].filter((value) => {
+                        return value !== pos.x
+                    })
                 }
             }
-            if (board.castleInfo[this.team].queenSide) {
-                let checkPos = {
-                    x: pos.x,
-                    y: pos.y
-                }
-                while (checkPos.x <= 7) {
-                    const piece = board.getPos(checkPos)
-                    if (piece && piece.code === 'k' && piece.team === this.team) {
-                        for (let i = 0; i < moves.length; i++) {
-                            moves[i].board.castleInfo[this.team].kingSide = false
-                        }
-                        break
-                    }
-                    checkPos.x++
-                }
-            }
-        }
-
-        for (let i = 0; i < moves.length; i++) {
-            this.hasMoved = true
         }
 
         return moves.filter(legal, this)
@@ -278,194 +247,85 @@ class King extends ChessPiece {
             { "x": -1, "y": 1 },
         ]
         let moves = getVectors(board, vectors, pos, this.team).vectors
-        for (let i = 0; i < moves.length; i++) {
-            moves[i].board.castleInfo[this.team].kingSide = false
-            moves[i].board.castleInfo[this.team].queenSide = false
-        }
+        for (let i = 0; i < moves.length; i++)
+            moves[i].board.castleInfo[this.team] = []
 
         if (!board.inCheck(this.team).length && (pos.y === 0 || pos.y === 7)) {
-            if (board.castleInfo[this.team].kingSide) {
-
+            for (let rookXpos of board.castleInfo[this.team]) {
                 // Find the rook's position
-                let rookPos: Vector | null = null
-                let checkPos: Vector = {
-                    x: 7,
+                let rookPos: Vector = {
+                    x: rookXpos,
                     y: pos.y
                 }
-                while (checkPos.x > pos.x) {
-                    console.log(1)
-                    console.log(checkPos, pos)
-                    const piece = board.getPos(checkPos)
-                    if (piece) {
-                        console.log(piece)
-                        if (piece.code === 'r' && piece.team === this.team) {
-                            rookPos = {
-                                x: checkPos.x,
-                                y: checkPos.y
-                            }
-                            break;
-                        }
-                    }
-                    checkPos.x--
-                }
+                const rook = board.getPos(rookPos)
+                if (!rook || rook.code !== 'r' || rook.team !== this.team)
+                    continue
 
-                if (rookPos) {
-                    // Check no pieces are in the way for the king
-                    const normalisedDirForKing = normaliseDirection(pos.x, 6)
-                    let piecesInWayForKing: ChessPiece[] = []
-                    let kingCheckPos: Vector = {
-                        x: pos.x + normalisedDirForKing,
-                        y: pos.y
-                    }
-                    while (kingCheckPos.x !== 6 + normalisedDirForKing) {
-                        console.log(2)
-                        const piece = board.getPos(kingCheckPos)
-                        if (piece)
-                            piecesInWayForKing.push(piece)
-                        kingCheckPos.x += normalisedDirForKing
-                    }
-                    if ((piecesInWayForKing.length === 1 && piecesInWayForKing[0].code === 'r' && piecesInWayForKing[0].team === this.team) || piecesInWayForKing.length === 0) {
-                        // Check no pieces are in the way for the rook
-                        const normalisedDirForRook = normaliseDirection(rookPos.x, 5)
+                const dirFromKingToRook = normaliseDirection(pos.x, rookPos.x)
+                if (dirFromKingToRook === 0) throw new Error("Bruh dir from king is 0")
 
-                        let piecesInWayForRook: ChessPiece[] = []
-                        let rookCheckPos: Vector = {
-                            x: rookPos.x + normalisedDirForRook,
-                            y: pos.y
-                        }
-                        while (rookCheckPos.x !== 5 + normalisedDirForRook) {
-                            console.log(3)
-                            const piece = board.getPos(rookCheckPos)
-                            if (piece)
-                                piecesInWayForRook.push(piece)
-                            rookCheckPos.x += normalisedDirForRook
-                        }
+                const kingEndXval = (dirFromKingToRook > 0) ? 6 : 2
+                const rookEndXval = (dirFromKingToRook > 0) ? 5 : 3
 
-                        if ((piecesInWayForRook.length === 1 && piecesInWayForRook[0].code === 'k' && piecesInWayForRook[0].team === this.team) || piecesInWayForRook.length === 0) {
-                            const rook = board.getPos(rookPos)
-
-                            // Ensure the king isn't at any point in check
-                            kingCheckPos = {
-                                x: pos.x + normalisedDirForKing,
-                                y: pos.y
-                            }
-                            let inCheck = false
-                            const newBoard = new Board(board)
-                            newBoard.setPos(rookPos, null)
-
-                            while (kingCheckPos.x !== 6 + normalisedDirForKing) {
-                                console.log(4)
-                                newBoard.doMove({
-                                    x: kingCheckPos.x - normalisedDirForKing,
-                                    y: pos.y
-                                }, kingCheckPos)
-                                inCheck = !!(newBoard.inCheck(this.team).length)
-                                if (inCheck) break
-                                kingCheckPos.x += normalisedDirForKing
-                            }
-                            if (!inCheck) {
-                                newBoard.setPos({ "x": 5, "y": pos.y }, rook)
-                                newBoard.castleInfo[this.team].kingSide = false
-                                newBoard.castleInfo[this.team].queenSide = false
-                                moves.push({
-                                    move: { "x": rookPos.x, "y": pos.y },
-                                    board: new Board(newBoard),
-                                    moveType: ["castleKingSide", 'captureRookCastle'],
-                                    displayVector: { x: 5, y: pos.y }
-                                })
-                            }
-                        }
-                    }
-                }
-            }
-            if (board.castleInfo[this.team].queenSide) {
-
-                // Find the rook's position
-                let rookPos: Vector | null = null
-                let checkPos: Vector = {
-                    x: 0,
+                // Check no pieces are in the way for the king
+                const normalisedDirForKing = normaliseDirection(pos.x, kingEndXval)
+                let piecesInWayForKing: ChessPiece[] = []
+                let kingCheckPos: Vector = {
+                    x: pos.x + normalisedDirForKing,
                     y: pos.y
                 }
-                while (checkPos.x < pos.x) {
-                    console.log(11)
-                    const piece = board.getPos(checkPos)
-                    if (piece) {
-                        if (piece.code === 'r' && piece.team === this.team) {
-                            rookPos = {
-                                x: checkPos.x,
-                                y: checkPos.y
-                            }
-                            break;
-                        }
-                    }
-                    checkPos.x++
+                while (kingCheckPos.x !== kingEndXval + normalisedDirForKing) {
+                    const piece = board.getPos(kingCheckPos)
+                    if (piece)
+                        piecesInWayForKing.push(piece)
+                    kingCheckPos.x += normalisedDirForKing
                 }
+                if ((piecesInWayForKing.length === 1 && piecesInWayForKing[0].code === 'r' && piecesInWayForKing[0].team === this.team) || piecesInWayForKing.length === 0) {
+                    // Check no pieces are in the way for the rook
+                    const normalisedDirForRook = normaliseDirection(rookPos.x, rookEndXval)
 
-                if (rookPos) {
-                    // Check no pieces are in the way for the king
-                    const normalisedDirForKing = normaliseDirection(pos.x, 2)
-                    let piecesInWayForKing: ChessPiece[] = []
-                    let kingCheckPos: Vector = {
-                        x: pos.x + normalisedDirForKing,
+                    let piecesInWayForRook: ChessPiece[] = []
+                    let rookCheckPos: Vector = {
+                        x: rookPos.x + normalisedDirForRook,
                         y: pos.y
                     }
-                    while (kingCheckPos.x !== 2 + normalisedDirForKing) {
-                        console.log(12)
-                        const piece = board.getPos(kingCheckPos)
+                    while (rookCheckPos.x !== rookEndXval + normalisedDirForRook) {
+                        const piece = board.getPos(rookCheckPos)
                         if (piece)
-                            piecesInWayForKing.push(piece)
-                        kingCheckPos.x += normalisedDirForKing
+                            piecesInWayForRook.push(piece)
+                        rookCheckPos.x += normalisedDirForRook
                     }
-                    if ((piecesInWayForKing.length === 1 && piecesInWayForKing[0].code === 'r' && piecesInWayForKing[0].team === this.team) || piecesInWayForKing.length === 0) {
-                        // Check no pieces are in the way for the rook
-                        const normalisedDirForRook = normaliseDirection(rookPos.x, 3)
 
-                        let piecesInWayForRook: ChessPiece[] = []
-                        let rookCheckPos: Vector = {
-                            x: rookPos.x + normalisedDirForRook,
+                    if ((piecesInWayForRook.length === 1 && piecesInWayForRook[0].code === 'k' && piecesInWayForRook[0].team === this.team) || piecesInWayForRook.length === 0) {
+                        const rook = board.getPos(rookPos)
+
+                        // Ensure the king isn't at any point in check
+                        kingCheckPos = {
+                            x: pos.x + normalisedDirForKing,
                             y: pos.y
                         }
-                        while (rookCheckPos.x !== 3 + normalisedDirForRook) {
-                            console.log(13)
-                            const piece = board.getPos(rookCheckPos)
-                            if (piece)
-                                piecesInWayForRook.push(piece)
-                            rookCheckPos.x += normalisedDirForRook
-                        }
+                        let inCheck = false
+                        const newBoard = new Board(board)
+                        newBoard.setPos(rookPos, null)
 
-                        if ((piecesInWayForRook.length === 1 && piecesInWayForRook[0].code === 'k' && piecesInWayForRook[0].team === this.team) || piecesInWayForRook.length === 0) {
-                            const rook = board.getPos(rookPos)
-
-                            // Ensure the king isn't at any point in check
-                            kingCheckPos = {
-                                x: pos.x + normalisedDirForKing,
+                        while (kingCheckPos.x !== kingEndXval + normalisedDirForKing) {
+                            newBoard.doMove({
+                                x: kingCheckPos.x - normalisedDirForKing,
                                 y: pos.y
-                            }
-                            let inCheck = false
-                            const newBoard = new Board(board)
-                            newBoard.setPos(rookPos, null)
-
-                            while (kingCheckPos.x !== 2 + normalisedDirForKing) {
-                                console.log(14)
-                                newBoard.doMove({
-                                    x: kingCheckPos.x - normalisedDirForKing,
-                                    y: pos.y
-                                }, kingCheckPos)
-                                inCheck = !!(newBoard.inCheck(this.team).length)
-                                if (inCheck) break
-                                kingCheckPos.x += normalisedDirForKing
-                            }
-                            if (!inCheck) {
-                                newBoard.setPos({ "x": 3, "y": pos.y }, rook)
-                                newBoard.castleInfo[this.team].kingSide = false
-                                newBoard.castleInfo[this.team].queenSide = false
-                                moves.push({
-                                    move: { "x": rookPos.x, "y": pos.y },
-                                    board: new Board(newBoard),
-                                    moveType: ["castleQueenSide", 'captureRookCastle'],
-                                    displayVector: { x: 3, y: pos.y }
-                                })
-                            }
+                            }, kingCheckPos)
+                            inCheck = !!(newBoard.inCheck(this.team).length)
+                            if (inCheck) break
+                            kingCheckPos.x += normalisedDirForKing
+                        }
+                        if (!inCheck) {
+                            newBoard.setPos({ "x": rookEndXval, "y": pos.y }, rook)
+                            newBoard.castleInfo[this.team] = []
+                            moves.push({
+                                move: { "x": rookPos.x, "y": pos.y },
+                                board: new Board(newBoard),
+                                moveType: ["castleKingSide", 'captureRookCastle'],
+                                // displayVector: { x: 5, y: pos.y }
+                            })
                         }
                     }
                 }
