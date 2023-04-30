@@ -2,11 +2,7 @@ import { PieceCodes, Teams, BoardPos, PieceAtPos } from './types'
 import { getRayCastVectors, getVectors, convertToPosition, convertToChessNotation } from './functions'
 import { Queen, Rook, Bishop, Knight, King, Pawn, pieceCodeClasses } from './pieces'
 import DefaultBoard from '../default/board'
-
-interface CastleInfoOfTeam {
-    kingSide: boolean;
-    queenSide: boolean;
-}
+import { Vector } from '../types';
 
 interface CapturedPieces {
     white: PieceCodes[]
@@ -24,9 +20,9 @@ class Board extends DefaultBoard {
     enPassant: BoardPos | null = null;
     halfMoveNumber: number;
     halfMovesSinceCaptureOrPawnMove: number;
-    castleInfo: { white: CastleInfoOfTeam, black: CastleInfoOfTeam } = {
-        "white": { "kingSide": false, "queenSide": false },
-        "black": { "kingSide": false, "queenSide": false }
+    castleInfo: { white: number[], black: number[] } = {
+        "white": [],
+        "black": []
     };
     capturedPieces: CapturedPieces = {
         white: [],
@@ -35,7 +31,7 @@ class Board extends DefaultBoard {
     private _pieceId = 0;
     private _repitions = new Map<string, number>()
 
-    constructor(input: string | DefaultBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+    constructor(input: string | DefaultBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1") {
         super('standard')
         this._squares = []
         for (let i = 0; i < 8; i++)
@@ -46,8 +42,8 @@ class Board extends DefaultBoard {
                 this._squares[i] = Object.assign([], board._squares[i])
             this.halfMoveNumber = board.halfMoveNumber
             this.halfMovesSinceCaptureOrPawnMove = board.halfMovesSinceCaptureOrPawnMove
-            this.castleInfo.white = Object.assign({}, board.castleInfo.white)
-            this.castleInfo.black = Object.assign({}, board.castleInfo.black)
+            this.castleInfo.white = Object.assign([], board.castleInfo.white)
+            this.castleInfo.black = Object.assign([], board.castleInfo.black)
             this.enPassant = board.enPassant
             this.capturedPieces.white = Object.assign([], board.capturedPieces.white)
             this.capturedPieces.black = Object.assign([], board.capturedPieces.black)
@@ -56,15 +52,15 @@ class Board extends DefaultBoard {
         } else {
             let FENparts = input.split(' ')
             if (FENparts.length !== 6) {
-                console.log("Invalid FEN, There should be 6 segments. The input FEN was " + input)
-                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                console.error("Invalid FEN, There should be 6 segments. The input FEN was " + input)
+                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1"
                 FENparts = input.split(' ')
             }
 
             let rows = FENparts[0].split('/')
             if (rows.length !== 8) {
-                console.log("Invalid FEN, there needs to be 8 rows specified.")
-                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                console.error("Invalid FEN, there needs to be 8 rows specified.")
+                input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1"
                 FENparts = input.split(' ')
                 rows = FENparts[0].split('/')
             }
@@ -77,12 +73,24 @@ class Board extends DefaultBoard {
             }
 
             // Set Castling
+            const letterToCol: any = {
+                a: 0,
+                b: 1,
+                c: 2,
+                q: 2,
+                d: 3,
+                e: 4,
+                f: 5,
+                g: 6,
+                k: 6,
+                h: 7
+            }
+
             for (let i = 0; i < FENparts[2].length; i++) {
                 let char = FENparts[2][i]
                 if (char !== '-') {
                     let teamOfCastlingInfo: Teams = (char === char.toUpperCase()) ? "white" : "black";
-                    let sideOfCastlingInfo: "kingSide" | "queenSide" = (char.toLowerCase() === 'k') ? "kingSide" : "queenSide";
-                    this.castleInfo[teamOfCastlingInfo][sideOfCastlingInfo] = true
+                    this.castleInfo[teamOfCastlingInfo].push(letterToCol[char.toLowerCase()])
                 }
             }
 
@@ -123,7 +131,7 @@ class Board extends DefaultBoard {
             }
         }
     }
-    
+
     doMove(pieceStartingPos: BoardPos, pieceEndingPos: BoardPos) {
         const pieceToMove = this._squares[pieceStartingPos.y][pieceStartingPos.x]
         if (pieceToMove) {
@@ -173,7 +181,7 @@ class Board extends DefaultBoard {
             }
             return false
         } else {
-            if (this.inCheck(team))
+            if (this.inCheck(team).length)
                 return { by: "checkmate", winner: (team === 'white') ? "black" : "white" }
             else
                 return { by: "stalemate", extraInfo: team + " in stalemate", winner: "draw" }
@@ -205,10 +213,14 @@ class Board extends DefaultBoard {
         FEN = FEN.slice(0, -1) // Remove excess '/'
         FEN += ` ${this.getTurn('next')[0]}`
         let castlingToAdd = ''
-        if (this.castleInfo.white.kingSide) castlingToAdd += 'K'
-        if (this.castleInfo.white.queenSide) castlingToAdd += 'Q'
-        if (this.castleInfo.black.kingSide) castlingToAdd += 'k'
-        if (this.castleInfo.black.queenSide) castlingToAdd += 'q'
+
+        const colToLetter: any = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+        for (let col of this.castleInfo.white) {
+            castlingToAdd += colToLetter[col].toUpperCase()
+        }
+        for (let col of this.castleInfo.black) {
+            castlingToAdd += colToLetter[col]
+        }
         if (castlingToAdd.length)
             FEN += ' ' + castlingToAdd
         else
@@ -243,7 +255,9 @@ class Board extends DefaultBoard {
 
     }
 
-    inCheck(team: Teams): boolean {
+    inCheck(team: Teams): Vector[] {
+        let checkPositions: Vector[] = []
+
         let pos: BoardPos = { "x": 0, "y": 0 }
         for (pos.x = 0; pos.x < 8; pos.x++)
             for (pos.y = 0; pos.y < 8; pos.y++) {
@@ -259,8 +273,10 @@ class Board extends DefaultBoard {
                     let pieces = getRayCastVectors(this, QueenAndRookBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Queen || pieces[i] instanceof Rook)
-                            return true;
+                        if (pieces[i] instanceof Queen || pieces[i] instanceof Rook) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
 
                     const QueenAndBishopBoardPoss: BoardPos[] = [
                         { "x": 1, "y": 1 },
@@ -271,8 +287,11 @@ class Board extends DefaultBoard {
                     pieces = getRayCastVectors(this, QueenAndBishopBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Queen || pieces[i] instanceof Bishop)
-                            return true;
+                        if (pieces[i] instanceof Queen || pieces[i] instanceof Bishop) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
+
 
                     const knightBoardPoss: BoardPos[] = [
                         { "x": 2, "y": 1 },
@@ -287,8 +306,11 @@ class Board extends DefaultBoard {
                     pieces = getVectors(this, knightBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Knight)
-                            return true;
+                        if (pieces[i] instanceof Knight) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
+
 
                     const kingBoardPoss: BoardPos[] = [
                         { "x": 0, "y": 1 },
@@ -303,8 +325,11 @@ class Board extends DefaultBoard {
                     pieces = getVectors(this, kingBoardPoss, pos, team).pieces;
 
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof King)
-                            return true;
+                        if (pieces[i] instanceof King) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
+
 
                     let pawnBoardPoss
                     if (team === "white")
@@ -320,14 +345,17 @@ class Board extends DefaultBoard {
 
                     pieces = getVectors(this, pawnBoardPoss, pos, team).pieces;
                     for (let i = 0; i < pieces.length; i++)
-                        if (pieces[i] instanceof Pawn)
-                            return true;
+                        if (pieces[i] instanceof Pawn) {
+                            checkPositions.push(Object.assign({}, pos));
+                            continue
+                        }
                 }
             }
-        return false;
+        return checkPositions;
     }
 
-    getPos(position: BoardPos): PieceAtPos {
+    getPos(position: BoardPos | null): PieceAtPos {
+        if (!position) return null
         if (position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8) return null
         return this._squares[position.y][position.x]
     }

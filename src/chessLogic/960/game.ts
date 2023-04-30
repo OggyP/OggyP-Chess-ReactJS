@@ -1,9 +1,9 @@
-import { sendToWs } from '../../helpers/wsHelper';
 import DefaultBoard from '../default/board';
 import Board from './board'
-import { convertToPosition, convertToChessNotation, addVectorsAndCheckPos } from './functions';
+import { convertToPosition, convertToChessNotation } from './functions';
 import { Pawn } from './pieces';
 import { Vector, Teams, PieceCodes } from './types'
+import genBoard from './startingPosition'
 
 async function getJSON(path: string, callback: Function) {
     return callback(await fetch(path).then(r => r.json()));
@@ -50,6 +50,7 @@ interface Opening {
 class Game {
     static openings: any;
     static boardType = Board
+    static genBoard = () => genBoard(Math.floor(Math.random() * 961))
     private _history: History[] = [];
     public shortNotationMoves: string = ''
     public gameOver: GameOverType = false
@@ -65,7 +66,7 @@ class Game {
         this.metaValuesOrder = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'WhiteElo', 'BlackElo', 'Result', 'Variant', 'TimeControl', 'ECO', 'Opening', 'FEN']
         if (input.pgn) {
             // Parse PGN
-            this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+            this.startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w AHah - 0 1"
             const currentDate = new Date()
             this.metaValues = new Map([
                 ['Event', '?'],
@@ -141,46 +142,46 @@ class Game {
                     continue
                 }
                 if (move === 'O-O-O' || move === '0-0-0' || move === 'O-O' || move === '0-0') { // O and 0 just to be sure 
-                    const kingPos = {
-                        'x': 4,
-                        'y': (turn === 'white') ? 7 : 0
-                    }
-                    const endingPos = Object.assign({}, kingPos)
-                    endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 2
-                    let piece = board.getPos(kingPos)
-                    if (!piece) {
-                        console.log('No legal castle found. ', board.getFen())
-                        break;
-                    }
-                    const moves = piece.getMoves(kingPos, board)
+                    const kingRow = (turn === 'white') ? 7 : 0
+                    const lookingForTag = (move === 'O-O' || move === '0-0') ? 'castleKingSide' : 'castleQueenSide'
                     let moveFound = false;
-                    for (let i = 0; i < moves.length; i++) {
-                        const checkMove = moves[i]
-                        if (checkMove.move.x === endingPos.x && checkMove.move.y === endingPos.y) {
-                            board = new Board(checkMove.board)
-                            this.newMove({
-                                board: checkMove.board,
-                                text: originalPGNmove,
-                                move: {
-                                    start: kingPos,
-                                    end: endingPos,
-                                    type: checkMove.moveType,
-                                    notation: {
-                                        short: originalPGNmove,
-                                        long: convertToChessNotation(kingPos) + convertToChessNotation(endingPos)
-                                    }
+                    
+                    for (let x = 0; x < 8; x++) {
+                        const pos = {
+                            x: x,
+                            y: kingRow
+                        }
+                        const piece = board.getPos(pos)
+                        if (piece && piece.team === turn) {
+                            const movesList = piece.getMoves(pos, board)
+                            for (let i = 0; i < movesList.length; i++) {
+                                const checkMove = movesList[i]
+                                if (checkMove.moveType.includes(lookingForTag)) {
+                                    board = new Board(checkMove.board)
+                                    this.newMove({
+                                        board: checkMove.board,
+                                        text: originalPGNmove,
+                                        move: {
+                                            start: pos,
+                                            end: checkMove.move,
+                                            type: checkMove.moveType,
+                                            notation: {
+                                                short: originalPGNmove,
+                                                long: convertToChessNotation(pos) + convertToChessNotation(checkMove.move)
+                                            }
+                                        }
+                                    })
+                                    moveFound = true;
+                                    break;
                                 }
-                            })
-                            moveFound = true;
-                            break;
+                            }
                         }
                     }
                     if (!moveFound) {
-                        console.log('No legal castle found. ', board.getFen())
+                        console.warn('No legal castle found. ', board.getFen())
                         break;
                     }
                 } else if (move[0] === move[0].toLowerCase()) {
-                    console.log('Pawn Move ' + originalPGNmove + '|' + move)
                     // pawn move
                     let startingPos: Vector = { 'x': convertToPosition(move[0], 'x') as number, 'y': -1 }
                     let endingPos: Vector
@@ -218,7 +219,7 @@ class Game {
                         }
                     }
                     if (!moveInfo) {
-                        console.log("No legal pawn move was found. ", board.getFen())
+                        console.warn("No legal pawn move was found. ", board.getFen())
                         break;
                     }
                     if (move[2] === '=') {
@@ -282,7 +283,7 @@ class Game {
                                 }
                             }
                     if (!foundMove) {
-                        console.log("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '')
+                        console.warn("No legal normal move found at " + originalPGNmove + " | " + board.getFen() + " Current turn: " + turn + '')
                         break;
                     }
                 }
@@ -403,7 +404,7 @@ class Game {
                 newBoard.promote(endPos, promotion, newBoard.getTurn('prev'))
             }
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-            const shortNotation = newBoard.getShortNotation(startPos, endPos, move.moveType, latestBoard as Board, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), promotion)
+            const shortNotation = newBoard.getShortNotation(startPos, endPos, move.moveType, latestBoard as Board, (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')).length ? '+' : '')), promotion)
             this.newMove({
                 board: newBoard,
                 text: shortNotation,
@@ -421,32 +422,6 @@ class Game {
             return true
         }
         return `No legal move found\n${latestBoard.getFen()}`
-    }
-
-    forcedEnpassant(ws: WebSocket | undefined, team: Teams) {
-        const latestBoardDefault = this.getLatest().board
-        const latestBoard = latestBoardDefault as Board
-        if (latestBoard.enPassant) {
-            // person who just moved is white then check for black
-            const pawnMoveDirection: number = ((team === 'white') ? 1 : -1)
-            // Plus x 
-            const xOffsets = [-1, 1]
-            for (let i = 0; i < xOffsets.length; i++) {
-                const checkPos = addVectorsAndCheckPos(latestBoard.enPassant, { x: xOffsets[i], y: -pawnMoveDirection })
-                if (!checkPos) continue
-                const checkPiece = latestBoard.getPos(checkPos)
-                if (!checkPiece || checkPiece.team === team || !(checkPiece instanceof Pawn)) continue // if same as person who just moved
-                if (this.doMove(checkPos, latestBoard.enPassant)) {
-                    if (ws)
-                        sendToWs(ws, 'move', {
-                            startingPos: [checkPos.x, checkPos.y],
-                            endingPos: [latestBoard.enPassant.x, latestBoard.enPassant.y],
-                        })
-                    return true
-                }
-            }
-        }
-        return false
     }
 
     newMove(move: History) {

@@ -58,7 +58,7 @@ class Game {
     public metaValues: Map<string, string>;
     public metaValuesOrder: string[];
     public opening: Opening = {
-        "Name": "Starting Position",
+        "Name": "Custom Position",
         "ECO": null
     }
     constructor(input: GameConstuctorInput) {
@@ -143,11 +143,11 @@ class Game {
                 }
                 if (move === 'O-O-O' || move === '0-0-0' || move === 'O-O' || move === '0-0') { // O and 0 just to be sure 
                     const kingPos = {
-                        'x': 4,
+                        'x': (move === 'O-O' || move === '0-0') ? 4 : 3,
                         'y': (turn === 'white') ? 7 : 0
                     }
                     const endingPos = Object.assign({}, kingPos)
-                    endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 2
+                    endingPos.x = (move === 'O-O' || move === '0-0') ? 6 : 1
                     let piece = board.getPos(kingPos)
                     if (!piece) {
                         console.warn('No legal castle found. ', board.getFen())
@@ -321,15 +321,6 @@ class Game {
     }
 
     checkForOpening(): void {
-        if (!Game.openings) return
-        const moves = this.shortNotationMoves.split(' ')
-        for (let i = 0; i < moves.length; i++) {
-            const opening = Game.openings[moves.slice(0, i).join(' ')]
-            if (!opening) continue
-            this.metaValues.set('Opening', opening.Name)
-            this.metaValues.set('ECO', opening.ECO)
-            this.opening = opening as Opening
-        }
     }
 
     getPlayerInfo(): {
@@ -442,14 +433,6 @@ class Game {
                 this.shortNotationMoves += ((i !== 1) ? ' ' : '') + ((i - 1) / 2 + 1) + '.'
             }
             this.shortNotationMoves += ' ' + moveInfo.notation.short
-        }
-
-        if (!Game.openings) return
-        const opening: { Name: string, ECO: string } = Game.openings[this.shortNotationMoves]
-        if (this.getMoveCount() < 25 && opening) {
-            this.metaValues.set('Opening', opening.Name)
-            this.metaValues.set('ECO', opening.ECO)
-            this.opening = opening as Opening
         }
     }
 

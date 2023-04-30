@@ -3,7 +3,7 @@ import '../css/index.scss';
 import '../css/chess.scss';
 import '../svg/assets.scss'
 import Game from '../game'
-import { Teams } from '../chessLogic';
+import { Teams } from '../chessLogic/chessLogic';
 import ErrorPage from './Error';
 import { GameModes } from '../chessLogic/types';
 import Loading from '../pages/loading';

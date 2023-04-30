@@ -1,4 +1,4 @@
-import { Vector } from '../chessLogic'
+import { Vector } from '../chessLogic/chessLogic'
 
 interface SquareProps {
   pos: Vector,

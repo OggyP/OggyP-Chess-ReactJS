@@ -45,10 +45,6 @@ function getRayCastVectors(board: Board, vectors: Vector[], position: Vector, te
     };
 }
 
-function normaliseDirection(startValue: number, endValue: number) {
-    return Math.sign(endValue - startValue)
-}
-
 function getVectors(board: Board, vectors: Vector[], position: Vector, team: Teams): VectorsAndPieces {
     let validVectors: MovesAndBoard[] = []
     let collidedPieces: ChessPiece[] = []
@@ -183,4 +179,4 @@ function cancelOutCapturedMaterial(p1: PieceCodes[], p2: PieceCodes[]) {
     }
 }
 
-export { normaliseDirection, getRayCastVectors, getVectors, legal, addVectorsAndCheckPos, convertToChessNotation, convertToPosition, VecSame, cancelOutCapturedMaterial }
+export { getRayCastVectors, getVectors, legal, addVectorsAndCheckPos, convertToChessNotation, convertToPosition, VecSame, cancelOutCapturedMaterial }

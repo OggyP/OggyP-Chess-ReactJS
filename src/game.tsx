@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChessBoardType, getChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, pieceStyle } from './chessLogic'
+import { gameTypeTypes, gameTypes, ChessBoardType, getChessGame, PieceCodes, Teams, PieceAtPos, convertToChessNotation, Vector, pieceStyle } from './chessLogic/chessLogic'
 import PromotePiece from './tsxAssets/pieces/promotePiece'
 import { pieceImageType } from './tsxAssets/pieces/pieceInfo'
 import Board from './board'
@@ -10,12 +10,10 @@ import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/standard/functions';
 import { MovesAndBoard } from './chessLogic/types'
-import GameStandard from './chessLogic/standard/game'
-import GameFisherRandom from './chessLogic/960/game'
 import iOS from './helpers/isIOS'
-
-type gameTypes = typeof GameStandard | typeof GameFisherRandom
-type games = GameStandard | GameFisherRandom
+import { userInfo } from './helpers/verifyToken';
+import displayRating from './helpers/displayRating'
+import { gameModeNamesType } from './helpers/gameModes';
 
 const boardSize = 0.87
 const minAspectRatio = 1.2
@@ -41,7 +39,7 @@ interface PlayerInfo {
 }
 
 interface GameState {
-    game: games
+    game: gameTypes
     viewingMove: number
     validMoves: MovesAndBoard[]
     selectedPiece: Vector | null
@@ -75,16 +73,15 @@ interface GameState {
     }
     loadedNNUE: boolean,
     resetGameFEN: string
+    spectators: userInfo[]
 }
-
-type gameModes = 'standard' | '960'
 
 interface GameProps {
     fen?: string
     pgn?: string
     multiplayerWs?: WebSocket
-    mode: gameModes
-    team: Teams | "any"
+    mode: gameModeNamesType
+    team: Teams | "any" | "none"
     onMounted?: Function
     players?: {
         white: PlayerInfo
@@ -108,18 +105,27 @@ class Game extends React.Component<GameProps, GameState> {
     getDraggingPiece: Function | undefined
     clearCustomSVGS: Function | undefined
     engineMoveType = 'movetime 60000'
-    gameType: gameTypes
+    gameType: gameTypeTypes
 
     constructor(props: GameProps) {
         super(props)
         this.gameType = getChessGame(this.props.mode)
-        if (!props.multiplayerWs || (props.players && ((props.players.white.username === 'OggyP' && props.team === 'white') || (props.players.black.username === 'OggyP' && props.team === 'black')))) {
+        if (
+            !(('fourkings').includes(this.props.mode)) && (
+                !(props.multiplayerWs && props.team !== 'none')
+                || (props.players &&
+                    ((props.players.white.username === 'OggyP' && props.team === 'white')
+                        || (props.players.black.username === 'OggyP' && props.team === 'black')))
+            )
+        ) {
             let startingCommands = [
                 "isready",
                 "ucinewgame"
             ]
             if (!props.versusStockfish)
                 startingCommands.unshift('setoption name UCI_AnalyseMode value true')
+            if (props.mode === '960')
+                startingCommands.unshift('setoption name UCI_Chess960 value true')
 
             var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
 
@@ -135,7 +141,7 @@ class Game extends React.Component<GameProps, GameState> {
             height: window.innerHeight
         }
         let playerInfo = null
-        const game = new this.gameType((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" } })
+        const game = new this.gameType((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: this.gameType.genBoard() } })
         if (props.pgn) {
             playerInfo = game.getPlayerInfo()
             game.isGameOver()
@@ -185,7 +191,7 @@ class Game extends React.Component<GameProps, GameState> {
             game: game,
             viewingMove: (this.props.multiplayerWs) ? game.getMoveCount() : 0, // make it `game.getMoveCount()` to go to the lastest move
             validMoves: [],
-            notFlipped: (props.team === 'any' || props.team === 'white'),
+            notFlipped: props.viewAs === 'white',
             selectedPiece: null,
             promotionSelector: null,
             boxSize: Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8),
@@ -197,7 +203,8 @@ class Game extends React.Component<GameProps, GameState> {
             piecesStyle: (localStorage.getItem('pieceStyle') as pieceStyle || 'normal'),
             boardStyle: boardStyle,
             loadedNNUE: (this.engine?.loadedNNUE || false),
-            resetGameFEN: ""
+            resetGameFEN: "",
+            spectators: []
         }
         this.boardMoveChanged((this.props.multiplayerWs) ? game.getMoveCount() : 0, true, true)
         if (props.pgnAndFenChange) this.updateURLtoHavePGN()
@@ -221,6 +228,15 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
+        if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
+            this.engineMoveType = 'movetime 60000'
+            this.engine = new UCIengine('/stockfish/stockfish.js', [
+                'setoption name UCI_AnalyseMode value true',
+                "isready",
+                "ucinewgame"
+            ], 3)
+        }
+
         if (this.engine)
             if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver)
                 this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
@@ -231,6 +247,12 @@ class Game extends React.Component<GameProps, GameState> {
             })
         if (this.clearCustomSVGS)
             this.clearCustomSVGS()
+    }
+
+    setSpectators(spectators: userInfo[]) {
+        this.setState({
+            spectators: spectators
+        })
     }
 
     customGameOver(winner: Teams | 'draw', by: string, extraInfo?: string) {
@@ -249,9 +271,9 @@ class Game extends React.Component<GameProps, GameState> {
         if (info && !this.state.game.gameOver && this.state.viewingMove === this.state.game.getMoveCount() && info.team === this.state.game.getLatest().board.getTurn('next')) {
             const newBoard = new this.gameType.boardType(info.board)
             newBoard.promote(info.pos.end, piece, info.team)
-            if (!newBoard.inCheck(info.team)) {
+            if (!newBoard.inCheck(info.team).length) {
                 const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-                const shortNotation = newBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')), piece)
+                const shortNotation = newBoard.getShortNotation(info.pos.start, info.pos.end, this.state.promotionSelector?.moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : (((newBoard.inCheck(newBoard.getTurn('next')).length) ? '+' : '')), piece)
                 this.state.game.newMove({
                     board: newBoard,
                     text: shortNotation,
@@ -303,8 +325,6 @@ class Game extends React.Component<GameProps, GameState> {
             start: start,
             end: end
         })
-        console.log(this.state.premoveBoard || this.latestBoard())
-        console.log(new this.gameType.boardType(this.state.premoveBoard || this.latestBoard()))
         let preMoveBoard = new this.gameType.boardType(this.state.premoveBoard || this.latestBoard())
         preMoveBoard.setPos(end, preMoveBoard.getPos(start))
         preMoveBoard.setPos(start, null)
@@ -315,22 +335,12 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     doMove(startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) {
-        console.log('doing move')
+        const viewingLatestMove = this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber
         const piece = this.latestBoard().getPos(startPos)
         if (!piece) return
         if (piece.team === this.props.team) return
         this.state.game.doMove(startPos, endPos, promotion)
         let newViewNum = this.state.viewingMove + 1
-
-        // Forced Enpassant
-        if (this.state.game.forcedEnpassant(this.props.multiplayerWs, piece.team)) {
-            console.log('force enpassant inc')
-            newViewNum++
-            this.setState({
-                premoves: [],
-                premoveBoard: null
-            })
-        }
 
         // Pre Moves
         if (this.state.premoves.length > 0) {
@@ -348,7 +358,6 @@ class Game extends React.Component<GameProps, GameState> {
                 })
             else if (this.props.allowPreMoves) {
                 newViewNum++
-                console.log('premove inc')
                 if (!this.state.premoves.length) {
                     this.setState({
                         premoves: [],
@@ -373,16 +382,19 @@ class Game extends React.Component<GameProps, GameState> {
             }
         }
 
-        console.log('saving view num')
         this.setState({
             game: this.state.game,
-            viewingMove: newViewNum
         })
-        this.boardMoveChanged(newViewNum, false, true)
-        if (this.getDraggingPiece) {
-            const draggingPiece = this.getDraggingPiece()
-            if (draggingPiece)
-                this.handlePieceClick(draggingPiece as Vector)
+        if (viewingLatestMove) {
+            this.setState({
+                viewingMove: newViewNum
+            })
+            this.boardMoveChanged(newViewNum, false, true)
+            if (this.getDraggingPiece) {
+                const draggingPiece = this.getDraggingPiece()
+                if (draggingPiece)
+                    this.handlePieceClick(draggingPiece as Vector)
+            }
         }
     }
 
@@ -405,7 +417,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     handlePieceClick(posClicked: Vector): void {
-        console.log(this.props.allowOverridingMoves)
+        if (this.props.team === 'none') return
         if (!this.state.game.gameOver
             && this.state.viewingMove === this.state.game.getMoveCount()
             && this.latestBoard().getPos(posClicked)?.team === this.latestBoard().getTurn('next')
@@ -440,12 +452,11 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     viewingBoard(): ChessBoardType {
-        console.log(this.state.viewingMove)
-        console.log(this.state.game)
         return this.state.game.getMove(this.state.viewingMove).board
     }
 
     handleMoveClick(posClicked: Vector): void {
+        if (this.props.team === 'none') return
         if ((!this.state.game.gameOver
             && this.state.viewingMove === this.state.game.getMoveCount())
             || (this.props.allowOverridingMoves)) {
@@ -502,7 +513,7 @@ class Game extends React.Component<GameProps, GameState> {
             })
             if (isPromotion) return
             const isGameOver = newBoard.isGameOverFor(newBoard.getTurn('next'))
-            const shortNotation = newBoard.getShortNotation(selectedPiecePos, displayPos, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')) ? '+' : '')))
+            const shortNotation = newBoard.getShortNotation(selectedPiecePos, displayPos, moveType as string[], this.latestBoard(), (isGameOver && isGameOver.by === 'checkmate') ? "#" : ((newBoard.inCheck(newBoard.getTurn('next')).length ? '+' : '')))
             this.state.game.newMove({
                 board: newBoard,
                 text: shortNotation,
@@ -610,7 +621,7 @@ class Game extends React.Component<GameProps, GameState> {
         }
         this.goToMove(0)
         this.updateURLtoHavePGN()
-        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', '/analysis');
+        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', window.location.pathname);
     }
 
     preventContextMenu(e: any) {
@@ -622,7 +633,8 @@ class Game extends React.Component<GameProps, GameState> {
             this.props.onMounted({
                 doMove: (startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) => this.doMove(startPos, endPos, promotion),
                 gameOver: (winner: Teams | 'draw', by: string, extraInfo?: string) => this.customGameOver(winner, by, extraInfo),
-                updateTimer: (white: TimerInfo, black: TimerInfo) => this.updateTimer(white, black)
+                updateTimer: (white: TimerInfo, black: TimerInfo) => this.updateTimer(white, black),
+                setSpectators: (spectators: userInfo[]) => this.setSpectators(spectators)
             });
         }
         document.addEventListener('contextmenu', this.preventContextMenu)
@@ -643,16 +655,6 @@ class Game extends React.Component<GameProps, GameState> {
     render() {
         let promotionSelector
         const promotionSelectorVal = this.state.promotionSelector
-
-        if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
-            this.engineMoveType = 'movetime 60000'
-            this.engine = new UCIengine('/stockfish/stockfish.js', [
-                'setoption name UCI_AnalyseMode value true',
-                "isready",
-                "ucinewgame"
-            ], 3)
-            this.boardMoveChanged(this.state.viewingMove)
-        }
 
         if (promotionSelectorVal) {
             const promotionChoices: PieceCodes[] = ['q', 'n', 'b', 'r']
@@ -700,7 +702,7 @@ class Game extends React.Component<GameProps, GameState> {
             players[team] = <UserInfoDisplay
                 team={team}
                 username={this.state.players?.[team].username || team.charAt(0).toUpperCase() + team.slice(1)}
-                rating={this.state.players?.[team].rating}
+                rating={(this.state.players) ? displayRating(this.state.players[team]) : undefined}
                 timer={timers?.[team]}
                 material={cancelledOutTakenMaterial[team]}
                 isTurn={(currentTurn === team)}
@@ -775,13 +777,14 @@ class Game extends React.Component<GameProps, GameState> {
             {(!this.state.onMobile) ? <div className='inline-info'>
                 <p className='button-type'
                     onClick={() => {
-                        navigator.clipboard.writeText(this.viewingBoard().getFen())
-                            .then(() => {
-                                alert('Copied FEN to clipboard.');
-                            })
-                            .catch(err => {
-                                alert('Error in copying text: ' + err);
-                            });
+                        if (navigator.clipboard)
+                            navigator.clipboard.writeText(this.viewingBoard().getFen())
+                                .then(() => {
+                                    alert('Copied FEN to clipboard.');
+                                })
+                                .catch(err => {
+                                    alert('Error in copying text: ' + err);
+                                });
                     }}>
                     Copy Fen
                 </p>
@@ -800,9 +803,9 @@ class Game extends React.Component<GameProps, GameState> {
                             else if (fenLength === 5) finalFen += ' 1'
                             else return
                         }
-                        console.log(finalFen)
+                        console.info(finalFen)
                         if (finalFen.split(' ')[0].split('/').length !== 8) return
-                        console.log('no errors')
+                        console.info('no errors')
                         this.resetGame(finalFen)
                         this.setState({ resetGameFEN: "" })
                     }}>
@@ -836,6 +839,14 @@ class Game extends React.Component<GameProps, GameState> {
 
         let leftSideInfo = <div className="game-controls-info">
             <div className='col-down'>
+                {(this.state.spectators.length) ? <div id="spectators-in-game-display">
+                    <h1>Spectators ({this.state.spectators.length})</h1>
+                    <ul>
+                        {this.state.spectators.map(spectator => {
+                            return <li key={spectator.userId}>{spectator.username}<span className='rating'>{displayRating(spectator)}</span></li>
+                        })}
+                    </ul>
+                </div> : null}
                 <br /><hr /><br />
                 <div>
                     <h3>Board Colour Selector</h3>

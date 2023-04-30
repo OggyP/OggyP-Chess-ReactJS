@@ -2,7 +2,7 @@
 //<line stroke="#15781B" stroke-width="0.15625" stroke-linecap="round" marker-end="url(#arrowhead-g)" opacity="1" x1="0.5" y1="0.5" x2="0.5" y2="-0.1875" cgHash="824,824,e4,e5,green,true"></line>
 //<circle stroke="#15781B" stroke-width="0.0625" fill="none" opacity="1" cx="-3.5" cy="0.5" r="0.46875" cgHash="824,824,a4,green"></circle>
 
-import { Vector } from '../chessLogic'
+import { Vector } from '../chessLogic/chessLogic'
 
 interface ArrowProps {
   start: Vector

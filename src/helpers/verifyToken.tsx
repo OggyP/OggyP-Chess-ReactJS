@@ -75,7 +75,7 @@ const NeedsLogin = (props: { children: React.ReactNode }) => {
         }
 
         getToken()
-    }, [apiURL])
+    }, [])
 
     if (userInfo) {
         const childrenWithProps = React.Children.map(children, child => {

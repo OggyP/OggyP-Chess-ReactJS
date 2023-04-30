@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './css/navbar.scss'
 import GoogleIcon from './tsxAssets/GoogleIcon';
+import { gameModesList } from './helpers/gameModes'
 
 interface NavBarProps {
 }
@@ -38,7 +39,16 @@ function NavBar(props: NavBarProps) {
         <li className={(open)? 'submenu open': 'submenu'}>
           <nav aria-label='Main Options'>
             <ul>
-              <li><a href='/analysis/standard'>Analyse</a></li>
+              <li>
+              <div className="dropdown item">
+                <button className='dropbtn'>Analyse<i className="fa fa-caret-down"></i></button>
+                <div className="dropdown-content">
+                    {gameModesList.map(value => {
+                        return <a key={value[0]} href={`/analysis/${value[0]}`}>{value[1]}</a>
+                    })}
+                </div>
+            </div>
+              </li>
               <li><a href='/stockfish'>Stockfish</a></li>
               <li>
                 <button>

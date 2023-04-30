@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import '../css/home.scss'
 import PlaySelectionMenu from './home/playSelector'
 import LobbyMenu, { queueInfo } from './home/lobby'
+import SpectateMenu, { spectateInfo } from './home/spectateList'
 import { userInfo } from '../helpers/verifyToken'
 import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
 import { formatDateShort } from '../helpers/date';
-import { getProperModeName } from '../helpers/misc';
+import displayRating from '../helpers/displayRating';
+import { gameModesList, gameModeToShortName, gameModeToName } from '../helpers/gameModes';
 
 interface HomeProps {
     userInfo: userInfo | null
@@ -27,13 +29,12 @@ interface gameInfo {
 function Home(props: HomeProps) {
 
     const [gameInfo, setGameInfo] = useState<gameInfo[]>([])
-    // const [pgnInput, setPgnInput] = useState<string>("")
-    const [copiedId, setCopiedId] = useState<null | number>(null)
     const [error, setError] = useState<null | {
         title: string,
         description: string
     }>(null)
     const [queues, setQueues] = useState<queueInfo[]>([])
+    const [currentGames, setCurrentGames] = useState<spectateInfo[]>([])
 
 
     useEffect(() => {
@@ -56,6 +57,9 @@ function Home(props: HomeProps) {
                             break;
                         case 'queues':
                             setQueues(data)
+                            break;
+                        case 'spectateGames':
+                            setCurrentGames(data)
                             break;
                         case 'redirect':
                             window.location.href = data.location
@@ -143,7 +147,7 @@ function Home(props: HomeProps) {
             </span>
         </h1>
         <section className='user-stats'>
-            <span className='type'>Rating</span><span className='content'>{Math.round(props.userInfo.rating)}</span>
+            <span className='type'>Rating</span><span className='content'>{displayRating(props.userInfo)}</span>
             <span className='type'># Games</span><span className='content'>{props.userInfo.gamesPlayed}</span>
             <span className='type'>Win %</span><span className='content'>{Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</span>
             <span className='type'>ID</span><span className='content'>{props.userInfo.userId}</span>
@@ -157,7 +161,6 @@ function Home(props: HomeProps) {
     for (let i = 0; i < gameInfo.length; i++) {
         const value = gameInfo[i]
         const urlToGoTo = '/viewGame/' + value.id + ((value.white === props.userInfo?.username) ? '' : '?viewAs=black')
-        const successfullyCopied = (copiedId && copiedId === value.id)
 
         let winSymbol, result
         const ownTeam = (value.white === props.userInfo.username) ? 'white' : 'black'
@@ -198,7 +201,7 @@ function Home(props: HomeProps) {
                 </div>
                 <div className='game-info'>
                     <p className='game-mode'>
-                        {getProperModeName(value.gameMode)}
+                        {gameModeToName.get(value.gameMode)}
                     </p>
                     <p className='time-controls'>
                         {`${Number(value.timeOption.split('+')[0]) / 60} + ${value.timeOption.split('+')[1]}`}
@@ -232,16 +235,6 @@ function Home(props: HomeProps) {
         "Custom"
     ]
 
-    const gameModes: [string, string][] = [
-        ['standard', 'Standard Chess'],
-        ['960', 'Chess 960']
-    ]
-
-    // const fullChessModeNames = {
-    //     'standard': 'Standard Chess',
-    //     '960': 'Chess 960'
-    // }
-
     if (error) return <ErrorPage
         title={error.title} description={error.description}
     />
@@ -253,15 +246,18 @@ function Home(props: HomeProps) {
         <div id="content">
             <main>
                 <PlaySelectionMenu
-                    gameModes={gameModes}
+                    gameModes={gameModesList}
                     timeSelections={defaultTimes}
                 />
                 <hr />
 
                 {/* <div id='lobby'>
+                    <h2>Lobby</h2>
                     <LobbyMenu queues={queues} />
-                </div>
-                <hr /> */}
+                    <br />
+                    <h2>Spectate</h2>
+                    <SpectateMenu currentGames={currentGames} />
+                </div> */}
 
                 <section id='lobby'>
                     <h2>Lobby</h2>
@@ -278,10 +274,10 @@ function Home(props: HomeProps) {
                 </section>
                 <hr />
             </main>
-        <aside id="previous-games">
-            <h2>Previous Games</h2>
-            <ul>{games}</ul>
-        </aside>
+            <aside id="previous-games">
+                <h2>Previous Games</h2>
+                <ul>{games}</ul>
+            </aside>
         </div>
     </div>
 }

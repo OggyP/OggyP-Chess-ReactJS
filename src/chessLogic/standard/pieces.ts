@@ -21,6 +21,8 @@ class Queen extends ChessPiece {
 
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+        
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 1 },
@@ -44,6 +46,8 @@ class Bishop extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+
         const vectors: Vector[] = [
             { "x": 1, "y": 1 },
             { "x": 1, "y": -1 },
@@ -62,7 +66,8 @@ class Knight extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
-        console.log('standard kngiht move')
+        if (board.enPassant) return []
+
         const vectors: Vector[] = [
             { "x": 2, "y": 1 },
             { "x": 1, "y": 2 },
@@ -85,6 +90,8 @@ class Rook extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 0 },
@@ -170,8 +177,6 @@ class Pawn extends ChessPiece {
             }
         }
 
-
-
         // Single Move
         vectorToCheck = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
         if (vectorToCheck && !board.getPos(vectorToCheck)) {
@@ -189,7 +194,10 @@ class Pawn extends ChessPiece {
                 if (vectorToCheck && !board.getPos(vectorToCheck)) {
                     const newBoard = new Board(board)
                     newBoard.doMove(pos, vectorToCheck)
-                    newBoard.enPassant = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
+                    let minusPos = newBoard.getPos(addVectorsAndCheckPos(pos, { "x": -1, "y": 2 * yMoveVal }))
+                    let plusPos = newBoard.getPos(addVectorsAndCheckPos(pos, { "x": 1, "y": 2 * yMoveVal }))
+                    if ((minusPos && minusPos.team !== ownTeam && minusPos.code === 'p') || (plusPos && plusPos.team !== ownTeam && plusPos.code === 'p'))
+                        newBoard.enPassant = addVectorsAndCheckPos(pos, { "x": 0, "y": yMoveVal })
                     moves.push({
                         "move": vectorToCheck,
                         "board": newBoard,
@@ -198,6 +206,16 @@ class Pawn extends ChessPiece {
                 }
             }
         }
+
+        if (board.enPassant) {
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].moveType.includes("enpassant")) {
+                    return [moves[i]].filter(legal, this)
+                }
+            }
+            return []
+        }
+
         if (((this.team === "white") ? 1 : 6) === pos.y)
             return moves.filter(legal, this).map((item, index) => {
                 item.moveType.push('promote')
@@ -214,6 +232,8 @@ class King extends ChessPiece {
     }
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
+        if (board.enPassant) return []
+
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 1 },
@@ -230,7 +250,7 @@ class King extends ChessPiece {
             moves[i].board.castleInfo[this.team].queenSide = false
         }
 
-        if (!board.inCheck(this.team)) {
+        if (!board.inCheck(this.team).length) {
             if (board.castleInfo[this.team].kingSide) {
                 let piecesInWay: PieceCodes[] = []
                 for (let i = 4; i < 8; i++) {
@@ -242,9 +262,9 @@ class King extends ChessPiece {
                     const vectorToDisplay = { "x": 6, "y": pos.y }
                     if (vectorToDisplay && !board.getPos({ "x": 5, "y": pos.y }) && !board.getPos({ "x": 6, "y": pos.y })) {
                         newBoard.doMove(pos, { "x": 5, "y": pos.y })
-                        if (!newBoard.inCheck(this.team)) {
+                        if (!newBoard.inCheck(this.team).length) {
                             newBoard.doMove({ "x": 5, "y": pos.y }, vectorToDisplay)
-                            if (!newBoard.inCheck(this.team)) {
+                            if (!newBoard.inCheck(this.team).length) {
                                 newBoard.doMove({ "x": 7, "y": pos.y }, { "x": 5, "y": pos.y })
                                 newBoard.castleInfo[this.team].kingSide = false
                                 newBoard.castleInfo[this.team].queenSide = false
@@ -276,9 +296,9 @@ class King extends ChessPiece {
                     const vectorToDisplay = { "x": 2, "y": pos.y }
                     if (vectorToDisplay && !board.getPos({ "x": 3, "y": pos.y }) && !board.getPos({ "x": 2, "y": pos.y }) && !board.getPos({ "x": 1, "y": pos.y })) {
                         newBoard.doMove(pos, { "x": 3, "y": pos.y })
-                        if (!newBoard.inCheck(this.team)) {
+                        if (!newBoard.inCheck(this.team).length) {
                             newBoard.doMove({ "x": 3, "y": pos.y }, vectorToDisplay)
-                            if (!newBoard.inCheck(this.team)) {
+                            if (!newBoard.inCheck(this.team).length) {
                                 newBoard.doMove({ "x": 0, "y": pos.y }, { "x": 3, "y": pos.y })
                                 newBoard.castleInfo[this.team].kingSide = false
                                 newBoard.castleInfo[this.team].queenSide = false

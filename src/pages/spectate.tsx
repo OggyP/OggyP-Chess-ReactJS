@@ -5,15 +5,11 @@ import { Teams } from '../chessLogic/types';
 import LoadingPage from './loading';
 import ErrorPage from './Error';
 import { wsURL } from '../settings';
-import { GameModes } from '../chessLogic/types';
-import {gameModeToName} from '../helpers/gameModes'
 
-function leavePage(event: BeforeUnloadEvent) {
-    event.returnValue = `You are still in game, are you sure you want to leave?`;
-}
+type gameModesType = 'standard' | '960'
 
 interface gameOptions {
-    mode: GameModes,
+    mode: gameModesType,
     time: {
         base: number,
         increment: number
@@ -35,11 +31,10 @@ interface PlayerInfo {
 }
 
 
-interface PlayGameProps {
+interface SpectateGameProps {
 }
 
-interface PlayGameState {
-    queueInfo: gameOptions | null
+interface SpectateGameState {
     error: null | {
         title: string,
         description: string
@@ -48,13 +43,12 @@ interface PlayGameState {
 }
 
 interface gameFoundInfo extends gameOptions {
-    team: 'white' | 'black'
     pgn: string
     white: PlayerInfo
     black: PlayerInfo
 }
 
-class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
+class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>{
 
     ws: WebSocket | undefined
     token = checkForToken()
@@ -64,25 +58,21 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     serverGameOver: Function | null = null
     setSpectators: Function | null = null
 
-    constructor(props: PlayGameProps) {
+    constructor(props: SpectateGameProps) {
         super(props)
 
         this.state = {
-            queueInfo: null,
             game: null,
             error: null
         }
 
-        const match = window.location.pathname.match(/^\/play\/([^/]+)\/(\d+)\+(\d+)$/);
-        if (!match) {
+        const match = window.location.pathname.match(/\/spectate\/(?<game>[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})/);
+        if (!match || !match.groups) {
             document.location.href = '/home';
             return
         }
 
-        const gameMode = match[1];
-        const start = parseInt(match[2], 10);
-        const inc = parseInt(match[3], 10);
-
+        const gameId = match.groups.game;
 
         if (!this.token) {
             document.location.href = '/login/?ref=' + document.location.pathname + document.location.search;
@@ -91,7 +81,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
 
         const serverGameOverTypes = ['resignation', 'timeout', 'game abandoned']
         const establishWS = () => {
-            const wsConnectionURL = `${wsURL}play/${gameMode}/${start}+${inc}/?token=${this.token?.token}&userId=${this.token?.userId}`
+            const wsConnectionURL = `${wsURL}spectate/${gameId}/?token=${this.token?.token}&userId=${this.token?.userId}`
             this.ws = new WebSocket(wsConnectionURL)
 
             let cancelReconnection = false
@@ -106,11 +96,6 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                     case 'error':
                         this.setState({
                             error: data
-                        })
-                        break;
-                    case 'queue':
-                        this.setState({
-                            queueInfo: data as gameOptions
                         })
                         break;
                     case 'game':
@@ -141,10 +126,9 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                         }
                         break;
                     case 'gameOver':
-                        window.removeEventListener('beforeunload', leavePage);
                         if (serverGameOverTypes.includes(data.by)) {
                             if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
-                            this.serverGameOver(data.winner, data.by, data.info)
+                            this.serverGameOver(data.winner, data.by, data.info)                            
                         }
                         window.history.pushState('OggyP Chess View Game', 'View Game', window.location.origin + '/viewGame/' + data.gameId);
                         break
@@ -186,7 +170,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                         description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
                     }
                 })
-                window.location.reload()
+                window.location.href = '/home'
             }
 
             this.ws.onopen = () => {
@@ -199,12 +183,10 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     }
 
     gameFound(game: gameFoundInfo) {
-        window.addEventListener('beforeunload', leavePage);
         this.setState({
-            queueInfo: null,
             game: <Game
-                team={game.team}
-                viewAs={game.team}
+                team={'none'}
+                viewAs={'white'}
                 mode={game.mode}
                 pgn={game.pgn}
                 allowOverridingMoves={false}
@@ -252,14 +234,9 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
             />
         else if (this.state.game)
             return this.state.game
-        else if (this.state.queueInfo)
-            return <LoadingPage
-                title='Queueing'
-                description={`${gameModeToName.get(this.state.queueInfo.mode as GameModes)} ${this.state.queueInfo.time.base / 60}+${this.state.queueInfo.time.increment}`}
-            />
         else
             return <LoadingPage description='Connecting to OggyP Chess Web Socket' />
     }
 }
 
-export default PlayGame
+export default SpectateGame

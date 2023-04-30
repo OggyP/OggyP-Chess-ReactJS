@@ -59,9 +59,11 @@
     will-change: transform;
     z-index: 2;
     pointer-events: all;
+
     &.capture {
         background: radial-gradient(transparent 0%, transparent 79%, rgba(20, 85, 0, 0.5) 80%);
     }
+
     &:hover {
         background: rgba(20, 85, 30, 0.3);
     }
@@ -86,19 +88,38 @@
     will-change: transform;
     pointer-events: none;
     cursor: pointer;
+
     &.ghost {
         background-color: rgba(20, 85, 30, 0.5);
         z-index: 2;
         opacity: 60%;
     }
+
     &.ani {
         transition: all 300ms !important;
         z-index: 4;
     }
+
     &.mobile-drag {
         width: 20%;
         height: 20%;
         z-index: 99;
+    }
+}
+
+#spectators-in-game-display {
+    li {
+        font-size: larger;
+        font-weight: bolder;
+
+        margin: 30px;
+
+        .rating {
+            color: grey;
+            margin-left: 10px;
+        }
+
+        list-style: none;
     }
 }
 
@@ -111,27 +132,33 @@
     z-index: 1;
     background-size: cover;
     will-change: transform;
+
     &.prevMove {
         &.start {
             &.self {
                 background-color: rgba(131, 131, 225, 0.5);
             }
+
             &.other {
                 background-color: rgba(225, 131, 131, 0.5);
             }
         }
+
         &.end {
             &.self {
                 background-color: rgba(46, 46, 228, 0.5);
             }
+
             &.other {
                 background-color: rgba(228, 46, 46, 0.5);
             }
         }
     }
+
     &.check {
         background: radial-gradient(ellipse at center, red 0%, #e70000 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);
     }
+
     &.premove {
         background-color: rgba(255, 255, 0, 0.5);
     }
@@ -144,20 +171,24 @@
     position: absolute;
     width: inherit;
     height: inherit;
+
     .square {
         cursor: pointer;
         border-radius: 50%;
         background-color: #b0b0b0;
         box-shadow: inset 0 0 25px 3px #808080;
         transition: all 150ms;
+
         &:hover {
             box-shadow: inset 0 0 48px 8px #d64f00;
             border-radius: 0%;
+
             .piece {
                 transform: none
             }
         }
     }
+
     .piece {
         pointer-events: auto;
         opacity: 1;
@@ -176,10 +207,12 @@
     opacity: 0.8;
     font-family: Arial;
     font-size: 2vmin;
+
     p {
         margin: 0;
         flex: 1 1 auto;
     }
+
     &.ranks {
         margin: 0;
         text-align: right;
@@ -188,30 +221,37 @@
         flex-flow: column-reverse;
         height: 100%;
         width: 12px;
+
         &.black {
             flex-flow: column;
+
             p {
                 &:nth-child(2n) {
                     color: rgba(72, 72, 72, 0.8);
                 }
+
                 &:nth-child(2n+1) {
                     color: rgba(255, 255, 255, 0.8);
                 }
             }
         }
+
         &.left {
             left: -15px;
             align-items: flex-end;
         }
+
         p {
             &:nth-child(2n) {
                 color: rgba(255, 255, 255, 0.8);
             }
+
             &:nth-child(2n+1) {
                 color: rgba(72, 72, 72, 0.8);
             }
         }
     }
+
     &.files {
         bottom: 0;
         left: 0.5%;
@@ -219,22 +259,28 @@
         width: 100%;
         text-transform: lowercase;
         text-align: center;
+
         &.black {
             flex-flow: row-reverse;
+
             p {
                 &:nth-child(2n) {
                     color: rgba(255, 255, 255, 0.8);
                 }
+
                 &:nth-child(2n+1) {
                     color: rgba(72, 72, 72, 0.8);
                 }
             }
         }
+
         p {
             text-align: left;
+
             &:nth-child(2n) {
                 color: rgba(72, 72, 72, 0.8);
             }
+
             &:nth-child(2n+1) {
                 color: rgba(255, 255, 255, 0.8);
             }
