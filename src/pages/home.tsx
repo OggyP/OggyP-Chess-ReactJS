@@ -5,6 +5,8 @@ import LobbyMenu, { queueInfo } from './home/lobby'
 import { userInfo } from '../helpers/verifyToken'
 import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
+import { formatDateShort } from '../helpers/date';
+import { getProperModeName } from '../helpers/misc';
 
 interface HomeProps {
     userInfo: userInfo | null
@@ -135,12 +137,20 @@ function Home(props: HomeProps) {
     if (!props.userInfo) throw new Error('What how')
 
     userInfoPage = <div className='user-info'>
-        <h1 className='username'>{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
-        <h3 className='user-stats'>Rating | {Math.round(props.userInfo.rating)}</h3>
-        <h3 className='user-stats'>Win% | {Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</h3>
-        <h3 className='user-stats'>Win:Loss | {props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</h3>
-        <h3 className='user-stats'>#Games | {props.userInfo.gamesPlayed}</h3>
-        <button className='button' onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }}>Log Out</button>
+        <h1 className='username'>
+            <span className='underline'>
+                Welcome back, <span className='name underline'>{props.userInfo.username}</span>
+            </span>
+        </h1>
+        <section className='user-stats'>
+            <span className='type'>Rating</span><span className='content'>{Math.round(props.userInfo.rating)}</span>
+            <span className='type'># Games</span><span className='content'>{props.userInfo.gamesPlayed}</span>
+            <span className='type'>Win %</span><span className='content'>{Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</span>
+            <span className='type'>ID</span><span className='content'>{props.userInfo.userId}</span>
+            <span className='type'>Win:Loss</span><span className='content'>{props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</span>
+            <span className='type'>Joined</span><span className='content'>{formatDateShort(props.userInfo.createdAt)}</span>
+            <button className='button' onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }}>Logout</button>
+        </section>
     </div>
 
     let games: JSX.Element[] = []
@@ -149,51 +159,52 @@ function Home(props: HomeProps) {
         const urlToGoTo = '/viewGame/' + value.id + ((value.white === props.userInfo?.username) ? '' : '?viewAs=black')
         const successfullyCopied = (copiedId && copiedId === value.id)
 
-        let winSymbol
+        let winSymbol, result
         const ownTeam = (value.white === props.userInfo.username) ? 'white' : 'black'
         if (ownTeam === value.winner)
-            winSymbol = 'win'
-        else if (value.winner === 'draw')
-            winSymbol = 'draw'
-        else
-            winSymbol = 'loss'
+            winSymbol = result = 'win'
+        else if (value.winner === 'draw') {
+            winSymbol = 'handshake-light'
+            result = 'draw'
+        } else
+            winSymbol = result = 'loss'
 
         let symbols = {
-            white: '1/2',
-            black: '1/2'
+            white: '½',
+            black: '½'
         }
 
         if (value.winner === 'white') {
             symbols.white = '1'
             symbols.black = '0'
-        } else {
+        } else if (value.winner === 'black') {
             symbols.white = '0'
             symbols.black = '1'
         }
 
 
-        games.push(<li className='game-normal-info' key={value.id * 2} onClick={() => window.location.href = urlToGoTo}>
-            <div className='container'>
-                <div className='result'>
+        games.push(<li className='previous-game' key={value.id * 2}>
+            <a className='container' href={urlToGoTo}>
+                <div className={'result ' + result}>
                     <img src={`/assets/images/previousGameMenu/${winSymbol}.svg`} alt={winSymbol} />
                 </div>
-                <div className='username'>
-                    <div className='white'>
-                        <p>{symbols.white}  {value.white}</p>
-                    </div>
-                    <div className='black'>
-                        <p>{symbols.black}  {value.black}</p>
-                    </div>
+                <div className='white'>
+                    <span className='number'>{symbols.white}</span>
+                    <span className='name'>{value.white}</span>
+                </div>
+                <div className='black'>
+                    <span className='number'>{symbols.black}</span>
+                    <span className='name'>{value.black}</span>
                 </div>
                 <div className='game-info'>
-                    <div className='game-mode'>
-                        <p>{value.gameMode}</p>
-                    </div>
-                    <div className='time-controls'>
-                        <p>{`${Number(value.timeOption.split('+')[0]) / 60}+${value.timeOption.split('+')[1]}`}</p>
-                    </div>
+                    <p className='game-mode'>
+                        {getProperModeName(value.gameMode)}
+                    </p>
+                    <p className='time-controls'>
+                        {`${Number(value.timeOption.split('+')[0]) / 60} + ${value.timeOption.split('+')[1]}`}
+                    </p>
                 </div>
-            </div>
+            </a>
 
             {/* <td onClick={() => {
                 navigator.clipboard.writeText("https://chess.oggyp.com" + urlToGoTo);
@@ -239,16 +250,38 @@ function Home(props: HomeProps) {
 
     }}>
         {userInfoPage}
-        <PlaySelectionMenu
-            gameModes={gameModes}
-            timeSelections={defaultTimes}
-        />
-        <div id='lobby'>
-            <LobbyMenu queues={queues} />
-        </div>
-        <div id="previous-games">
+        <div id="content">
+            <main>
+                <PlaySelectionMenu
+                    gameModes={gameModes}
+                    timeSelections={defaultTimes}
+                />
+                <hr />
+
+                {/* <div id='lobby'>
+                    <LobbyMenu queues={queues} />
+                </div>
+                <hr /> */}
+
+                <section id='lobby'>
+                    <h2>Lobby</h2>
+                    <ul>
+                        <li className='challenge'>
+                            <a className='container' href=''>
+                                <span className='username'>Jamcode</span>
+                                <span className='rating'>963</span>
+                                <span className='mode'>Standard</span>
+                                <span className='time-control'>10 + 5</span>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+                <hr />
+            </main>
+        <aside id="previous-games">
             <h2>Previous Games</h2>
             <ul>{games}</ul>
+        </aside>
         </div>
     </div>
 }

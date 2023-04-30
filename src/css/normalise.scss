@@ -22,21 +22,17 @@ h3 {
     width: auto;
 }
 
-// h1 {
-//     font-size: 70px;
-// }
+h2 {
+    text-align: center;
+}
 
-// h2 {
-//     font-size: 50px;
-// }
-
-// h3 {
-//     font-size: 25px;
-// }
-
-// h4 {
-//     font-size: 20px;
-// }
+h3 {
+    margin-top: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--txt-2);
+    text-transform: uppercase;
+}
 
 
 /********************
@@ -65,31 +61,40 @@ hr {
 button,
 input+label.button,
 .button-type {
-    background: var(--dark);
+    background: var(--bg-3);
     cursor: pointer;
+
     border: none;
-    --bdrs: 5px;
-    -webkit-border-radius: var(--bdrs);
-    -moz-border-radius: var(--bdrs);
-    border-radius: var(--bdrs);
+    border-radius: 5px;
     padding: 0.4em 0.6em;
     width: auto;
     height: auto;
+
     display: inline-flex;
     justify-content: center;
     align-items: center;
+
     font-size: 16px;
     font-family: var(--font-1);
     color: var(--txt);
-    -webkit-transition: 50ms;
-    -moz-transition: 50ms;
-    -ms-transition: 50ms;
-    -o-transition: 50ms;
+
     transition: 50ms;
-    margin-right: 10px;
+
     &:hover,
     &:focus {
-        background: var(--grey);
+        background: var(--hover);
+    }
+
+    &.disabled,
+    &[disabled] {
+        background: var(--bg-faded);
+        cursor: not-allowed;
+        color: var(--txt-2);
+
+        &:hover,
+        &:focus {
+            background: var(--bg-faded);
+        }
     }
 }
 
@@ -152,4 +157,27 @@ th {
 
 input:checked+label.button {
     background: var(--primary);
+}
+
+
+/********************
+        TEXT
+********************/
+
+.underline {
+    position: relative;
+}
+
+.underline::after {
+    content: "";
+    background: var(--primary);
+    background: var(--gradient-1);
+
+    width: 100%;
+    height: var(--underline-thickness);
+
+    position: absolute;
+    bottom: calc(0.25em - var(--underline-thickness));
+    left: 0;
+    z-index: -1;
 }
