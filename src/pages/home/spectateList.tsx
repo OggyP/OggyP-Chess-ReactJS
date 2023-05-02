@@ -1,10 +1,9 @@
 import displayRating from '../../helpers/displayRating';
 import { userInfo } from '../../helpers/verifyToken';
-
-type gameModesType = 'standard' | '960'
+import { gameModeToName, GameModes } from '../../helpers/gameModes';
 
 interface gameOptions {
-    mode: gameModesType,
+    mode: GameModes,
     time: {
         base: number,
         increment: number
@@ -44,7 +43,7 @@ function SpectateMenu(props: SpectateMenuProps) {
                 <tr key={index} onClick={() => window.location.href = `/spectate/${data.gameId}`}>
                     <td>{data.players.white.username} <span className="rating">{displayRating(data.players.white)}</span></td>
                     <td>{data.players.black.username} <span className="rating">{displayRating(data.players.black)}</span></td>
-                    <td>{fullChessModeNames[data.gameInfo.mode]} {data.gameInfo.time.base / 60}+{data.gameInfo.time.increment}</td>
+                    <td>{gameModeToName.get(data.gameInfo.mode)} {data.gameInfo.time.base / 60}+{data.gameInfo.time.increment}</td>
                 </tr>
             ))}
         </tbody>
