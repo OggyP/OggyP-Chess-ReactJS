@@ -1,5 +1,5 @@
 import { Teams, Vector, MovesAndBoard, PieceCodes } from './types'
-import  Board from './board'
+import Board from './board'
 import { getVectors, legal, getRayCastVectors, addVectorsAndCheckPos } from './functions'
 import ChessPiece from '../default/pieces'
 
@@ -22,7 +22,7 @@ class Queen extends ChessPiece {
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
         if (board.enPassant) return []
-        
+
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 1 },
@@ -233,7 +233,7 @@ class King extends ChessPiece {
 
     getMoves(pos: Vector, board: Board): MovesAndBoard[] {
         if (board.enPassant) return []
-        
+
         const vectors: Vector[] = [
             { "x": 0, "y": 1 },
             { "x": 1, "y": 1 },
@@ -245,10 +245,14 @@ class King extends ChessPiece {
             { "x": -1, "y": 1 },
         ]
         let moves = getVectors(board, vectors, pos, this.team).vectors
-        for (let i = 0; i < moves.length; i++) {
-            moves[i].board.castleInfo[this.team].kingSide = false
-            moves[i].board.castleInfo[this.team].queenSide = false
-        }
+
+        if (board.castleInfo[this.team].kingSide && pos.x === 4 && (pos.y === 0 || pos.y === 7))
+            for (let i = 0; i < moves.length; i++)
+                moves[i].board.castleInfo[this.team].kingSide = false
+
+        if (board.castleInfo[this.team].queenSide && pos.x === 3 && (pos.y === 0 || pos.y === 7))
+            for (let i = 0; i < moves.length; i++)
+                moves[i].board.castleInfo[this.team].queenSide = false
 
         if (!board.inCheck(this.team).length) {
             if (board.castleInfo[this.team].kingSide && pos.x === 4 && (pos.y === 0 || pos.y === 7)) {

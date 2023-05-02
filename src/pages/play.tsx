@@ -104,6 +104,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                 console.log(event)
                 switch (event.type) {
                     case 'error':
+                        cancelReconnection = true
                         this.setState({
                             error: data
                         })
