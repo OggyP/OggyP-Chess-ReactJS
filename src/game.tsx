@@ -228,7 +228,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
-        if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
+        if (!(('fourkings').includes(this.props.mode)) && (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1))) {
             this.engineMoveType = 'movetime 60000'
             this.engine = new UCIengine('/stockfish/stockfish.js', [
                 'setoption name UCI_AnalyseMode value true',
