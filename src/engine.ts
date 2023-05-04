@@ -9,7 +9,7 @@ class UCIengine {
     private _analyseFromTeam: Teams = "white";
     private _infoBuffer: any[] = []
     multiPV: number;
-    loadedNNUE: boolean = localStorage.getItem('loadNNUE') === 'true'
+    loadedNNUE: boolean = false
     _commandsQueue: string[];
     constructor(path: string, initConfigCommands: string[] = [], multiPV: number = 1) {
         this.multiPV = multiPV

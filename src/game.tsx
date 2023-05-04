@@ -900,7 +900,6 @@ class Game extends React.Component<GameProps, GameState> {
                 <div id="game-controls">
                     <h3>Game Controls</h3>
                     <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
-                    {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); localStorage.setItem('loadNNUE', 'true') }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); localStorage.removeItem('loadNNUE') }}>Stop Loading NNUE</button>}
                 </div>
             </div>
         </div>
