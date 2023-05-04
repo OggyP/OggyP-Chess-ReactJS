@@ -2,6 +2,17 @@
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48
 }
 
+.title {
+    margin-right: 0.3em;
+    font-weight: bolder;
+    background-color: rgb(176, 0, 0);
+    padding: 0px 0.2em;
+    border-radius: 0.3em;
+    color: white;
+    font-size: 0.9em;
+    // font-size: max(0.7em, 1.7vw);
+}
+
 #home-wrapper {
     height: calc(100vh - 40px);
     width: 100%;
@@ -42,8 +53,12 @@
         padding: 20px;
         grid-area: user-info;
 
+        .title {
+            font-size: max(0.7em, 1.7vw);
+        }
+
         .username {
-            font-size: max(1.5em, 3vw);
+            font-size: max(1.2em, 2vw);
         }
 
         .user-stats {

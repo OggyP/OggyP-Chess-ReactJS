@@ -140,7 +140,7 @@ function Home(props: HomeProps) {
     if (!props.userInfo) throw new Error('What how')
 
     userInfoPage = <div className='user-info'>
-        <h1 className='username'>{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
+        <h1 className='username'>{(props.userInfo.title) ? <span className='title'>{props.userInfo.title}</span> : null}{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
         <h3 className='user-stats'>Rating | {displayRating(props.userInfo)}</h3>
         <h3 className='user-stats'>Win% | {Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</h3>
         <h3 className='user-stats'>Win:Loss | {props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</h3>
@@ -170,10 +170,30 @@ function Home(props: HomeProps) {
         if (value.winner === 'white') {
             symbols.white = '1'
             symbols.black = '0'
-        } else {
+        } else if (value.winner === 'black') {
             symbols.white = '0'
             symbols.black = '1'
         }
+
+
+        // Usernames in previous games are stores as TITLE|username
+        let split = {
+            white: value.white.split('|'),
+            black: value.black.split('|')
+        }
+
+        let username = {
+            white: split.white.slice(-1),
+            black: split.black.slice(-1)
+        }
+
+
+        let titles = {
+            white: (split.white.length === 2) ? <span className='title'>{split.white[0]}</span> : null,
+            black: (split.black.length === 2) ? <span className='title'>{split.black[0]}</span> : null
+        }
+
+
 
 
         games.push(<li className='game-normal-info' key={value.id * 2} onClick={() => window.location.href = urlToGoTo}>
@@ -183,10 +203,10 @@ function Home(props: HomeProps) {
                 </div>
                 <div className='username'>
                     <div className='white'>
-                        <p>{symbols.white}  {value.white}</p>
+                        <p>{symbols.white}  {titles.white}{username.white}</p>
                     </div>
                     <div className='black'>
-                        <p>{symbols.black}  {value.black}</p>
+                        <p>{symbols.black}  {titles.black}{username.black}</p>
                     </div>
                 </div>
                 <div className='game-info'>
