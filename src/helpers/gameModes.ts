@@ -1,14 +1,8 @@
 import { GameModes } from "../chessLogic/types";
 
 const gameModeToName: Map<string, string> = new Map([
-    ['standard', 'Standard Chess'],
-    ['960', 'Chess 960'],
-    ['fourkings', 'Four Kings']
-])
-
-const gameModeToShortName: Map<string, string> = new Map([
     ['standard', 'Standard'],
-    ['960', '960'],
+    ['960', 'Chess960'],
     ['fourkings', 'Four Kings']
 ])
 
@@ -27,5 +21,5 @@ function checkGameMode(gameMode: string): GameModes | null {
     return null
 }
 
-export { gameModeToName, gameModesList, checkGameMode, validGameModes, gameModeToShortName }
+export { gameModeToName, gameModesList, checkGameMode, validGameModes }
 export type { GameModes, gameModeNamesType }

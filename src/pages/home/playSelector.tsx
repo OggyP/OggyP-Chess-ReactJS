@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface PlaySelectionMenuProps {
     gameModes: [string, string][]
@@ -7,6 +7,21 @@ interface PlaySelectionMenuProps {
 
 function PlaySelectionMenu(props: PlaySelectionMenuProps) {
     const [selectedGameMode, setGameMode] = useState<string | null>(null)
+    const [open, setOpen] = useState<string>('open');
+    
+    useEffect(() => {
+        setOpen(localStorage.getItem('PlaySelectionMenu-open') ?? 'open');
+    }, []);
+
+    const toggleOpen = () => {
+        if (open === 'open') {
+            setOpen('closed');
+            localStorage.setItem('PlaySelectionMenu-open', 'closed');
+        } else {
+            setOpen('open');
+            localStorage.setItem('PlaySelectionMenu-open', 'open');
+        }
+    };
 
     const colAmt = Math.floor(Math.sqrt(props.timeSelections.length))
     const rowAmt = Math.ceil(props.timeSelections.length / colAmt)
@@ -42,9 +57,10 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
         }
     })
 
-    return <div id='play-selector'>
+    return <div id='play-selector' className={open}>
         <h2>Play A Game</h2>
         <h3>Mode</h3>
+        <button onClick={toggleOpen}>toggle</button>
         <div className='game-modes'>
             {gameModeSelection}
         </div>

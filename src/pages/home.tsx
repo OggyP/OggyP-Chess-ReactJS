@@ -8,7 +8,8 @@ import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
 import { formatDateShort } from '../helpers/date';
 import displayRating from '../helpers/displayRating';
-import { gameModesList, gameModeToShortName, gameModeToName } from '../helpers/gameModes';
+import { gameModesList, gameModeToName } from '../helpers/gameModes';
+import ToggleMenu from '../tsxAssets/ToggleMenu';
 
 interface HomeProps {
     userInfo: userInfo | null
@@ -264,15 +265,22 @@ function Home(props: HomeProps) {
                     <ul>
                         <li className='challenge'>
                             <a className='container' href=''>
-                                <span className='username'>Jamcode</span>
-                                <span className='rating'>963</span>
-                                <span className='mode'>Standard</span>
-                                <span className='time-control'>10 + 5</span>
+                                <span className='user'>
+                                    <span className='name'>Jamcode</span>
+                                    <span className='rating'>963</span>
+                                </span>
+                                <span className='game-info'>
+                                    <span className='mode'>Four Kings</span>
+                                    <span className='time-control'>30 + 20</span>
+                                </span>
                             </a>
                         </li>
                     </ul>
                 </section>
                 <hr />
+                <ToggleMenu>
+                    <a href="test">test</a>
+                </ToggleMenu>
             </main>
             <aside id="previous-games">
                 <h2>Previous Games</h2>

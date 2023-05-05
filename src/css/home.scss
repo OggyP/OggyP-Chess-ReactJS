@@ -117,7 +117,7 @@ main {
   .game-modes {
     margin-bottom: globals.$margin-medium;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     column-gap: globals.$margin-medium;
   }
   
@@ -302,14 +302,21 @@ main {
 
 .challenge {
   width: 100%;
+  height: calc(2 * globals.$margin-medium + 1.25em);
   position: relative;
+  $increase-width: 7.5px;
+  $increase-height: 2px;
+  $padding-inline: globals.$margin-medium + $increase-width;
+  $padding-block: globals.$margin-medium + $increase-height;
 
   .container {
     background: var(--bg-3);
-
+    box-shadow: var(--drop-shadow-1);
+    
     border-radius: 5px;
     padding: globals.$margin-medium;
     width: 100%;
+    height: calc(2 * globals.$margin-medium + 1.25em);
     position: absolute;
     top: 0;
     left: 0;
@@ -317,16 +324,62 @@ main {
     color: var(--txt-1);
     text-decoration: none;
 
-    & {
+    &, * {
       transition: 150ms;
     }
+  }
 
-    &:hover {
-      $increase: globals.$margin-small;
-      padding: globals.$margin-medium + $increase;
-      width: calc(100% + $increase);
-      top: -0.5 * $increase;
-      left: -0.5 * $increase;
+  .container:hover {
+    width: calc(100% + 2 * $increase-width);
+    height: calc(2 * $padding-block + 1.25em);
+    top: -1 * $increase-height;
+    left: -1 * $increase-width;
+
+    .user {
+      top: $padding-block;
+      left: globals.$margin-medium;
+    }
+
+    .game-info {
+      top: $padding-block;
+      right: globals.$margin-medium;
+    }
+  }
+
+  .user {
+    display: inline-flex;
+    align-items: center;
+    position: absolute;
+    top: globals.$margin-medium;
+    left: globals.$margin-medium;
+
+    .name {
+      margin-right: globals.$margin-small;
+      display: inline-block;
+    }
+
+    .rating {
+      font-size: 0.85em;
+      color: var(--txt-2);
+    }
+  }
+
+  .game-info {
+    position: absolute;
+    top: globals.$margin-medium;
+    right: globals.$margin-medium;
+
+    .mode {
+      margin-right: globals.$margin-small;
+      width: 6em;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .time-control {
+      width: 4.5em;
+      display: inline-block;
+      text-align: right;
     }
   }
 }
