@@ -10,7 +10,7 @@ function LoadingPage(props: LoadingPageProps) {
         <div className='loading'>
             <h1><span className='loading-ani'>{(props.title) ? props.title : 'Loading'}</span></h1>
             <h3>{props.description}</h3>
-            <img id='oulingchess' src='/logo512.png' alt='OggyP Chess Loading'></img>
+            <img id='oulingchess' src={(Math.random() >= 0.95) ? '/ooooulingchessHead.png' : '/logo512.png'} alt='OggyP Chess Loading'></img>
         </div>
     )
 }

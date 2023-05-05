@@ -63,7 +63,7 @@ function UserInfo(props: UserInfoProps) {
 
     return <div className={props.team + ' player-info' + ((props.isTurn) ? ' isTurn' : '')}>
         <h4>
-            {title && title + " "}
+            {title}
             {props.username + " "}
             {props.rating ? <span className='rating'>{props.rating + " "}</span> : null}{ratingChange}
         </h4>

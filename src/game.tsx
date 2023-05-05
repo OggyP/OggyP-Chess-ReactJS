@@ -228,7 +228,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
-        if (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1)) {
+        if (!(('fourkings').includes(this.props.mode)) && (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1))) {
             this.engineMoveType = 'movetime 60000'
             this.engine = new UCIengine('/stockfish/stockfish.js', [
                 'setoption name UCI_AnalyseMode value true',
@@ -701,6 +701,7 @@ class Game extends React.Component<GameProps, GameState> {
                 timers[team].countingDown = false
             players[team] = <UserInfoDisplay
                 team={team}
+                title={this.state.players?.[team].title}
                 username={this.state.players?.[team].username || team.charAt(0).toUpperCase() + team.slice(1)}
                 rating={(this.state.players) ? displayRating(this.state.players[team]) : undefined}
                 timer={timers?.[team]}
@@ -843,7 +844,7 @@ class Game extends React.Component<GameProps, GameState> {
                     <h1>Spectators ({this.state.spectators.length})</h1>
                     <ul>
                         {this.state.spectators.map(spectator => {
-                            return <li key={spectator.userId}>{spectator.username}<span className='rating'>{displayRating(spectator)}</span></li>
+                            return <li key={spectator.userId}>{(spectator.title) ? <span className='title'>{spectator.title}</span> : null}{spectator.username}<span className='rating'>{displayRating(spectator)}</span></li>
                         })}
                     </ul>
                 </div> : null}
@@ -899,7 +900,6 @@ class Game extends React.Component<GameProps, GameState> {
                 <div id="game-controls">
                     <h3>Game Controls</h3>
                     <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
-                    {(!this.state.loadedNNUE) ? <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: true }); localStorage.setItem('loadNNUE', 'true') }}>Load NNUE</button> : <button onClick={() => { this.engine?.loadNNUE(); this.setState({ loadedNNUE: false }); localStorage.removeItem('loadNNUE') }}>Stop Loading NNUE</button>}
                 </div>
             </div>
         </div>

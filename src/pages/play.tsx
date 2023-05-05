@@ -104,6 +104,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                 console.log(event)
                 switch (event.type) {
                     case 'error':
+                        cancelReconnection = true
                         this.setState({
                             error: data
                         })
@@ -173,7 +174,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
             this.ws.onclose = () => {
                 console.log("Web socket Closed")
                 if (!cancelReconnection)
-                    setTimeout(establishWS, 2000);
+                    window.location.href = '/home'
             }
 
             this.ws.onerror = (error) => {

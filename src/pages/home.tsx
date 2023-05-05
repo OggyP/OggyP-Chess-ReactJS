@@ -187,6 +187,27 @@ function Home(props: HomeProps) {
         }
 
 
+        
+        // Usernames in previous games are stores as TITLE|username
+        let split = {
+            white: value.white.split('|'),
+            black: value.black.split('|')
+        }
+
+        let username = {
+            white: split.white.slice(-1),
+            black: split.black.slice(-1)
+        }
+
+
+        let titles = {
+            white: (split.white.length === 2) ? <span className='title'>{split.white[0]}</span> : null,
+            black: (split.black.length === 2) ? <span className='title'>{split.black[0]}</span> : null
+        }
+
+
+
+
         games.push(<li className='previous-game' key={value.id * 2}>
             <a className='container' href={urlToGoTo}>
                 <div className={'result ' + result}>

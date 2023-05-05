@@ -316,7 +316,7 @@ class Board extends React.Component<BoardProps, BoardState> {
             }
         const pieceBeingDragged = this.state.pieceBeingDragged
         const currentTurn = this.props.board.getTurn('next')
-        const prevTurnInReferenceToSelf = (this.props.ownTeam === 'any') ? (this.props.board.getTurn('prev') === 'white') ? "self" : "other" : (this.props.ownTeam === this.props.board.getTurn('prev')) ? "self" : "other"
+        const prevTurnInReferenceToSelf = (this.props.ownTeam === 'any' || this.props.ownTeam === 'none') ? (this.props.board.getTurn('prev') === 'white') ? "self" : "other" : (this.props.ownTeam === this.props.board.getTurn('prev')) ? "self" : "other"
         const inCheck = this.props.board.inCheck(currentTurn)
 
         let highlightedSquares: Vector[] = []

@@ -24,6 +24,7 @@ interface userInfoExport {
     draws: number
     gamesPlayed: number
     rating: number
+    title?: string
     gameIds: string
     ratingDeviation: number
     tokenInfo: {token: string, userId: string | number}
