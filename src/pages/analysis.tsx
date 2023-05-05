@@ -41,6 +41,10 @@ function AnalysisPage() {
         allowPreMoves={false}
         pgn={(pgn.length) ? pgn : undefined}
         pgnAndFenChange={true}
+        engineEnabled={{
+            atBeginning: true,
+            atEnd: true
+        }}
     />
 }
 

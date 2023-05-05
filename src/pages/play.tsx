@@ -218,6 +218,10 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                 }}
                 allowMoving={true}
                 allowPreMoves={true}
+                engineEnabled={{
+                    atBeginning: false,
+                    atEnd: true
+                }}
             />
         })
     }

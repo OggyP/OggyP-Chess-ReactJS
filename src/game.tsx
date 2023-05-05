@@ -15,6 +15,8 @@ import { userInfo } from './helpers/verifyToken';
 import displayRating from './helpers/displayRating'
 import { gameModeNamesType } from './helpers/gameModes';
 
+import './css/switchBox.scss'
+
 const boardSize = 0.87
 const minAspectRatio = 1.2
 
@@ -72,11 +74,16 @@ interface GameState {
         black: string,
     }
     loadedNNUE: boolean,
-    resetGameFEN: string
-    spectators: userInfo[]
+    resetGameFEN: string,
+    spectators: userInfo[],
+    engineDisplayToggle: boolean
 }
 
 interface GameProps {
+    engineEnabled: {
+        atBeginning: boolean
+        atEnd: boolean
+    }
     fen?: string
     pgn?: string
     multiplayerWs?: WebSocket
@@ -107,16 +114,19 @@ class Game extends React.Component<GameProps, GameState> {
     engineMoveType = 'movetime 60000'
     gameType: gameTypeTypes
 
+    static noStockfishGameModes = ['fourkings']
+    static adminUsers = ['OggyP'] // Basically all users that have stockfish always enabled
+
     constructor(props: GameProps) {
         super(props)
         this.gameType = getChessGame(this.props.mode)
-        if (
-            !(('fourkings').includes(this.props.mode)) && (
-                !(props.multiplayerWs && props.team !== 'none')
-                || (props.players &&
-                    ((props.players.white.username === 'OggyP' && props.team === 'white')
-                        || (props.players.black.username === 'OggyP' && props.team === 'black')))
-            )
+
+        if (!Game.noStockfishGameModes.includes(props.mode)
+            && (props.engineEnabled.atBeginning ||
+                (
+                    (props.players && props.team === 'white' && Game.adminUsers.includes(props.players.white.username))
+                    || (props.players && props.team === 'black' && Game.adminUsers.includes(props.players.black.username))
+                ))
         ) {
             let startingCommands = [
                 "isready",
@@ -204,7 +214,8 @@ class Game extends React.Component<GameProps, GameState> {
             boardStyle: boardStyle,
             loadedNNUE: (this.engine?.loadedNNUE || false),
             resetGameFEN: "",
-            spectators: []
+            spectators: [],
+            engineDisplayToggle: true
         }
         this.boardMoveChanged((this.props.multiplayerWs) ? game.getMoveCount() : 0, true, true)
         if (props.pgnAndFenChange) this.updateURLtoHavePGN()
@@ -228,7 +239,10 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     boardMoveChanged(moveNum: number, firstMove: boolean = false, goingToNewMove = false) {
-        if (!(('fourkings').includes(this.props.mode)) && (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1))) {
+        if (
+            this.props.engineEnabled.atEnd
+            && !Game.noStockfishGameModes.includes(this.props.mode)
+            && (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1))) {
             this.engineMoveType = 'movetime 60000'
             this.engine = new UCIengine('/stockfish/stockfish.js', [
                 'setoption name UCI_AnalyseMode value true',
@@ -237,7 +251,7 @@ class Game extends React.Component<GameProps, GameState> {
             ], 3)
         }
 
-        if (this.engine)
+        if (this.engine && this.state.engineDisplayToggle)
             if (!this.props.versusStockfish || goingToNewMove || this.state.game.gameOver)
                 this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(moveNum), this.engineMoveType)
         if (this.state.game.getMoveCount() !== moveNum && !firstMove)
@@ -456,6 +470,7 @@ class Game extends React.Component<GameProps, GameState> {
     }
 
     handleMoveClick(posClicked: Vector): void {
+        if (this.state.premoveBoard) return
         if (this.props.team === 'none') return
         if ((!this.state.game.gameOver
             && this.state.viewingMove === this.state.game.getMoveCount())
@@ -600,6 +615,10 @@ class Game extends React.Component<GameProps, GameState> {
         })
     }
 
+    allowedEngineDisplay() {
+        return !!this.engine && (!this.props.versusStockfish || !!this.state.game.gameOver)
+    }
+
     resetGame(fen: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
         if (this.props.resetGameReloads) {
             window.location.reload()
@@ -675,7 +694,7 @@ class Game extends React.Component<GameProps, GameState> {
         }
 
         let engineInfo = null
-        if (this.engine)
+        if (this.engine && this.state.engineDisplayToggle)
             engineInfo = <EngineInfo
                 showMoves={(!this.props.versusStockfish || !!this.state.game.gameOver)}
                 showEval={(!this.props.versusStockfish || !!this.state.game.gameOver)}
@@ -711,50 +730,27 @@ class Game extends React.Component<GameProps, GameState> {
         })
 
 
-        let boardToDisplay: JSX.Element
-        if (!this.state.premoveBoard) {
-            boardToDisplay = <Board
-                board={this.viewingBoard()}
-                validMoves={this.state.validMoves}
-                selectedPiece={this.state.selectedPiece}
-                notFlipped={this.state.notFlipped}
-                onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
-                onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
-                deselectPiece={() => this.deselectPiece()}
-                ownTeam={this.props.team}
-                moveInfo={this.state.game.getMove(this.state.viewingMove).move}
-                showingPromotionSelector={!!this.state.promotionSelector}
-                boxSize={this.state.boxSize}
-                haveEngine={!!this.engine && (!this.props.versusStockfish || !!this.state.game.gameOver)}
-                doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
-                isLatestBoard={this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
-                onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
-                boardStyle={this.state.boardStyle}
-                pieceStyle={this.state.piecesStyle}
-            />
-        } else {
-            boardToDisplay = <Board
-                board={this.state.premoveBoard}
-                validMoves={[]}
-                selectedPiece={this.state.selectedPiece}
-                notFlipped={this.state.notFlipped}
-                onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
-                onValidMoveClick={(posClicked: Vector) => { }}
-                deselectPiece={() => this.deselectPiece()}
-                ownTeam={this.props.team}
-                moveInfo={this.state.game.getMove(this.state.viewingMove).move}
-                showingPromotionSelector={!!this.state.promotionSelector}
-                boxSize={this.state.boxSize}
-                haveEngine={!!this.engine && !this.props.versusStockfish}
-                doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
-                isLatestBoard={true}
-                premoves={this.state.premoves}
-                deletePremoves={() => { this.setState({ premoves: [], premoveBoard: null }) }}
-                onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
-                boardStyle={this.state.boardStyle}
-                pieceStyle={this.state.piecesStyle}
-            />
-        }
+        let boardToDisplay = <Board
+            board={this.state.premoveBoard || this.viewingBoard()}
+            validMoves={(this.state.premoveBoard) ? [] : this.state.validMoves}
+            selectedPiece={this.state.selectedPiece}
+            notFlipped={this.state.notFlipped}
+            onPieceClick={(posClicked: Vector) => this.handlePieceClick(posClicked)}
+            onValidMoveClick={(posClicked: Vector) => this.handleMoveClick(posClicked)}
+            deselectPiece={() => this.deselectPiece()}
+            ownTeam={this.props.team}
+            moveInfo={this.state.game.getMove(this.state.viewingMove).move}
+            showingPromotionSelector={!!this.state.promotionSelector}
+            boxSize={this.state.boxSize}
+            haveEngine={this.allowedEngineDisplay() && this.state.engineDisplayToggle}
+            doPremove={(start: Vector, end: Vector) => this.addPremove(start, end)}
+            isLatestBoard={!!this.state.premoveBoard || this.viewingBoard().halfMoveNumber === this.latestBoard().halfMoveNumber}
+            premoves={this.state.premoves}
+            deletePremoves={() => { this.setState({ premoves: [], premoveBoard: null }) }}
+            onMounted={(callbacks: any) => this.gameBoardMounted(callbacks)}
+            boardStyle={this.state.boardStyle}
+            pieceStyle={this.state.piecesStyle}
+        />
 
         let boardAndPlayers = <div id='board-and-info'
             style={{
@@ -900,6 +896,22 @@ class Game extends React.Component<GameProps, GameState> {
                 <div id="game-controls">
                     <h3>Game Controls</h3>
                     <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
+                    {
+                        (this.allowedEngineDisplay()) ?
+                            <div>
+                                <p>Enable Engine:</p>
+                                <label className="switch">
+                                    <input type="checkbox" defaultChecked={this.state.engineDisplayToggle} onChange={() => {
+                                        if (this.engine)
+                                            this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(this.state.viewingMove), this.engineMoveType)
+                                        this.setState({
+                                            engineDisplayToggle: !this.state.engineDisplayToggle
+                                        })
+                                    }} />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div> : null
+                    }
                 </div>
             </div>
         </div>

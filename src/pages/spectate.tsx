@@ -199,6 +199,10 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
                 }}
                 allowMoving={true}
                 allowPreMoves={true}
+                engineEnabled={{
+                    atBeginning: true,
+                    atEnd: true
+                }}
             />
         })
     }

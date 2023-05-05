@@ -35,6 +35,10 @@ function StockfishGame() {
           rating: 0
         }
       }}
+      engineEnabled={{
+        atBeginning: true,
+        atEnd: true
+      }}
     />
   return <div className='full-screen-menu'>
     <h2>Choose Stockfish Difficulty</h2>

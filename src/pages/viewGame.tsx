@@ -81,6 +81,10 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
                 allowMoving={false}
                 allowPreMoves={false}
                 mode={this.state.gameMode as GameModes}
+                engineEnabled={{
+                    atBeginning: true,
+                    atEnd: true
+                }}
             />
         else
             return <Loading description={'Loading Game ' + this.gameId} />
