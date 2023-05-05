@@ -151,10 +151,10 @@ function Home(props: HomeProps) {
     let games: JSX.Element[] = []
     for (let i = 0; i < gameInfo.length; i++) {
         const value = gameInfo[i]
-        const urlToGoTo = '/viewGame/' + value.id + ((value.white === props.userInfo?.username) ? '' : '?viewAs=black')
+        const urlToGoTo = '/viewGame/' + value.id + ((value.white.split('|').slice(-1)[0] === props.userInfo?.username) ? '' : '?viewAs=black')
 
         let winSymbol
-        const ownTeam = (value.white === props.userInfo.username) ? 'white' : 'black'
+        const ownTeam = (value.white.split('|').slice(-1)[0] === props.userInfo.username) ? 'white' : 'black'
         if (ownTeam === value.winner)
             winSymbol = 'win'
         else if (value.winner === 'draw')
