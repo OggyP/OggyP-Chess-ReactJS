@@ -1,5 +1,5 @@
-const wsURL = "wss://api.oggyp.com/ws/newChess/"
-const apiURL = "https://api.oggyp.com/chess/v2/"
+const wsURL = process.env.REACT_APP_WEBSOCKET as string
+const apiURL = process.env.REACT_APP_API as string
 
 export {
     wsURL, apiURL
