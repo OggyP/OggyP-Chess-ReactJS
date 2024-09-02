@@ -6,8 +6,10 @@ import SpectateMenu, { spectateInfo } from './home/spectateList'
 import { userInfo } from '../helpers/verifyToken'
 import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
+import { formatDateShort } from '../helpers/date';
 import displayRating from '../helpers/displayRating';
-import { gameModesList, gameModeToShortName } from '../helpers/gameModes';
+import { gameModesList, gameModeToName } from '../helpers/gameModes';
+import ToggleMenu from '../tsxAssets/ToggleMenu';
 
 interface HomeProps {
     userInfo: userInfo | null
@@ -140,12 +142,19 @@ function Home(props: HomeProps) {
     if (!props.userInfo) throw new Error('What how')
 
     userInfoPage = <div className='user-info'>
-        <h1 className='username'>{(props.userInfo.title) ? <span className='title'>{props.userInfo.title}</span> : null}{props.userInfo.username}  <span className='user-id'>ID: {props.userInfo.userId}</span></h1>
-        <h3 className='user-stats'>Rating | {displayRating(props.userInfo)}</h3>
-        <h3 className='user-stats'>Win% | {Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</h3>
-        <h3 className='user-stats'>Win:Loss | {props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</h3>
-        <h3 className='user-stats'>#Games | {props.userInfo.gamesPlayed}</h3>
-        <button className='button' onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }}>Log Out</button>
+        <h1 className='username'>
+            <span className='underline'>
+                Welcome back, <span className='name underline'>{props.userInfo.username}</span>
+            </span>
+        </h1>
+        <section className='user-stats'>
+            <span className='type'>Rating</span><span className='content'>{displayRating(props.userInfo)}</span>
+            <span className='type'># Games</span><span className='content'>{props.userInfo.gamesPlayed}</span>
+            <span className='type'>Win %</span><span className='content'>{Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</span>
+            <span className='type'>ID</span><span className='content'>{props.userInfo.userId}</span>
+            <span className='type'>Win:Loss</span><span className='content'>{props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</span>
+            <span className='type'>Joined</span><span className='content'>{formatDateShort(props.userInfo.createdAt)}</span>
+        </section>
     </div>
 
     let games: JSX.Element[] = []
@@ -153,18 +162,21 @@ function Home(props: HomeProps) {
         const value = gameInfo[i]
         const urlToGoTo = '/viewGame/' + value.id + ((value.white.split('|').slice(-1)[0] === props.userInfo?.username) ? '' : '?viewAs=black')
 
-        let winSymbol
-        const ownTeam = (value.white.split('|').slice(-1)[0] === props.userInfo.username) ? 'white' : 'black'
+        // let winSymbol
+        // const ownTeam = (value.white.split('|').slice(-1)[0] === props.userInfo.username) ? 'white' : 'black'
+        let winSymbol, result
+        const ownTeam = (value.white === props.userInfo.username) ? 'white' : 'black'
         if (ownTeam === value.winner)
-            winSymbol = 'win'
-        else if (value.winner === 'draw')
-            winSymbol = 'draw'
-        else
-            winSymbol = 'loss'
+            winSymbol = result = 'win'
+        else if (value.winner === 'draw') {
+            winSymbol = 'handshake-light'
+            result = 'draw'
+        } else
+            winSymbol = result = 'loss'
 
         let symbols = {
-            white: '1/2',
-            black: '1/2'
+            white: '½',
+            black: '½'
         }
 
         if (value.winner === 'white') {
@@ -176,6 +188,7 @@ function Home(props: HomeProps) {
         }
 
 
+        
         // Usernames in previous games are stores as TITLE|username
         let split = {
             white: value.white.split('|'),
@@ -193,32 +206,37 @@ function Home(props: HomeProps) {
             black: (split.black.length === 2) ? <span className='title'>{split.black[0]}</span> : null
         }
 
-
-
-
-        games.push(<li className='game-normal-info' key={value.id * 2} onClick={() => window.location.href = urlToGoTo}>
-            <div className='container'>
-                <div className='result'>
-                    <img src={`/assets/images/previousGameMenu/${winSymbol}.svg`} alt={winSymbol} />
-                </div>
-                <div className='username'>
+        games.push(
+            <li className='previous-game' key={value.id * 2}>
+                <a className='container' href={urlToGoTo}>
+                    <div className={'result ' + result}>
+                        <img src={`/assets/images/previousGameMenu/${winSymbol}.svg`} alt={winSymbol} />
+                    </div>
                     <div className='white'>
-                        <p>{symbols.white}  {titles.white}{username.white}</p>
+                        <span className='number'>{symbols.white}</span>
+                        <span className='name'>
+                            {titles.white ? <span className='title'>{titles.white}</span> : null}
+                            {username.white}
+                        </span>
                     </div>
                     <div className='black'>
-                        <p>{symbols.black}  {titles.black}{username.black}</p>
+                        <span className='number'>{symbols.black}</span>
+                        <span className='name'>
+                            {titles.black ? <span className='title'>{titles.black}</span> : null}
+                            {username.black}
+                        </span>
                     </div>
-                </div>
-                <div className='game-info'>
-                    <div className='game-mode'>
-                        <p>{gameModeToShortName.get(value.gameMode)}</p>
+                    <div className='game-info'>
+                        <p className='game-mode'>
+                            {gameModeToName.get(value.gameMode)}
+                        </p>
+                        <p className='time-controls'>
+                            {`${Number(value.timeOption.split('+')[0]) / 60} + ${value.timeOption.split('+')[1]}`}
+                        </p>
                     </div>
-                    <div className='time-controls'>
-                        <p>{`${Number(value.timeOption.split('+')[0]) / 60}+${value.timeOption.split('+')[1]}`}</p>
-                    </div>
-                </div>
-            </div>
-        </li>)
+                </a>
+            </li>
+        );
     }
 
     const defaultTimes: ([number, number] | string)[] = [
@@ -244,20 +262,29 @@ function Home(props: HomeProps) {
 
     }}>
         {userInfoPage}
-        <PlaySelectionMenu
-            gameModes={gameModesList}
-            timeSelections={defaultTimes}
-        />
-        <div id='lobby'>
-            <h2>Lobby</h2>
-            <LobbyMenu queues={queues} />
-            <br />
-            <h2>Spectate</h2>
-            <SpectateMenu currentGames={currentGames} />
-        </div>
-        <div id="previous-games">
-            <h2>Previous Games</h2>
-            <ul>{games}</ul>
+        <div id="content">
+            <main>
+                <PlaySelectionMenu
+                    gameModes={gameModesList}
+                    timeSelections={defaultTimes}
+                />
+                <hr />
+
+                <div id='lobby'>
+                    <LobbyMenu queues={queues} />
+                    <br />
+                    <SpectateMenu currentGames={currentGames} />
+                </div>
+
+                <hr />
+                {/* <ToggleMenu>
+                    <a href="test">test</a>
+                </ToggleMenu> */}
+            </main>
+            <aside id="previous-games">
+                <h2>Previous Games</h2>
+                <ul>{games}</ul>
+            </aside>
         </div>
     </div>
 }

@@ -1,104 +1,151 @@
+@use 'sass:math';
+
+
+/** VARIABLES **/
+$nav-height: 40px;
+$items-spacing-vertical: 5px;
+$items-spacing-horizontal: 10px;
+$img-size: 30px;
+
+
+/** BODY **/
+body {
+  padding-top: $nav-height;
+}
+
+
+/** NAVBAR and LIST ITEMS **/
 #navbar {
-    .item {
-        // display: flex;
-        // margin: 1px;
-        align-items: center;
-        font-size: large;
-        padding-left: 6px;
-        vertical-align: middle;
-        margin-left: 5px;
-        margin-right: 5px;
-        padding-right: 6px;
-        margin: 0;
-        text-align: center;
-        color: white;
-        text-decoration: none;
-        font-weight: bold;
+  background: var(--bg-2);
+  width: 100vw;
+  height: $nav-height;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
 
-        &:hover {
-            background-color: var(--grey);
-        }
+  ul {
+    margin: 0 $items-spacing-horizontal;
+    width: 100%;
+    height: 100%;
 
-        &.first {
-            padding-left: 0;
-        }
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    li {
+      list-style: none;
+      margin: 0;
+      height: 100%;
+    }
+
+    .home {
+      img {
+        width: $img-size;
+        height: $img-size;
+      }
+    }
+
+    .toggle-button, 
+    .submenu {
+      display: none;
+    }
+  }
+}
+
+
+/** LINKS and BUTTONS **/
+#navbar li {
+  a {
+    padding: 0 $items-spacing-horizontal;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 1.25rem;
+    color: var(--txt-1);
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      background: var(--hover);
+    }
+  }
+
+  button {
+    @extend a;
+
+    background: none;
+    margin: 0;
+    border-radius: 0;
+    height: $nav-height;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    position: absolute;
+    top: 0;
+    right: $items-spacing-horizontal;
+
+    .material-symbols-rounded {
+      font-size: $img-size;
     }
 
     img {
-        height: 40px;
-        // width: min-content;
-        padding: 4px;
-        margin: 0;
+      width: $img-size;
+      height: $img-size;
+    }
+  }
+}
 
-        &:hover {
-            background-color: var(--grey);
-        }
+
+/** SUBMENU **/
+#navbar .submenu {
+  background: var(--bg-2);
+  overflow: hidden;
+  height: 0;
+  position: fixed;
+  top: $nav-height;
+  right: 0;
+  transition: height 150ms;
+
+  &.open {
+    height: 7.75rem;
+  }
+  
+  ul {
+    margin: $items-spacing-vertical $items-spacing-horizontal;
+    width: auto;
+    height: auto;
+    flex-direction: column;
+
+    a {
+      padding: $items-spacing-vertical $items-spacing-horizontal;
+      height: auto;
     }
 
-    height: 40px;
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    // max-width: 100vh;
-    background-color: var(--bg-2);
-    box-shadow: 0px 0px 15px -10px rgb(255, 255, 255);
+    button {
+      position: static;
+    }
+  }
+}
 
 
-    // https://www.w3schools.com/howto/howto_css_dropdown_navbar.asp
-
-    /* The dropdown container */
-    .dropdown {
-        float: left;
-        overflow: hidden;
+/** RESPONSIVE **/
+@media only screen and (max-width: 900px) {
+  #navbar ul {
+    .widescreen-only {
+      display: none;
     }
 
-    /* Dropdown button */
-    .dropdown .dropbtn {
-        font-size: 16px;
-        border: none;
-        outline: none;
-        color: white;
-        // padding: 14px 16px;
-        background-color: inherit;
-        font-family: inherit;
-        /* Important for vertical align on mobile phones */
-        margin: 0;
-        /* Important for vertical align on mobile phones */
+    .toggle-button {
+      display: block;
     }
 
-    /* Add a red background color to navbar links on hover */
-    .navbar a:hover,
-    .dropdown:hover .dropbtn {
-        // background-color: red;
+    .submenu {
+      display: flex;
     }
-
-    /* Dropdown content (hidden by default) */
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        background-color: #f9f9f9;
-        min-width: 160px;
-        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-        z-index: 1;
-    }
-
-    /* Links inside the dropdown */
-    .dropdown-content a {
-        float: none;
-        color: black;
-        padding: 12px 16px;
-        text-decoration: none;
-        display: block;
-        text-align: left;
-    }
-
-    /* Add a grey background color to dropdown links on hover */
-    .dropdown-content a:hover {
-        background-color: #ddd;
-    }
-
-    /* Show the dropdown menu on hover */
-    .dropdown:hover .dropdown-content {
-        display: block;
-    }
+  }
 }

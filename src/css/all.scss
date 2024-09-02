@@ -1,22 +1,91 @@
 :root {
-    --primary: purple;
-    --secondary: #035bff77;
-    --mignight: #131313;
-    --night: #171717;
-    --evening: #1f1f1f;
-    --dark: #2d2d2d;
-    --grey: #464646;
-    --fog: #bfbfbf;
-    --bg-1: var(--evening);
-    --bg-2: var(--night);
-    --txt: white;
-    --font-1: 'Noto Sans JP', sans-serif;
+  /* FONTS */
+  $font-sys-default: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-main: 'DM Sans', 'Core Sans C', #{$font-sys-default};
+  --font-brand: 'Jost', 'DM Sans', 'Core Sans C', #{$font-sys-default};
+  --font-monospace: 'DM Sans', 'Courier New', Courier, monospace;
+
+
+  /* COLOURS */
+  // Accent
+  --primary: rgba(239, 62, 45, 1);
+  --secondary: rgba(245, 106, 21, 1);
+  --gradient-1: linear-gradient(90deg, rgba(239,62,45,1) 0%, rgba(245,106,21,1) 100%);
+
+  // Backgrounds
+    // dark
+  --bg-dark-1: rgba(36, 35, 34, 1);
+  --bg-dark-2: rgba(31, 27, 26, 1);
+  --bg-dark-3: rgba(52, 51, 50, 1);
+  --bg-dark-faded: rgba(52, 51, 50, 0.5);
+  --bg-dark-gradient: linear-gradient(90deg, rgba(34,33,32,1) 0%, rgba(39,38,37,1) 100%);
+    // light
+  --bg-light-1: rgba(238, 238, 238, 1);
+  --bg-light-2: rgba(220, 219, 218, 1);
+  --bg-light-3: rgba(207, 205, 205, 1);
+  --bg-light-faded: rgba(207, 205, 205, 0.5);
+  --bg-light-gradient: linear-gradient(90deg, rgba(234,234,234,1) 0%, rgba(242,242,242,1) 100%);
+
+  // Text
+    // dark
+  --txt-dark-1: rgba(51, 51, 51, 1);
+  --txt-dark-2: rgba(102, 102, 102, 1);
+    // light
+  --txt-light-1: rgba(222, 222, 222, 1);
+  --txt-light-2: rgba(164, 164, 164, 1);
+
+  // Miscellaneous
+  --white: rgba(255, 255, 255, 1);
+  --black: rgba(17, 17, 17, 1);
+  --green: rgba(79, 185, 17, 1);
+  --gradient-2: linear-gradient(90deg, rgba(255,0,228,1) 0%, rgba(255,154,0,1) 100%);
+    // lichess
+  --lichess-light: rgba(240, 217, 181, 1);
+  --lichess-dark: rgba(181, 136, 99, 1);
+    // chess.com
+  --chesscom-light: rgba(235, 236, 208, 1);
+  --chesscom-dark: rgba(119, 149, 86, 1);
+
+
+  /* EFFECTS */
+  --drop-shadow-1:  0px 5px 10px rgba(0, 0, 0, 0.3);
+
+
+  /* UTILITY */
+  // Background
+  --bg-1: var(--bg-dark-1);
+  --bg-2: var(--bg-dark-2);
+  --bg-3: var(--bg-dark-3);
+  --bg-faded: var(--bg-dark-faded);
+  --bg-gradient: var(--bg-dark-gradient);
+
+  // Text
+  --txt-1: var(--txt-light-1);
+  --txt-2: var(--txt-light-2);
+
+  // Hover
+  --hover: rgba(102, 102, 102, 0.5);
+
+
+  /* LEGACY */
+  // --primary: purple;
+  // --secondary: #035bff77;
+  // --mignight: #131313;
+  // --night: #171717;
+  // --evening: #1f1f1f;
+  // --dark: #2d2d2d;
+  // --grey: #464646;
+  // --fog: #bfbfbf;
+  // --bg-1: var(--evening);
+  // --bg-2: var(--night);
+  // --txt: white;
+  // --font-1: 'Noto Sans JP', sans-serif;
 }
 
 body {
-    background-color: var(--bg-1);
-    color: var(--txt);
-    font-family: var(--font-1);
-    font-weight: 300;
-    margin: 0;
+  background-color: var(--bg-1);
+  color: var(--txt-1);
+  font-family: var(--font-main);
+  font-weight: 400;
+  margin: 0;
 }

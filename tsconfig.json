@@ -22,5 +22,5 @@
   },
   "include": [
     "src/*"
-, "src/chessLogic/chessLogic.ts"  ]
+, "src/tsxAssets/GoogleIcon.tsx"  ]
 }
