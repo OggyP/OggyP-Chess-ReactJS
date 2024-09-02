@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { gameTypes } from '../chessLogic/chessLogic';
+import GoogleIcon from './GoogleIcon';
 
 interface PreviousMovesProps {
     onMobile: boolean,
@@ -64,25 +65,17 @@ function PreviousMoves(props: PreviousMovesProps) {
 
     const gameMoveControls = <div className='game-controls'>
         <p onClick={() => { if (props.viewingMove !== 0) props.goToMove(0) }} className={(props.viewingMove === 0) ? 'disabled' : ''}>
-            <span className="material-icons-sharp">
-                first_page
-            </span>
+            <GoogleIcon name='first_page' type='material-icons-sharp' />
         </p>
 
         <p onClick={() => { if (props.viewingMove !== 0) props.goToMove(props.viewingMove - 1) }} className={(props.viewingMove === 0) ? 'disabled' : ''}>
-            <span className="material-icons-sharp">
-                chevron_left
-            </span>
+            <GoogleIcon name='chevron_left' type='material-icons-sharp' />
         </p>
         <p onClick={() => { if (props.viewingMove !== props.latestMove) props.goToMove(props.viewingMove + 1) }} className={(props.latestMove === props.viewingMove) ? 'disabled' : ''}>
-            <span className="material-icons-sharp">
-                chevron_right
-            </span>
+            <GoogleIcon name='chevron_right' type='material-icons-sharp' />
         </p>
         <p onClick={() => { if (props.viewingMove !== props.latestMove) props.goToMove(props.latestMove) }} className={(props.latestMove === props.viewingMove) ? 'disabled' : ''}>
-            <span className="material-icons-sharp">
-                last_page
-            </span>
+            <GoogleIcon name='last_page' type='material-icons-sharp' />
         </p>
     </div>
 

@@ -60,7 +60,7 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
     return <div id='play-selector' className={open}>
         <h2>Play A Game</h2>
         <h3>Mode</h3>
-        <button onClick={toggleOpen}>toggle</button>
+        {/* <button onClick={toggleOpen}>toggle</button> */}
         <div className='game-modes'>
             {gameModeSelection}
         </div>

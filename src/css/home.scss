@@ -33,7 +33,7 @@ $previous-games-width: 30%;
 
   .user-stats {
     display: grid;
-    grid-template-columns: repeat(3, 100px 100px) 170px;
+    grid-template-columns: repeat(3, 100px 100px);
     column-gap: globals.$margin-small;
     justify-content: center;
     align-content: center;
@@ -359,6 +359,24 @@ main {
     position: absolute;
     top: globals.$margin-medium;
     left: globals.$margin-medium;
+
+    .name {
+      margin-right: globals.$margin-small;
+      display: inline-block;
+    }
+
+    .rating {
+      font-size: 0.85em;
+      color: var(--txt-2);
+    }
+  }
+
+  .user-spectate {
+    display: inline-flex;
+    align-items: center;
+    // position: absolute;
+    top: globals.$margin-medium;
+    // left: globals.$margin-medium;
 
     .name {
       margin-right: globals.$margin-small;

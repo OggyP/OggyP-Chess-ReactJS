@@ -1,16 +1,19 @@
 interface GoogleIconProps {
   name: string,
-  aria?: boolean
+  aria?: boolean,
+  type?: string
 }
 
 function GoogleIcon(props: GoogleIconProps) {
-  let presentation:any = {};
+  let presentation: any = {};
   if (!props.aria) presentation['role'] = 'presentation';
 
+  let type = props.type || 'material-symbols-rounded';
+
   return (
-    <span className='material-symbols-rounded' {...presentation}>
+    <span className={type} {...presentation}>
       {props.name}
-    </span> 
+    </span>
   )
 }
 

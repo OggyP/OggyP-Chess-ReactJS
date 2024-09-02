@@ -18,7 +18,7 @@ function getTimeStringParts(dateObj: Date) {
         'date': '',
         'time': ''
     };
-    
+
     if (dateArray.length === 2) {
         // if date and time are in one string
         let dateTimeArray = dateArray[1].split(' at ');
@@ -42,7 +42,7 @@ function getTimeStringParts(dateObj: Date) {
 function formatDate(timestamp: Date | number | string): string {
     let today = new Date();
     let yesterday = new Date(Date.now() - 864e5);
-    let event = (timestamp instanceof Date)? timestamp : new Date(timestamp);
+    let event = (timestamp instanceof Date) ? timestamp : new Date(timestamp);
 
     let date = getTimeStringParts(event);
     let currentDate = getTimeStringParts(today);
@@ -72,7 +72,7 @@ function formatDateShort(timestamp: string): string {
     // ['YYYY', 'MM', 'DD']
     let dateArray = date.split('-');
     let monthStrings = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    
+
     return dateArray[2] + ' ' + monthStrings[Number(dateArray[1]) - 1] + ' \'' + dateArray[0].substring(2, 4);
 }
 

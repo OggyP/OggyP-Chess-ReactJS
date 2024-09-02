@@ -23,26 +23,31 @@ interface LobbyMenuProps {
 }
 
 function LobbyMenu(props: LobbyMenuProps) {
-    return <table>
-        <thead>
-            <tr>
-                <th className='player'>Player</th>
-                <th className='rating'>Rating</th>
-                <th className='time'>Time</th>
-                <th className='mode'>Mode</th>
-            </tr>
-        </thead>
-        <tbody>
-            {props.queues.map((data, index) => (
-                <tr key={index} onClick={() => window.location.href = `/play/${data.gameInfo.mode}/${data.gameInfo.time.base}+${data.gameInfo.time.increment}`}>
-                    <td>{(data.player.title) ? <span className='title'>{data.player.title}</span> : null}{data.player.username}</td>
-                    <td>{displayRating(data.player)}</td>
-                    <td>{data.gameInfo.time.base / 60}+{data.gameInfo.time.increment}</td>
-                    <td>{gameModeToName.get(data.gameInfo.mode)}</td>
-                </tr>
-            ))}
-        </tbody>
-    </table>
+    return (
+        <section id='lobby' style={{ width: '100%', textAlign: 'center' }}>
+            <h2>Lobby</h2>
+            {props.queues.length === 0 ? (
+                <p>No queues available</p>
+            ) : (
+                <ul>
+                    {props.queues.map((data, index) => (
+                        <li className='challenge' key={index} style={{ marginBottom: '10px' }}>
+                            <a className='container' href={`/play/${data.gameInfo.mode}/${data.gameInfo.time.base}+${data.gameInfo.time.increment}`}>
+                                <span className='user'>
+                                    <span className='name'>{(data.player.title) ? <span className='title'>{data.player.title}</span> : null}{data.player.username}</span>
+                                    <span className='rating'>{displayRating(data.player)}</span>
+                                </span>
+                                <span className='game-info'>
+                                    <span className='mode'>{gameModeToName.get(data.gameInfo.mode)}</span>
+                                    <span className='time-control'>{data.gameInfo.time.base / 60} + {data.gameInfo.time.increment}</span>
+                                </span>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </section>
+    );
 }
 
 export default LobbyMenu
