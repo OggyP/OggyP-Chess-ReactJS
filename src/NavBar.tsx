@@ -21,7 +21,7 @@ function NavBar(props: NavBarProps) {
         </li>
 
         <li className='widescreen-only'>
-          <a onClick={() => setShowGameModes(!showGameModes)} style={{paddingLeft: "30px", paddingRight: "30px"}}>Analyse</a>
+          <a onClick={() => setShowGameModes(!showGameModes)} style={{ paddingLeft: "30px", paddingRight: "30px" }}>Analyse</a>
           {showGameModes && gameModesList.map(value => {
             return <a className='drop-down' key={value[0]} href={`/analysis/${value[0]}`}>{value[1]}</a>
           })}
