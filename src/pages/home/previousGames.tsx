@@ -96,7 +96,7 @@ function PreviousGames(props: { gameInfo: gameInfo[], userInfo: userInfo }) {
         );
     }
 
-    return <>{games}</>
+    return <ul>{games}</ul>
 }
 
 export default PreviousGames

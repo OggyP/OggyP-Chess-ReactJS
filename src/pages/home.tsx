@@ -202,7 +202,7 @@ function Home(props: HomeProps) {
             </main>
             <aside id="previous-games">
                 <h2>Previous Games</h2>
-                <ul><PreviousGames userInfo={props.userInfo} gameInfo={gameInfo} /></ul>
+                <PreviousGames userInfo={props.userInfo} gameInfo={gameInfo} />
             </aside>
         </div>
     </div>
