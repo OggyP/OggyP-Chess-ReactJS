@@ -8,8 +8,8 @@ import { wsURL, apiURL } from '../settings';
 import ErrorPage from './Error';
 import { formatDateShort } from '../helpers/date';
 import displayRating from '../helpers/displayRating';
-import { gameModesList, gameModeToName } from '../helpers/gameModes';
-import ToggleMenu from '../tsxAssets/ToggleMenu';
+import { gameModesList } from '../helpers/gameModes';
+// import ToggleMenu from '../tsxAssets/ToggleMenu';
 import PreviousGames from './home/previousGames';
 
 interface HomeProps {
