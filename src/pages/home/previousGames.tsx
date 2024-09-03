@@ -19,12 +19,23 @@ function PreviousGames(props: { gameInfo: gameInfo[], userInfo: userInfo }) {
     for (let i = 0; i < props.gameInfo.length; i++) {
         const value = props.gameInfo[i]
         const urlToGoTo = '/viewGame/' + value.id + ((value.white.split('|').slice(-1)[0] === props.userInfo?.username) ? '' : '?viewAs=black')
+        
+        // Usernames in previous games are stores as TITLE|username
+        let split = {
+            white: value.white.split('|'),
+            black: value.black.split('|')
+        }
 
+        let username = {
+            white: split.white.slice(-1)[0],
+            black: split.black.slice(-1)[0]
+        }
+        
         // let winSymbol
         // const ownTeam = (value.white.split('|').slice(-1)[0] === props.userInfo.username) ? 'white' : 'black'
         let winSymbol = 'loss'
         let result
-        const ownTeam = (value.white === props.userInfo.username) ? 'white' : 'black'
+        const ownTeam = (username.white === props.userInfo.username) ? 'white' : 'black'
         if (ownTeam === value.winner)
             winSymbol = result = 'win'
         else if (value.winner === 'draw') {
@@ -46,16 +57,6 @@ function PreviousGames(props: { gameInfo: gameInfo[], userInfo: userInfo }) {
         }
 
 
-        // Usernames in previous games are stores as TITLE|username
-        let split = {
-            white: value.white.split('|'),
-            black: value.black.split('|')
-        }
-
-        let username = {
-            white: split.white.slice(-1),
-            black: split.black.slice(-1)
-        }
 
 
         let titles = {
