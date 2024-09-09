@@ -1,0 +1,159 @@
+@use 'sass:math';
+
+
+/** VARIABLES **/
+$nav-height: 40px;
+$items-spacing-vertical: 5px;
+$items-spacing-horizontal: 10px;
+$img-size: 30px;
+
+
+/** BODY **/
+body {
+  padding-top: $nav-height;
+}
+
+
+/** NAVBAR and LIST ITEMS **/
+#navbar {
+  background: var(--bg-2);
+  width: 100vw;
+  height: $nav-height;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+
+  ul {
+    margin: 0 $items-spacing-horizontal;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    li {
+      list-style: none;
+      margin: 0;
+      height: 100%;
+    }
+
+    .home {
+      img {
+        width: $img-size;
+        height: $img-size;
+      }
+    }
+
+    .toggle-button, 
+    .submenu {
+      display: none;
+    }
+  }
+}
+
+
+/** LINKS and BUTTONS **/
+#navbar li {
+  a {
+    padding: 0 $items-spacing-horizontal;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 1.25rem;
+    color: var(--txt-1);
+    text-decoration: none;
+
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+      background: var(--hover);
+    }
+
+    &.drop-down {
+      background: var(--bg-2);
+    }
+  
+  }
+
+
+  button {
+    @extend a;
+
+    background: none;
+    margin: 0;
+    border-radius: 0;
+    height: $nav-height;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    position: absolute;
+    top: 0;
+    right: $items-spacing-horizontal;
+
+    .material-symbols-rounded {
+      font-size: $img-size;
+    }
+
+    img {
+      width: $img-size;
+      height: $img-size;
+    }
+  }
+}
+
+
+/** SUBMENU **/
+#navbar .submenu {
+  background: var(--bg-2);
+  overflow: hidden;
+  height: 0;
+  position: fixed;
+  top: $nav-height;
+  right: 0;
+  transition: height 150ms;
+
+  &.open {
+    height: 7.75rem;
+  }
+  
+  ul {
+    margin: $items-spacing-vertical $items-spacing-horizontal;
+    width: auto;
+    height: auto;
+    flex-direction: column;
+
+    a {
+      padding: $items-spacing-vertical $items-spacing-horizontal;
+      height: auto;
+    }
+
+    button {
+      position: static;
+    }
+  }
+}
+
+
+/** RESPONSIVE **/
+@media only screen and (max-width: 900px) {
+  #navbar ul {
+    .widescreen-only {
+      display: none;
+    }
+
+    .toggle-button {
+      display: block;
+    }
+
+    .submenu {
+      display: flex;
+    }
+  }
+}
