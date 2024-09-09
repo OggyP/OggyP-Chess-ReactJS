@@ -2,6 +2,7 @@ import React from 'react';
 import '../css/login-register.scss'
 import { checkForToken } from '../helpers/getToken';
 import { apiURL } from '../settings'
+import GoogleIcon from '../tsxAssets/GoogleIcon';
 
 interface LoginProps {
 }
@@ -130,7 +131,7 @@ class Login extends React.Component<LoginProps, LoginState>{
                 <button>
                     Login
                     <span className="spacer" style={{ display: 'inline-block', width: '5px' }}></span>
-                    <span className="material-icons-round">login</span>
+                    <GoogleIcon name='login' />
                 </button>
                 <input id='login-submit' type="submit" hidden value='Submit' />
             </label>

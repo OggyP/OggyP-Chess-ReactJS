@@ -14,14 +14,41 @@ function NavBar(props: NavBarProps) {
   return (
     <nav id='navbar' aria-label='Main Menu'>
       <ul>
-        <li className='home'>
+        
+        {/* <li className='home'>
           <a href='/home'>
             <img src='/assets/images/logo/white.svg' alt='OggyP Chess logo' />
           </a>
         </li>
 
+        <li className={((open) ? 'submenu open' : 'submenu') + ' widescreen-only'}>
+          <nav aria-label='Analysis Options'>
+            <ul>
+              <li>
+                <div className="dropdown item">
+                  <button className='dropbtn'>Analyse<i className="fa fa-caret-down"></i></button>
+                  <div className="dropdown-content">
+                    {gameModesList.map(value => {
+                      return <a key={value[0]} href={`/analysis/${value[0]}`}>{value[1]}</a>
+                    })}
+                    <a onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }}>
+                      Logout
+                    </a>
+                  </div>
+                </div>
+              </li>
+              <li><a href='/stockfish'>Stockfish</a></li>
+              <li>
+                <button>
+                  <GoogleIcon name='dark_mode' />
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </li>
+
         <li className='widescreen-only'>
-          <a onClick={() => setShowGameModes(!showGameModes)} style={{paddingLeft: "30px", paddingRight: "30px"}}>Analyse</a>
+          <button onClick={() => setShowGameModes(!showGameModes)} style={{paddingLeft: "30px", paddingRight: "30px"}}>Analyse</button>
           {showGameModes && gameModesList.map(value => {
             return <a className='drop-down' key={value[0]} href={`/analysis/${value[0]}`}>{value[1]}</a>
           })}
@@ -32,9 +59,9 @@ function NavBar(props: NavBarProps) {
         </li>
 
         <li className='widescreen-only'>
-          <a onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }}>
+          <button onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }}>
             Logout
-          </a>
+          </button>
         </li>
 
         <li className='widescreen-only mode-switch'>
@@ -73,7 +100,7 @@ function NavBar(props: NavBarProps) {
               </li>
             </ul>
           </nav>
-        </li>
+        </li> */}
       </ul>
     </nav>
   )
