@@ -183,3 +183,17 @@ input:checked+label.button {
     left: 0;
     z-index: -1;
 }
+
+.title {
+    background: var(--primary);
+    background: var(--gradient-1);
+
+    margin-left: 0.5em;
+    border-radius: 5px;
+    padding: 0 0.2em;
+    display: inline-block;
+
+    font-size: 0.9em;
+    font-weight: bold;
+    color: var(--white);
+}

@@ -229,15 +229,15 @@ function Home(props: HomeProps) {
                     <div className='white'>
                         <span className='number'>{symbols.white}</span>
                         <span className='name'>
-                            {titles.white ? <span className='title'>{titles.white}</span> : null}
                             {username.white}
+                            {titles.white}
                         </span>
                     </div>
                     <div className='black'>
                         <span className='number'>{symbols.black}</span>
                         <span className='name'>
-                            {titles.black ? <span className='title'>{titles.black}</span> : null}
                             {username.black}
+                            {titles.black}
                         </span>
                     </div>
                     <div className='game-info'>
