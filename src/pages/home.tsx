@@ -144,16 +144,30 @@ function Home(props: HomeProps) {
     userInfoPage = <div className='user-info'>
         <h1 className='username'>
             <span className='underline'>
-                Welcome back, <span className='name underline'>{props.userInfo.username}</span>
+                Welcome back, 
+                <span className='new-line'><br></br></span>
+                <span className="space">&nbsp;</span>
+                <span className='name underline'>{props.userInfo.username}</span>
             </span>
         </h1>
         <section className='user-stats'>
-            <span className='type'>Rating</span><span className='content'>{displayRating(props.userInfo)}</span>
-            <span className='type'># Games</span><span className='content'>{props.userInfo.gamesPlayed}</span>
-            <span className='type'>Win %</span><span className='content'>{Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</span>
-            <span className='type'>ID</span><span className='content'>{props.userInfo.userId}</span>
-            <span className='type'>Win:Loss</span><span className='content'>{props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</span>
-            <span className='type'>Joined</span><span className='content'>{formatDateShort(props.userInfo.createdAt)}</span>
+            <span className='type col-1'>Rating</span>
+            <span className='content col-1'>{displayRating(props.userInfo)}</span>
+
+            <span className='type col-2'># Games</span>
+            <span className='content col-2'>{props.userInfo.gamesPlayed}</span>
+
+            <span className='type col-3'>Win %</span>
+            <span className='content col-3'>{Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</span>
+
+            <span className='type col-1'>ID</span>
+            <span className='content col-1'>{props.userInfo.userId}</span>
+
+            <span className='type col-2'>Win:Loss</span>
+            <span className='content col-2'>{props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</span>
+
+            <span className='type col-3'>Joined</span>
+            <span className='content col-3'>{formatDateShort(props.userInfo.createdAt)}</span>
         </section>
     </div>
 
