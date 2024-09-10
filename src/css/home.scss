@@ -205,11 +205,7 @@ main {
     }
 
     &:hover {
-      $increase: 5%;
-      width: 100% + $increase;
-      height: 100% + $increase;
-      top: -0.5 * $increase;
-      left: -0.5 * $increase;
+      scale: 1.05;
     }
   }
 
@@ -230,17 +226,21 @@ main {
     top: 0;
     left: 0;
 
+    &.win {
+      background: var(--win-gradient);
+    }
+
     &.draw {
-      img {
-        width: math.div($height * 17, 24);
-        height: math.div($height * 7, 12);
-      }
+      background: var(--draw-gradient);
+    }
+
+    &.loss {
+      background: var(--loss-gradient);
     }
 
     img {
-      $size: math.div($height * 7, 12); // between 1/2 and 2/3
-      width: $size;
-      height: $size;
+      width: 100%;
+      height: 100%;
     }
   }
 

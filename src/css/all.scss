@@ -39,6 +39,10 @@
   --black: rgba(17, 17, 17, 1);
   --green: rgba(79, 185, 17, 1);
   --gradient-2: linear-gradient(90deg, rgba(255,0,228,1) 0%, rgba(255,154,0,1) 100%);
+    // result
+  --win-gradient: linear-gradient(120deg, hsl(87, 79%, 39%) 0%, hsl(141, 86%, 28%) 100%);
+  --draw-gradient: linear-gradient(120deg, hsl(180, 2%, 68%) 0%, hsl(208, 5%, 49%) 100%);
+  --loss-gradient: linear-gradient(120deg, hsl(0, 100%, 57%) 0%, hsl(20, 74%, 43%) 100%);
     // lichess
   --lichess-light: rgba(240, 217, 181, 1);
   --lichess-dark: rgba(181, 136, 99, 1);

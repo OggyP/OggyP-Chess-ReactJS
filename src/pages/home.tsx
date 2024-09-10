@@ -183,8 +183,7 @@ function Home(props: HomeProps) {
         if (ownTeam === value.winner)
             winSymbol = result = 'win'
         else if (value.winner === 'draw') {
-            winSymbol = 'handshake-light'
-            result = 'draw'
+            winSymbol = result = 'draw'
         } else
             winSymbol = result = 'loss'
 
