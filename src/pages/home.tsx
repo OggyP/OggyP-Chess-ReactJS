@@ -226,14 +226,14 @@ function Home(props: HomeProps) {
                         <img src={`/assets/images/previousGameMenu/${winSymbol}.svg`} alt={winSymbol} />
                     </div>
                     <div className='white'>
-                        <span className='number'>{symbols.white}</span>
+                        {/* <span className='number'>{symbols.white}</span> */}
                         <span className='name'>
                             {username.white}
                             {titles.white}
                         </span>
                     </div>
                     <div className='black'>
-                        <span className='number'>{symbols.black}</span>
+                        {/* <span className='number'>{symbols.black}</span> */}
                         <span className='name'>
                             {username.black}
                             {titles.black}

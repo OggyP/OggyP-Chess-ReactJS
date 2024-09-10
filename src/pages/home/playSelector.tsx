@@ -27,7 +27,9 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
     const rowAmt = Math.ceil(props.timeSelections.length / colAmt)
 
     const gameModeSelection = props.gameModes.map((gameMode, index) => {
-        return <button key={gameMode[0]} onClick={() => setGameMode(gameMode[0])} className={(selectedGameMode && selectedGameMode === gameMode[0]) ? 'selected' : ''}>
+        const modeSelected = selectedGameMode && selectedGameMode === gameMode[0];
+        const classSelected = modeSelected? 'selected ' : '';
+        return <button key={gameMode[0]} onClick={() => setGameMode(gameMode[0])} className={classSelected + 'mode-' + gameMode[0]}>
             {gameMode[1]}
         </button>
     })
