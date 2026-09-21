@@ -1,3 +1,5 @@
+'use client'
+
 import '../css/index.scss';
 import '../css/chess.scss';
 import '../svg/assets.scss'
@@ -6,13 +8,17 @@ import { checkGameMode } from '../helpers/gameModes'
 import LoadingPage from './loading';
 import checkIfRedirectNeeded from '../helpers/redirect';
 
-function AnalysisPage() {
+interface AnalysisPageProps {
+    mode: string
+    pgn?: string | null
+    fen?: string | null
+}
+
+function AnalysisPage({ mode, pgn: pgnParam, fen: fenParam }: AnalysisPageProps) {
 
     checkIfRedirectNeeded()
 
-    const urlParams = new URLSearchParams(window.location.search);
-    console.log(window.location.pathname.split('/')[2])
-    const gameMode = checkGameMode(window.location.pathname.split('/')[2])
+    const gameMode = checkGameMode(mode)
 
     if (!gameMode) {
         window.location.href = '/analysis/standard' + window.location.search
@@ -21,15 +27,13 @@ function AnalysisPage() {
 
     let pgn: string = ''
     let startingFen: string | undefined = undefined
-    if (urlParams.has('pgn'))
-        pgn = (urlParams.get('pgn') as string).replace(/_/g, ' ')
-    if (urlParams.has('fen'))
-        startingFen = (urlParams.get('fen') as string).replace(/_/g, ' ')
+    if (pgnParam)
+        pgn = pgnParam.replace(/_/g, ' ')
+    if (fenParam)
+        startingFen = fenParam.replace(/_/g, ' ')
 
     if (startingFen)
         pgn = `[FEN "${startingFen}"]\n\n` + pgn
-
-    console.log(pgn)
 
     return <Game
         team='any'

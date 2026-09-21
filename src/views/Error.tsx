@@ -1,3 +1,5 @@
+'use client'
+
 import '../css/error.scss'
 
 interface ErrorPageProps {

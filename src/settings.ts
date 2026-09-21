@@ -1,5 +1,5 @@
-const wsURL = process.env.REACT_APP_WEBSOCKET as string
-const apiURL = process.env.REACT_APP_API as string
+const wsURL = process.env.NEXT_PUBLIC_WEBSOCKET as string
+const apiURL = process.env.NEXT_PUBLIC_API as string
 
 export {
     wsURL, apiURL

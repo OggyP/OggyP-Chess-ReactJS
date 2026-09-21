@@ -399,7 +399,7 @@ class Board extends React.Component<BoardProps, BoardState> {
                 />;
         }
 
-        let highlightedSquaresElements: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>[] = []
+        let highlightedSquaresElements: React.ReactElement[] = []
 
         for (let value of highlightedSquares) {
             highlightedSquaresElements.push(

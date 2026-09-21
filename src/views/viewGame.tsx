@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import '../css/index.scss';
 import '../css/chess.scss';
@@ -6,15 +8,17 @@ import Game from '../game'
 import { Teams } from '../chessLogic/chessLogic';
 import ErrorPage from './Error';
 import { GameModes } from '../chessLogic/types';
-import Loading from '../pages/loading';
+import Loading from './loading';
 import { apiURL } from '../settings';
 
 interface ViewGameProps {
+    gameId: string
+    viewAs?: string | null
 }
 
 interface ViewGameState {
     PGN: string | null
-    error: null | JSX.Element
+    error: null | React.ReactElement
     termination: string
     gameMode: string | undefined
 }
@@ -22,12 +26,11 @@ interface ViewGameState {
 class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
 
     gameId: number;
-    urlParams = new URLSearchParams(window.location.search);
 
     constructor(props: ViewGameProps) {
         super(props)
 
-        this.gameId = Number(window.location.pathname.split('/')[2]);
+        this.gameId = Number(props.gameId);
 
         if (isNaN(this.gameId)) window.location.href = '/home'
 
@@ -65,7 +68,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
 
     render() {
         let viewAs: Teams = 'white'
-        const viewAsFromURL = this.urlParams.get('viewAs')
+        const viewAsFromURL = this.props.viewAs
         if (viewAsFromURL === 'white' || viewAsFromURL === 'black')
             viewAs = viewAsFromURL
         if (this.state.error)

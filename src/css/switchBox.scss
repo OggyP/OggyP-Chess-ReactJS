@@ -40,11 +40,11 @@
   }
   
   input:checked + .slider {
-    background-color: purple;
+    background-color: var(--primary);
   }
   
   input:focus + .slider {
-    box-shadow: 0 0 1px purple;
+    box-shadow: 0 0 1px var(--primary);
   }
   
   input:checked + .slider:before {

@@ -66,20 +66,19 @@
   // Hover
   --hover: rgba(102, 102, 102, 0.5);
 
-
-  /* LEGACY */
-  // --primary: purple;
-  // --secondary: #035bff77;
-  // --mignight: #131313;
-  // --night: #171717;
-  // --evening: #1f1f1f;
-  // --dark: #2d2d2d;
-  // --grey: #464646;
-  // --fog: #bfbfbf;
-  // --bg-1: var(--evening);
-  // --bg-2: var(--night);
-  // --txt: white;
-  // --font-1: 'Noto Sans JP', sans-serif;
+  /* LEGACY aliases used across game UI */
+  --dark: var(--bg-dark-3);
+  --grey: rgba(70, 70, 70, 1);
+  --fog: rgba(191, 191, 191, 1);
+  --txt: var(--txt-1);
+  --font-1: var(--font-main);
+  --accent-engine: rgba(56, 42, 58, 1);
+  --accent-engine-border: rgba(239, 62, 45, 0.45);
+  --panel: var(--bg-2);
+  --panel-elevated: var(--bg-3);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 }
 
 body {

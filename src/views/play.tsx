@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { checkForToken } from '../helpers/getToken';
 import Game from '../game';
@@ -36,6 +38,9 @@ interface PlayerInfo {
 
 
 interface PlayGameProps {
+    mode: string
+    base: number
+    increment: number
 }
 
 interface PlayGameState {
@@ -44,7 +49,7 @@ interface PlayGameState {
         title: string,
         description: string
     }
-    game: JSX.Element | null
+    game: React.ReactElement | null
 }
 
 interface gameFoundInfo extends gameOptions {
@@ -73,16 +78,9 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
             error: null
         }
 
-        const match = window.location.pathname.match(/^\/play\/([^/]+)\/(\d+)\+(\d+)$/);
-        if (!match) {
-            document.location.href = '/home';
-            return
-        }
-
-        const gameMode = match[1];
-        const start = parseInt(match[2], 10);
-        const inc = parseInt(match[3], 10);
-
+        const gameMode = props.mode;
+        const start = props.base;
+        const inc = props.increment;
 
         if (!this.token) {
             document.location.href = '/login/?ref=' + document.location.pathname + document.location.search;
@@ -147,7 +145,7 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
                             if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
                             this.serverGameOver(data.winner, data.by, data.info)
                         }
-                        window.history.pushState('OggyP Chess View Game', 'View Game', window.location.origin + '/viewGame/' + data.gameId);
+                        window.history.pushState(null, '', window.location.origin + '/viewGame/' + data.gameId);
                         break
                     case 'timerUpdate':
                         if (this.updateTimer)

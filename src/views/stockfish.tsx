@@ -1,3 +1,5 @@
+'use client'
+
 import '../css/index.scss';
 import '../css/chess.scss';
 import '../svg/assets.scss'

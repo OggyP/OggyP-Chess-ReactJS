@@ -1,7 +1,10 @@
+'use client'
+
 import React from 'react';
 import '../css/login-register.scss'
 import { checkForToken } from '../helpers/getToken';
 import { apiURL } from '../settings'
+import GoogleIcon from '../tsxAssets/GoogleIcon'
 
 interface LoginProps {
 }
@@ -25,7 +28,6 @@ class Login extends React.Component<LoginProps, LoginState>{
 
         const queryParams = new URLSearchParams(window.location.search);
         const loginError = queryParams.get('error');
-        console.log(loginError)
 
         let error: null | string = null
 
@@ -84,7 +86,6 @@ class Login extends React.Component<LoginProps, LoginState>{
                 if (response.ok) {
                     const data = await response.json()
                     localStorage.setItem("token", data.token + "|" + data.user.userId)
-                    console.log('Settings cookie')
                     const queryParams = new URLSearchParams(window.location.search);
                     const ref = queryParams.get('ref')
                     if (ref && ref.startsWith('/') && (ref[1] && ref[1] !== '/'))
@@ -102,41 +103,40 @@ class Login extends React.Component<LoginProps, LoginState>{
     }
 
     render() {
-        let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
+        let passwordError: null | React.ReactElement = null
         if (this.state.loginError) passwordError = <h2 className='account-error'>{this.state.loginError}</h2>
         return <form id='account-form' onSubmit={this.handleSubmit.bind(this)}>
             <h1>Login</h1>
             {passwordError}
             <label htmlFor="username-input">
+                <span className="sr-only">Username</span>
                 <input
                     type='text'
                     id='username-input'
                     placeholder='Username'
                     name='username'
+                    autoComplete='username'
                     onChange={this.handleInputChange.bind(this)}
                 />
             </label>
-            {/* <br /> */}
             <label htmlFor='password-input'>
+                <span className="sr-only">Password</span>
                 <input
                     type='password'
                     id='password-input'
                     placeholder='Password'
                     name='password'
+                    autoComplete='current-password'
                     onChange={this.handleInputChange.bind(this)}
                 />
             </label>
-            <label htmlFor='login-submit'>
-                <button>
-                    Login
-                    <span className="spacer" style={{ display: 'inline-block', width: '5px' }}></span>
-                    <span className="material-icons-round">login</span>
-                </button>
-                <input id='login-submit' type="submit" hidden value='Submit' />
-            </label>
-            <p>Don't Have an Account?</p>
+            <button type='submit' className='account-submit'>
+                Login
+                <GoogleIcon name='login' />
+            </button>
+            <p>Don't have an account?</p>
             <a href='/register' className='button-type'>
-                Register Now!
+                Register now
             </a>
         </form>
     }

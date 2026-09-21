@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useEffect, useState } from 'react';
 import { checkForToken } from './getToken';
-import Loading from '../pages/loading'
-import ErrorPage from '../pages/Error'
+import Loading from '../views/loading'
+import ErrorPage from '../views/Error'
 import { apiURL } from '../settings'
 
 interface userInfo {

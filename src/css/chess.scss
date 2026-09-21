@@ -1,19 +1,8 @@
 .board-wrapper {
     width: 100px;
     height: 100px;
+    position: relative;
     touch-action: none;
-    // &.normal .chess-board {
-    //     background-image: url('../svg/board/brownBoard.svg');
-    // }
-    // &.green .chess-board {
-    //     background-image: url('../svg/board/greenBoard.svg');
-    // }
-    // &.dark-green .chess-board {
-    //     background-image: url('../svg/board/AbrenicaBoard.svg');
-    // }
-    // &.test .chess-board {
-    //     background-image: url('../svg/board/testBoard.svg');
-    // }
 }
 
 #main-board {

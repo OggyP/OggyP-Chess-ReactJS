@@ -1,9 +1,20 @@
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 #account-form {
     background-image: url("../resources/favicon-login-bg.png");
     background-size: min(100vh - 40px - 60px, 100vw - 60px);
     background-repeat: no-repeat;
     background-position: calc((100vw - min(100vh - 40px - 60px, 100vw - 60px)) / 2), calc(((100vh - 40px) - min(100vh - 40px - 60px, 100vw - 60px)) / 2);
-    // position: absolute;
     height: 100%;
     width: 100%;
     min-height: calc(100vh - 40px);
@@ -11,9 +22,12 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+
     h1 {
         font-size: 70px;
     }
+
     h2.account-error {
         font-size: large;
         background-color: rgb(253, 132, 132, 0.2);
@@ -22,16 +36,57 @@
         padding: 10px;
         border-radius: 5px;
     }
+
     p {
         margin-top: 20px;
         margin-bottom: 5px;
     }
+
     a {
         color: white;
         text-decoration: none;
         font-weight: 500;
     }
-    overflow: hidden;
+
+    .account-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        .material-symbols-rounded {
+            font-size: 1.15em;
+            line-height: 1;
+        }
+    }
+
+    input {
+        color: var(--txt-1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.35);
+        margin: 8px 0;
+        width: min(280px, 80vw);
+
+        &::placeholder {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        &:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        &:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+    }
+
+    .account-submit,
+    a.button-type {
+        margin-top: 8px;
+        min-width: 140px;
+    }
 }
 
 .queueing {

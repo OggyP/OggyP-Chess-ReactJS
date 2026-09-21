@@ -19,7 +19,7 @@ interface UserInfoProps {
 
 function UserInfo(props: UserInfoProps) {
 
-    const Ref = useRef<null | NodeJS.Timer>(null);
+    const Ref = useRef<null | ReturnType<typeof setInterval>>(null);
 
     const [time, setTime] = useState<number>((props.timer?.startTime || 0));
 
@@ -28,7 +28,7 @@ function UserInfo(props: UserInfoProps) {
         title = <span className='title'>{props.title}</span>
     let ratingChange = null
     if (props.ratingChange)
-        ratingChange = <span className='rating-change'>{props.ratingChange}</span>
+        ratingChange = <span className='rating-change'>{props.ratingChange > 0 ? '+' : ''}{props.ratingChange}</span>
 
     React.useEffect(() => {
         if (props.timer && props.timer.countingDown)
@@ -64,8 +64,9 @@ function UserInfo(props: UserInfoProps) {
     return <div className={props.team + ' player-info' + ((props.isTurn) ? ' isTurn' : '')}>
         <h4>
             {title}
-            {props.username + " "}
-            {props.rating ? <span className='rating'>{props.rating + " "}</span> : null}{ratingChange}
+            <span className='username'>{props.username}</span>
+            {props.rating ? <span className='rating'>{props.rating}</span> : null}
+            {ratingChange}
         </h4>
         <div className='material pieces'>{material.toUpperCase().split('').map(((item: string, index: number) => {
             return <img key={item + index} src={'/assets/images/materialCount/' + item + '.svg'} alt={item}></img>

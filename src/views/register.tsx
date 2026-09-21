@@ -1,7 +1,10 @@
+'use client'
+
 import React from 'react';
 import '../css/login-register.scss'
 import { checkForToken } from '../helpers/getToken';
-import { apiURL, wsURL } from '../settings'
+import { apiURL } from '../settings'
+import GoogleIcon from '../tsxAssets/GoogleIcon'
 
 interface LoginProps {
 }
@@ -19,7 +22,6 @@ const registerError = new Map<string, string>([
 
 class Register extends React.Component<LoginProps, LoginState>{
 
-  ws = new WebSocket(wsURL)
   token = checkForToken()
 
   constructor(props: LoginProps) {
@@ -27,7 +29,6 @@ class Register extends React.Component<LoginProps, LoginState>{
 
     const queryParams = new URLSearchParams(window.location.search);
     const loginError = queryParams.get('error');
-    console.log(loginError)
 
     let error: null | string = null
 
@@ -102,7 +103,6 @@ class Register extends React.Component<LoginProps, LoginState>{
                     })
     
                     if (response.ok) {
-                        console.log('REGISTER DONE')
                         const data = await response.json()
                         localStorage.setItem("token", data.token + "|" + data.user.userId)
                         const queryParams = new URLSearchParams(window.location.search);
@@ -129,53 +129,51 @@ class Register extends React.Component<LoginProps, LoginState>{
 }
 
   render() {
-    let passwordError: null | React.DetailedHTMLProps<React.HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement> = null
+    let passwordError: null | React.ReactElement = null
     if (this.state.registerError) passwordError = <h2 className='account-error'>{this.state.registerError}</h2>
     return <form id='account-form' onSubmit={this.handleSubmit.bind(this)}>
       <h1>Register</h1>
       {passwordError}
       <label htmlFor="username-input">
-        Username:
+        <span className="sr-only">Username</span>
         <input
           type='text'
           id='username-input'
           placeholder='Username'
           name='username'
+          autoComplete='username'
           onChange={this.handleInputChange.bind(this)}
         />
       </label>
-      {/* <br /> */}
       <label htmlFor='password-input'>
-        Password:
+        <span className="sr-only">Password</span>
         <input
           type='password'
           id='password-input'
           placeholder='Password'
           name='password'
+          autoComplete='new-password'
           onChange={this.handleInputChange.bind(this)}
         />
       </label>
       <label htmlFor='password-check-input'>
-        Password:
+        <span className="sr-only">Confirm password</span>
         <input
           type='password'
           id='password-check-input'
-          placeholder='Password Validation'
+          placeholder='Confirm password'
           name='passwordCheck'
+          autoComplete='new-password'
           onChange={this.handleInputChange.bind(this)}
         />
       </label>
-      <label htmlFor='register-submit'>
-        <button>
-          Register
-          <span className="spacer" style={{ display: 'inline-block', width: '5px' }}></span>
-          <span className="material-icons-round">add_circle</span>
-        </button>
-        <input id='register-submit' type="submit" hidden value='Submit' />
-      </label>
-      <p>Already Have an Account?</p>
+      <button type='submit' className='account-submit'>
+        Register
+        <GoogleIcon name='person_add' />
+      </button>
+      <p>Already have an account?</p>
       <a href='/login' className='button-type'>
-        Login Now!
+        Login now
       </a>
     </form>
   }

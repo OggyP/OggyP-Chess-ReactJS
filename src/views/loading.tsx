@@ -1,3 +1,5 @@
+'use client'
+
 import '../css/loading.scss'
 
 interface LoadingPageProps {

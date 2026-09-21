@@ -27,8 +27,8 @@ interface PreviousMovesProps {
 function PreviousMoves(props: PreviousMovesProps) {
     const [hasCopied, setHasCopied] = useState<null | true>(null)
 
-    let moveRows: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>[] = []
-    let currentRow: React.DetailedHTMLProps<React.TdHTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement>[] = []
+    let moveRows: React.ReactElement[] = []
+    let currentRow: React.ReactElement[] = []
     for (let i = 1; i <= props.game.getMoveCount(); i++) {
         const move = props.game.getMove(i)
         if (i !== 1 && i % 2 === 1) // is white's turn and is not the first turn

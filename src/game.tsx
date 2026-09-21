@@ -17,8 +17,30 @@ import { gameModeNamesType } from './helpers/gameModes';
 
 import './css/switchBox.scss'
 
-const boardSize = 0.87
-const minAspectRatio = 1.2
+const boardHeightShareDesktop = 0.92
+const desktopMinWidth = 960
+const desktopSideReserve = 520
+
+function isMobileLayout(width: number) {
+    return width < desktopMinWidth
+}
+
+function computeBoxSize(width: number, height: number) {
+    const availableHeight = height - 40
+    const onMobile = isMobileLayout(width)
+    if (onMobile) {
+        // Full device content width (no side inset) — board touches screen edges
+        const fullWidth = typeof document !== 'undefined'
+            ? document.documentElement.clientWidth
+            : width
+        return Math.max(32, fullWidth / 8)
+    }
+    const maxByHeight = availableHeight * boardHeightShareDesktop
+    const maxByWidth = width - desktopSideReserve
+    return Math.max(44, Math.floor(Math.min(maxByHeight, maxByWidth) / 8))
+}
+
+
 
 interface TimerInfo {
     startTime: number; // UNIX Time
@@ -150,6 +172,10 @@ class Game extends React.Component<GameProps, GameState> {
             width: window.innerWidth,
             height: window.innerHeight
         }
+        const onMobile = isMobileLayout(windowSize.width)
+        const boxSize = computeBoxSize(windowSize.width, windowSize.height)
+
+
         let playerInfo = null
         const game = new this.gameType((props.fen) ? { fen: { val: props.fen } } : (props.pgn) ? { pgn: props.pgn } : { fen: { val: this.gameType.genBoard() } })
         if (props.pgn) {
@@ -204,12 +230,12 @@ class Game extends React.Component<GameProps, GameState> {
             notFlipped: props.viewAs === 'white',
             selectedPiece: null,
             promotionSelector: null,
-            boxSize: Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8),
+            boxSize: boxSize,
             moveRightSection: false,
             players: (props.players || playerInfo),
             premoveBoard: null,
             premoves: [],
-            onMobile: windowSize.height * minAspectRatio > windowSize.width,
+            onMobile: onMobile,
             piecesStyle: (localStorage.getItem('pieceStyle') as pieceStyle || 'normal'),
             boardStyle: boardStyle,
             loadedNNUE: (this.engine?.loadedNNUE || false),
@@ -427,7 +453,7 @@ class Game extends React.Component<GameProps, GameState> {
         if (this.state.game.startingFEN && this.state.game.startingFEN !== "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
             queries += ((queries) ? '&' : '?') + "fen=" + this.state.game.startingFEN.replace(/ /g, '_')
         }
-        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', window.location.pathname + queries);
+        window.history.pushState(null, '', window.location.pathname + queries);
     }
 
     handlePieceClick(posClicked: Vector): void {
@@ -573,12 +599,12 @@ class Game extends React.Component<GameProps, GameState> {
             width: window.innerWidth,
             height: window.innerHeight
         }
-        const newBoxSize = Math.floor(Math.min(windowSize.height * boardSize, windowSize.width) / 8)
-        const onMobile = windowSize.height * minAspectRatio > windowSize.width
+        const onMobile = isMobileLayout(windowSize.width)
+        const newBoxSize = computeBoxSize(windowSize.width, windowSize.height)
         if (newBoxSize !== this.state.boxSize || onMobile !== this.state.onMobile) {
             this.setState({
                 boxSize: newBoxSize,
-                onMobile: windowSize.height * minAspectRatio > windowSize.width,
+                onMobile: onMobile,
                 validMoves: [],
                 selectedPiece: null,
             })
@@ -640,7 +666,7 @@ class Game extends React.Component<GameProps, GameState> {
         }
         this.goToMove(0)
         this.updateURLtoHavePGN()
-        window.history.pushState('OggyP Chess Analysis', 'Shared Analysis', window.location.pathname);
+        window.history.pushState(null, '', window.location.pathname);
     }
 
     preventContextMenu(e: any) {
@@ -752,18 +778,18 @@ class Game extends React.Component<GameProps, GameState> {
             pieceStyle={this.state.piecesStyle}
         />
 
+        const boardPx = 8 * this.state.boxSize
         let boardAndPlayers = <div id='board-and-info'
-            style={{
-                flex: '0 0 ' + (this.state.boxSize * 8 + 1) + 'px'
-            }}>
+            className={this.state.onMobile ? 'mobile-board' : undefined}
+            style={{ width: boardPx }}>
             {(this.state.onMobile) ? (this.state.notFlipped) ? players.black : players.white : null}
             <div
                 id='board-wrapper'
                 className={'board-wrapper ' + this.state.piecesStyle}
                 onContextMenu={function () { return false; }}
                 style={{
-                    width: 8 * this.state.boxSize,
-                    height: 8 * this.state.boxSize
+                    width: boardPx,
+                    height: boardPx,
                 }}>
                 {boardToDisplay}
                 {promotionSelector}
@@ -834,86 +860,93 @@ class Game extends React.Component<GameProps, GameState> {
             </div>
         })
 
-        let leftSideInfo = <div className="game-controls-info">
-            <div className='col-down'>
-                {(this.state.spectators.length) ? <div id="spectators-in-game-display">
-                    <h1>Spectators ({this.state.spectators.length})</h1>
-                    <ul>
-                        {this.state.spectators.map(spectator => {
-                            return <li key={spectator.userId}>{(spectator.title) ? <span className='title'>{spectator.title}</span> : null}{spectator.username}<span className='rating'>{displayRating(spectator)}</span></li>
-                        })}
-                    </ul>
-                </div> : null}
-                <br /><hr /><br />
-                <div>
-                    <h3>Board Colour Selector</h3>
-                    <button onClick={() => {
-                        this.setState({
-                            boardStyle: {
-                                white: '#f0d9b5',
-                                black: '#b58863',
-                            }
-                        });
-                        localStorage.setItem('boardStyle', JSON.stringify({
+        const settingsBody = <div className='col-down'>
+            {(this.state.spectators.length) ? <div id="spectators-in-game-display" className='game-settings-section'>
+                <h1>Spectators ({this.state.spectators.length})</h1>
+                <ul>
+                    {this.state.spectators.map(spectator => {
+                        return <li key={spectator.userId}>{(spectator.title) ? <span className='title'>{spectator.title}</span> : null}{spectator.username}<span className='rating'>{displayRating(spectator)}</span></li>
+                    })}
+                </ul>
+            </div> : null}
+            <div className='game-settings-section'>
+                <h3>Board Colour</h3>
+                <button type='button' onClick={() => {
+                    this.setState({
+                        boardStyle: {
                             white: '#f0d9b5',
                             black: '#b58863',
-                        }))
-                    }
-                    }>Lichess Colours</button>
-                    <button onClick={() => {
-                        this.setState({
-                            boardStyle: {
-                                white: '#ebecd0',
-                                black: '#779556',
-                            }
-                        });
-                        localStorage.setItem('boardStyle', JSON.stringify({
+                        }
+                    });
+                    localStorage.setItem('boardStyle', JSON.stringify({
+                        white: '#f0d9b5',
+                        black: '#b58863',
+                    }))
+                }
+                }>Lichess</button>
+                <button type='button' onClick={() => {
+                    this.setState({
+                        boardStyle: {
                             white: '#ebecd0',
                             black: '#779556',
-                        }))
-                    }
-                    }>Chess.com Colours</button>
-                    <br />
-                    <br />
-                    {(!this.state.onMobile) ? <div>
-                        <label className='button-type' htmlFor="white-tile-color">Custom White Tile Colour</label>
-                        <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white}
-                            onChange={(event) => {
-                                localStorage.setItem('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }));
-                                this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } })
-                            }} />
-                        <label className='button-type' htmlFor="black-tile-color">Custom Black Tile Colour</label>
-                        <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black}
-                            onChange={(event) => {
-                                localStorage.setItem('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }));
-                                this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } })
-                            }} />
-                    </div> : null}
-                    <h3>Piece Style Selector</h3>
-                    {pieceSelector}
-                </div>
-                <br /><hr /><br />
-                <div id="game-controls">
-                    <h3>Game Controls</h3>
-                    <button onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
-                    {
-                        (this.allowedEngineDisplay()) ?
-                            <div>
-                                <p>Enable Engine:</p>
-                                <label className="switch">
-                                    <input type="checkbox" defaultChecked={this.state.engineDisplayToggle} onChange={() => {
-                                        if (this.engine)
-                                            this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(this.state.viewingMove), this.engineMoveType)
-                                        this.setState({
-                                            engineDisplayToggle: !this.state.engineDisplayToggle
-                                        })
-                                    }} />
-                                    <span className="slider round"></span>
-                                </label>
-                            </div> : null
-                    }
-                </div>
+                        }
+                    });
+                    localStorage.setItem('boardStyle', JSON.stringify({
+                        white: '#ebecd0',
+                        black: '#779556',
+                    }))
+                }
+                }>Chess.com</button>
+                {(!this.state.onMobile) ? <div>
+                    <label className='button-type' htmlFor="white-tile-color">Custom White</label>
+                    <input hidden type="color" id="white-tile-color" name="favcolor" defaultValue={this.state.boardStyle.white}
+                        onChange={(event) => {
+                            localStorage.setItem('boardStyle', JSON.stringify({ white: event.target.value, black: this.state.boardStyle.black }));
+                            this.setState({ boardStyle: { white: event.target.value, black: this.state.boardStyle.black } })
+                        }} />
+                    <label className='button-type' htmlFor="black-tile-color">Custom Black</label>
+                    <input hidden type="color" id="black-tile-color" name="favcolor" defaultValue={this.state.boardStyle.black}
+                        onChange={(event) => {
+                            localStorage.setItem('boardStyle', JSON.stringify({ white: this.state.boardStyle.white, black: event.target.value }));
+                            this.setState({ boardStyle: { white: this.state.boardStyle.white, black: event.target.value } })
+                        }} />
+                </div> : null}
             </div>
+            <hr />
+            <div className='game-settings-section'>
+                <h3>Piece Style</h3>
+                {pieceSelector}
+            </div>
+            <hr />
+            <div id="game-controls" className='game-settings-section'>
+                <h3>Game Controls</h3>
+                <button type='button' onClick={() => download('game.pgn', this.state.game.getPGN())}>Download PGN</button>
+                {
+                    (this.allowedEngineDisplay()) ?
+                        <div>
+                            <p>Enable Engine</p>
+                            <label className="switch">
+                                <input type="checkbox" defaultChecked={this.state.engineDisplayToggle} onChange={() => {
+                                    if (this.engine)
+                                        this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(this.state.viewingMove), this.engineMoveType)
+                                    this.setState({
+                                        engineDisplayToggle: !this.state.engineDisplayToggle
+                                    })
+                                }} />
+                                <span className="slider round"></span>
+                            </label>
+                        </div> : null
+                }
+            </div>
+        </div>
+
+        let leftSideInfo = <div className="game-controls-info">
+            {this.state.onMobile ? (
+                <details className="game-settings-drawer">
+                    <summary>Board &amp; game settings</summary>
+                    {settingsBody}
+                </details>
+            ) : settingsBody}
         </div>
 
         let previousMovesList = <PreviousMoves
@@ -942,10 +975,7 @@ class Game extends React.Component<GameProps, GameState> {
 
         return (
             <div className="game">
-                <div className='horizontal-game-wrapper'
-                    style={{
-                        flexDirection: (this.state.onMobile) ? 'column' : 'row'
-                    }}>
+                <div className={'horizontal-game-wrapper ' + (this.state.onMobile ? 'mobile' : 'desktop')}>
                     {(this.state.onMobile) ? boardAndPlayers : leftSideInfo}
                     {(this.state.onMobile) ? previousMovesList : boardAndPlayers}
                     {(this.state.onMobile) ? leftSideInfo : previousMovesList}

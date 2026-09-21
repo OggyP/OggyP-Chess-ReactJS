@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { checkForToken } from '../helpers/getToken';
 import Game from '../game';
@@ -32,6 +34,7 @@ interface PlayerInfo {
 
 
 interface SpectateGameProps {
+    gameId: string
 }
 
 interface SpectateGameState {
@@ -39,7 +42,7 @@ interface SpectateGameState {
         title: string,
         description: string
     }
-    game: JSX.Element | null
+    game: React.ReactElement | null
 }
 
 interface gameFoundInfo extends gameOptions {
@@ -66,13 +69,13 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
             error: null
         }
 
-        const match = window.location.pathname.match(/\/spectate\/(?<game>[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})/);
-        if (!match || !match.groups) {
+        const uuidRe = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+        if (!uuidRe.test(props.gameId)) {
             document.location.href = '/home';
             return
         }
 
-        const gameId = match.groups.game;
+        const gameId = props.gameId;
 
         if (!this.token) {
             document.location.href = '/login/?ref=' + document.location.pathname + document.location.search;
@@ -130,7 +133,7 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
                             if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
                             this.serverGameOver(data.winner, data.by, data.info)                            
                         }
-                        window.history.pushState('OggyP Chess View Game', 'View Game', window.location.origin + '/viewGame/' + data.gameId);
+                        window.history.pushState(null, '', window.location.origin + '/viewGame/' + data.gameId);
                         break
                     case 'timerUpdate':
                         if (this.updateTimer)

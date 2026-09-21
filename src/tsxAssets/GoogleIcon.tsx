@@ -5,8 +5,11 @@ interface GoogleIconProps {
 }
 
 function GoogleIcon(props: GoogleIconProps) {
-  let presentation: any = {};
-  if (!props.aria) presentation['role'] = 'presentation';
+  let presentation: Record<string, string> = {};
+  if (!props.aria) {
+    presentation['aria-hidden'] = 'true'
+    presentation['role'] = 'presentation'
+  }
 
   let type = props.type || 'material-symbols-rounded';
 
