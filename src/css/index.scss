@@ -30,7 +30,9 @@ table {
         padding: 12px 20px 16px;
         width: 100%;
         min-height: calc(100vh - 40px);
+        max-height: calc(100vh - 40px);
         box-sizing: border-box;
+        overflow: hidden;
 
         .game-controls-info,
         #previous-moves-wrapper {
@@ -48,6 +50,7 @@ table {
             align-self: center;
             width: auto;
             max-width: 100%;
+            overflow: hidden;
         }
     }
 
@@ -297,6 +300,8 @@ div.piece-style-btn {
     flex-direction: column;
     gap: 8px;
     box-sizing: border-box;
+    overflow: hidden;
+    max-width: 100%;
 
     .board-wrapper {
         border-radius: 4px;
@@ -365,36 +370,50 @@ div.piece-style-btn {
         display: flex;
         gap: 8px;
         align-items: center;
-        padding: 8px 10px;
+        padding: 4px 8px;
         background: var(--panel);
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: var(--radius-md);
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
 
         p.button-type {
             flex: 0 0 auto;
+            width: auto;
             margin: 0;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            line-height: 1.2;
             cursor: pointer;
             white-space: nowrap;
         }
 
-        p {
+        > p:not(.button-type) {
+            flex: 1 1 auto;
+            min-width: 0;
+            width: auto;
             margin: 0;
             font-size: 0.75rem;
             color: var(--txt-2);
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
             font-family: var(--font-monospace);
         }
 
         form {
-            flex: 1;
+            flex: 1 1 auto;
             width: auto;
             min-width: 0;
+            overflow: hidden;
 
             label {
                 margin: 0;
                 width: 100%;
                 display: block;
+                min-width: 0;
 
                 input {
                     margin: 0;
@@ -404,8 +423,9 @@ div.piece-style-btn {
                     border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: var(--radius-sm);
                     color: var(--txt-1);
-                    font-size: 0.8rem;
-                    padding: 6px 8px;
+                    font-size: 0.75rem;
+                    padding: 4px 8px;
+                    line-height: 1.2;
                 }
             }
         }

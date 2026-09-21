@@ -20,6 +20,8 @@ import './css/switchBox.scss'
 const boardHeightShareDesktop = 0.92
 const desktopMinWidth = 960
 const desktopSideReserve = 520
+// Opening line + FEN row + gaps under the board on desktop
+const desktopBelowBoardChrome = 96
 
 function isMobileLayout(width: number) {
     return width < desktopMinWidth
@@ -35,7 +37,7 @@ function computeBoxSize(width: number, height: number) {
             : width
         return Math.max(32, fullWidth / 8)
     }
-    const maxByHeight = availableHeight * boardHeightShareDesktop
+    const maxByHeight = (availableHeight - desktopBelowBoardChrome) * boardHeightShareDesktop
     const maxByWidth = width - desktopSideReserve
     return Math.max(44, Math.floor(Math.min(maxByHeight, maxByWidth) / 8))
 }
