@@ -15,7 +15,7 @@ interface gameInfo {
 }
 
 function PreviousGames(props: { gameInfo: gameInfo[], userInfo: userInfo }) {
-    let games: JSX.Element[] = []
+    let games: React.JSX.Element[] = []
     for (let i = 0; i < props.gameInfo.length; i++) {
         const value = props.gameInfo[i]
         const urlToGoTo = '/viewGame/' + value.id + ((value.white.split('|').slice(-1)[0] === props.userInfo?.username) ? '' : '?viewAs=black')

@@ -321,7 +321,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 
         let highlightedSquares: Vector[] = []
 
-        let unsortedPieces: ([JSX.Element, number] | [null, number])[] = pieces.map((item, index) => {
+        let unsortedPieces: ([React.JSX.Element, number] | [null, number])[] = pieces.map((item, index) => {
             if (inCheck.length
                 && item.piece.code === 'k'
                 && item.piece.team === currentTurn
@@ -414,7 +414,7 @@ class Board extends React.Component<BoardProps, BoardState> {
                     }></div>)
         }
 
-        let squares: JSX.Element[] | null = null
+        let squares: React.JSX.Element[] | null = null
         if (this.props.moveInfo)
             squares = [
                 <Square
@@ -433,8 +433,8 @@ class Board extends React.Component<BoardProps, BoardState> {
                 ></Square>
             ]
 
-        let preMoveSquaresStart: JSX.Element[] | null = null
-        let preMoveSquaresEnd: JSX.Element[] | null = null
+        let preMoveSquaresStart: React.JSX.Element[] | null = null
+        let preMoveSquaresEnd: React.JSX.Element[] | null = null
         if (this.props.premoves) {
             preMoveSquaresStart = this.props.premoves.map((item, index) => {
                 return <Square

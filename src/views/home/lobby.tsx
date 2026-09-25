@@ -32,7 +32,7 @@ function LobbyMenu(props: LobbyMenuProps) {
                 <ul>
                     {props.queues.map((data, index) => (
                         <li className='challenge' key={index}>
-                            <a className='container' href={`/play/${data.gameInfo.mode}/${data.gameInfo.time.base}+${data.gameInfo.time.increment}`}>
+                            <a className='container' href={`/play/${data.gameInfo.mode}/${data.gameInfo.time.base}%2B${data.gameInfo.time.increment}`}>
                                 <span className='user'>
                                     <span className='name'>{(data.player.title) ? <span className='title'>{data.player.title}</span> : null}{data.player.username}</span>
                                     <span className='rating'>{displayRating(data.player)}</span>

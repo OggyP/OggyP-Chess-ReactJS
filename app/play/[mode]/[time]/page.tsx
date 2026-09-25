@@ -11,29 +11,38 @@ const PlayGame = dynamic(() => import('@/src/views/play'), {
   loading: () => <LoadingPage description="Loading" />,
 })
 
+/** Next may decode `180+0` as `180 0` because `+` means space in URLs. */
+function parseTimeControl(raw: string | string[] | undefined): { base: number, increment: number } | null {
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (!value) return null
+  const normalized = decodeURIComponent(value).trim().replace(/\s+/g, '+')
+  const match = normalized.match(/^(\d+)\+(\d+)$/)
+  if (!match) return null
+  return {
+    base: parseInt(match[1], 10),
+    increment: parseInt(match[2], 10),
+  }
+}
+
 function PlayInner() {
   const params = useParams()
   const router = useRouter()
   const mode = params.mode as string
-  const time = params.time as string
-  const match = time?.match(/^(\d+)\+(\d+)$/)
+  const timeControl = parseTimeControl(params.time)
 
   useEffect(() => {
-    if (!match) {
+    if (!timeControl) {
       router.replace('/home')
     }
-  }, [match, router])
+  }, [timeControl, router])
 
-  if (!match) {
+  if (!timeControl) {
     return <LoadingPage description="Redirecting" />
   }
 
-  const base = parseInt(match[1], 10)
-  const increment = parseInt(match[2], 10)
-
   return (
     <NeedsLogin>
-      <PlayGame mode={mode} base={base} increment={increment} />
+      <PlayGame mode={mode} base={timeControl.base} increment={timeControl.increment} />
     </NeedsLogin>
   )
 }

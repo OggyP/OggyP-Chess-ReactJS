@@ -42,60 +42,71 @@ function Home(props: HomeProps) {
 
 
     useEffect(() => {
+        let ws: WebSocket | null = null
+        let cancelReconnection = false
+        let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+        let disposed = false
+
         const establishWS = () => {
-            if (props.userInfo && error === null) {
-                const wsConnectionURL = `${wsURL}home/?token=${props.userInfo.tokenInfo.token}&userId=${props.userInfo.tokenInfo.userId}`
-                let ws = new WebSocket(wsConnectionURL)
+            if (disposed || !props.userInfo || error !== null)
+                return
 
-                let cancelReconnection = false
+            const wsConnectionURL = `${wsURL}home/?token=${props.userInfo.tokenInfo.token}&userId=${props.userInfo.tokenInfo.userId}`
+            ws = new WebSocket(wsConnectionURL)
 
-                ws.onmessage = (message) => {
-                    const event = JSON.parse(message.data)
-                    const data: any = event.data
-                    console.log(event)
+            ws.onmessage = (message) => {
+                const event = JSON.parse(message.data)
+                const data: any = event.data
+                console.log(event)
 
-                    switch (event.type) {
-                        case 'error':
-                            cancelReconnection = true
-                            setError(data)
-                            break;
-                        case 'queues':
-                            setQueues(data)
-                            break;
-                        case 'spectateGames':
-                            setCurrentGames(data)
-                            break;
-                        case 'redirect':
-                            window.location.href = data.location
-                            break;
-                    }
-                }
-
-                ws.onclose = function () {
-                    console.log("Web socket Closed")
-                    if (!cancelReconnection && !error)
-                        setTimeout(establishWS, 2000);
-                }
-
-                ws.onerror = (error) => {
-                    console.log("Web socket error!")
-                    console.error(error)
-                    cancelReconnection = true
-                    setError({
-                        title: "Connection Issues!",
-                        description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
-                    })
-                    window.location.reload()
-                }
-
-                ws.onopen = () => {
-                    console.log("Web Socket Connected")
+                switch (event.type) {
+                    case 'error':
+                        cancelReconnection = true
+                        setError(data)
+                        break;
+                    case 'queues':
+                        setQueues(data)
+                        break;
+                    case 'spectateGames':
+                        setCurrentGames(data)
+                        break;
+                    case 'redirect':
+                        window.location.href = data.location
+                        break;
                 }
             }
 
+            ws.onclose = function () {
+                console.log("Web socket Closed")
+                if (!disposed && !cancelReconnection && !error)
+                    reconnectTimer = setTimeout(establishWS, 2000);
+            }
+
+            ws.onerror = (err) => {
+                console.log("Web socket error!")
+                console.error(err)
+                cancelReconnection = true
+                setError({
+                    title: "Connection Issues!",
+                    description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
+                })
+            }
+
+            ws.onopen = () => {
+                console.log("Web Socket Connected")
+            }
         }
 
         establishWS()
+
+        return () => {
+            disposed = true
+            cancelReconnection = true
+            if (reconnectTimer)
+                clearTimeout(reconnectTimer)
+            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING))
+                ws.close()
+        }
     }, [error, props.userInfo])
 
     useEffect(() => {

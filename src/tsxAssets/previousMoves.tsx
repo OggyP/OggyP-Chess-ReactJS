@@ -6,10 +6,10 @@ interface PreviousMovesProps {
     onMobile: boolean,
     notFlipped: boolean;
     players: {
-        white: JSX.Element | null,
-        black: JSX.Element | null
+        white: React.JSX.Element | null,
+        black: React.JSX.Element | null
     },
-    engineInfo: JSX.Element | null,
+    engineInfo: React.JSX.Element | null,
     allowCopy: boolean,
     goToMove: Function,
     flipBoardFunc: Function,
@@ -21,7 +21,8 @@ interface PreviousMovesProps {
     viewingMove: number,
     latestMove: number,
     analyseFunc: Function,
-    allowAnalyse: boolean
+    allowAnalyse: boolean,
+    chatPanel?: React.ReactNode
 }
 
 function PreviousMoves(props: PreviousMovesProps) {
@@ -46,7 +47,7 @@ function PreviousMoves(props: PreviousMovesProps) {
         <tr key={props.game.getMoveCount() + 1}><th scope='row'><p>{Math.floor((props.game.getMoveCount() + 1) / 2)}</p></th>{currentRow}</tr>
     )
 
-    let gameOverDisplay: JSX.Element | null = null
+    let gameOverDisplay: React.JSX.Element | null = null
     if (props.game.gameOver) {
         const winner = {
             "white": "White wins by",
@@ -136,6 +137,7 @@ function PreviousMoves(props: PreviousMovesProps) {
             {(!props.onMobile) ? (!props.notFlipped) ? <div style={{ verticalAlign: "bottom" }}>{props.players.black}</div> : props.players.white : null}
             {(!props.onMobile) ? gameMoveControls : null}
             {(!props.onMobile) ? otherGameControls : null}
+            {props.chatPanel || null}
         </div>
     </div>
 }

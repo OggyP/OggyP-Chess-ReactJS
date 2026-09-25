@@ -6,6 +6,7 @@ import Board from './board'
 import EngineInfo from './tsxAssets/engineEvalInfo'
 import UCIengine from './engine'
 import PreviousMoves from './tsxAssets/previousMoves'
+import GameChat, { ChatMessage } from './tsxAssets/gameChat'
 import { sendToWs } from './helpers/wsHelper';
 import UserInfoDisplay from './tsxAssets/UserInfo'
 import { cancelOutCapturedMaterial as cancelOutMaterial } from './chessLogic/standard/functions';
@@ -15,6 +16,9 @@ import { userInfo } from './helpers/verifyToken';
 import displayRating from './helpers/displayRating'
 import { gameModeNamesType } from './helpers/gameModes';
 
+import './css/index.scss'
+import './css/chess.scss'
+import './svg/assets.scss'
 import './css/switchBox.scss'
 
 const boardHeightShareDesktop = 0.92
@@ -100,7 +104,8 @@ interface GameState {
     loadedNNUE: boolean,
     resetGameFEN: string,
     spectators: userInfo[],
-    engineDisplayToggle: boolean
+    engineDisplayToggle: boolean,
+    chatMessages: ChatMessage[]
 }
 
 interface GameProps {
@@ -129,6 +134,8 @@ interface GameProps {
     allowOverridingMoves: boolean
     resetGameReloads: boolean
     viewAs: Teams
+    initialChatMessages?: ChatMessage[]
+    chatReplay?: boolean
 }
 
 class Game extends React.Component<GameProps, GameState> {
@@ -243,7 +250,8 @@ class Game extends React.Component<GameProps, GameState> {
             loadedNNUE: (this.engine?.loadedNNUE || false),
             resetGameFEN: "",
             spectators: [],
-            engineDisplayToggle: true
+            engineDisplayToggle: true,
+            chatMessages: props.initialChatMessages || []
         }
         this.boardMoveChanged((this.props.multiplayerWs) ? game.getMoveCount() : 0, true, true)
         if (props.pgnAndFenChange) this.updateURLtoHavePGN()
@@ -295,6 +303,24 @@ class Game extends React.Component<GameProps, GameState> {
         this.setState({
             spectators: spectators
         })
+    }
+
+    addChatMessage(message: ChatMessage) {
+        this.setState((prev) => ({
+            chatMessages: [...prev.chatMessages, message]
+        }))
+    }
+
+    setChatMessages(messages: ChatMessage[]) {
+        this.setState({
+            chatMessages: messages
+        })
+    }
+
+    sendChatMessage(text: string) {
+        if (!this.props.multiplayerWs)
+            return
+        sendToWs(this.props.multiplayerWs, 'chat', { text })
     }
 
     customGameOver(winner: Teams | 'draw', by: string, extraInfo?: string) {
@@ -681,7 +707,9 @@ class Game extends React.Component<GameProps, GameState> {
                 doMove: (startPos: Vector, endPos: Vector, promotion: PieceCodes | undefined = undefined) => this.doMove(startPos, endPos, promotion),
                 gameOver: (winner: Teams | 'draw', by: string, extraInfo?: string) => this.customGameOver(winner, by, extraInfo),
                 updateTimer: (white: TimerInfo, black: TimerInfo) => this.updateTimer(white, black),
-                setSpectators: (spectators: userInfo[]) => this.setSpectators(spectators)
+                setSpectators: (spectators: userInfo[]) => this.setSpectators(spectators),
+                addChatMessage: (message: ChatMessage) => this.addChatMessage(message),
+                setChatMessages: (messages: ChatMessage[]) => this.setChatMessages(messages)
             });
         }
         document.addEventListener('contextmenu', this.preventContextMenu)
@@ -730,8 +758,8 @@ class Game extends React.Component<GameProps, GameState> {
             />
 
         let players: {
-            white: JSX.Element | null,
-            black: JSX.Element | null
+            white: React.JSX.Element | null,
+            black: React.JSX.Element | null
         } = {
             white: null,
             black: null
@@ -942,7 +970,18 @@ class Game extends React.Component<GameProps, GameState> {
             </div>
         </div>
 
+        let chatPanel = (this.props.multiplayerWs || this.props.chatReplay) ? (
+            <GameChat
+                messages={this.state.chatMessages.filter((m) => m.moveNum <= this.state.viewingMove)}
+                onSend={this.props.multiplayerWs ? (text) => this.sendChatMessage(text) : undefined}
+                disabled={!!this.state.game.gameOver}
+                readOnly={!!this.props.chatReplay}
+                emptyText="No chat on this move"
+            />
+        ) : null
+
         let leftSideInfo = <div className="game-controls-info">
+            {!this.state.onMobile && chatPanel}
             {this.state.onMobile ? (
                 <details className="game-settings-drawer">
                     <summary>Board &amp; game settings</summary>
@@ -973,6 +1012,7 @@ class Game extends React.Component<GameProps, GameState> {
             viewingMove={this.state.viewingMove}
             latestMove={this.state.game.getMoveCount()}
             allowCopy={(!this.props.multiplayerWs)}
+            chatPanel={this.state.onMobile ? chatPanel : undefined}
         />
 
         return (

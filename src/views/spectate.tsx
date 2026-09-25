@@ -60,6 +60,10 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
     updateTimer: Function | null = null
     serverGameOver: Function | null = null
     setSpectators: Function | null = null
+    addChatMessage: Function | null = null
+    setChatMessages: Function | null = null
+    pendingChatMessages: any[] = []
+    pendingChatHistory: any[] | null = null
 
     constructor(props: SpectateGameProps) {
         super(props)
@@ -154,6 +158,18 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
                         if (this.setSpectators)
                             this.setSpectators(data)
                         break
+                    case 'chat':
+                        if (this.addChatMessage)
+                            this.addChatMessage(data)
+                        else
+                            this.pendingChatMessages.push(data)
+                        break
+                    case 'chatHistory':
+                        if (this.setChatMessages)
+                            this.setChatMessages(data)
+                        else
+                            this.pendingChatHistory = data
+                        break
                 }
             }
 
@@ -215,6 +231,16 @@ class SpectateGame extends React.Component<SpectateGameProps, SpectateGameState>
         this.updateTimer = callbacks.updateTimer
         this.serverGameOver = callbacks.gameOver
         this.setSpectators = callbacks.setSpectators
+        this.addChatMessage = callbacks.addChatMessage
+        this.setChatMessages = callbacks.setChatMessages
+        if (this.pendingChatHistory && this.setChatMessages) {
+            this.setChatMessages(this.pendingChatHistory)
+            this.pendingChatHistory = null
+        }
+        if (this.pendingChatMessages.length && this.addChatMessage) {
+            this.pendingChatMessages.forEach((msg) => this.addChatMessage!(msg))
+            this.pendingChatMessages = []
+        }
     }
 
     regainedFocus() {

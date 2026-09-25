@@ -43,7 +43,7 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
                 return <button
                     type='button'
                     key={index}
-                    onClick={() => { window.location.href = `/play/${selectedGameMode}/${Math.round(time[0]*60)}+${Math.round(time[1])}` }}>
+                    onClick={() => { window.location.href = `/play/${selectedGameMode}/${Math.round(time[0]*60)}%2B${Math.round(time[1])}` }}>
                     {time[0]} + {time[1]}
                 </button>
             else

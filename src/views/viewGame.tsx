@@ -10,6 +10,7 @@ import ErrorPage from './Error';
 import { GameModes } from '../chessLogic/types';
 import Loading from './loading';
 import { apiURL } from '../settings';
+import { ChatMessage } from '../tsxAssets/gameChat';
 
 interface ViewGameProps {
     gameId: string
@@ -21,11 +22,13 @@ interface ViewGameState {
     error: null | React.ReactElement
     termination: string
     gameMode: string | undefined
+    messages: ChatMessage[]
 }
 
 class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
 
     gameId: number;
+    private cancelled = false
 
     constructor(props: ViewGameProps) {
         super(props)
@@ -38,22 +41,26 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
             PGN: null,
             error: null,
             termination: 'Unknown',
-            gameMode: undefined
+            gameMode: undefined,
+            messages: []
         }
+    }
 
-        let response = fetch(apiURL + "games/view/" + this.gameId, {
+    componentDidMount() {
+        this.cancelled = false
+        fetch(apiURL + "games/view/" + this.gameId, {
             method: 'GET',
-        })
-
-        response.then(async (rawData) => {
+        }).then(async (rawData) => {
             const text = await rawData.text()
+            if (this.cancelled) return
             try {
                 const data = JSON.parse(text)
                 console.log(data.pgn)
                 this.setState({
                     PGN: data.pgn,
                     termination: data.gameOverReason,
-                    gameMode: data.gameMode
+                    gameMode: data.gameMode,
+                    messages: Array.isArray(data.messages) ? data.messages : []
                 })
             } catch {
                 this.setState({
@@ -64,6 +71,10 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
                 })
             }
         })
+    }
+
+    componentWillUnmount() {
+        this.cancelled = true
     }
 
     render() {
@@ -88,6 +99,8 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
                     atBeginning: true,
                     atEnd: true
                 }}
+                initialChatMessages={this.state.messages}
+                chatReplay={true}
             />
         else
             return <Loading description={'Loading Game ' + this.gameId} />

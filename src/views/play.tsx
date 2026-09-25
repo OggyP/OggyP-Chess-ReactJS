@@ -8,7 +8,7 @@ import LoadingPage from './loading';
 import ErrorPage from './Error';
 import { wsURL } from '../settings';
 import { GameModes } from '../chessLogic/types';
-import {gameModeToName} from '../helpers/gameModes'
+import { gameModeToName } from '../helpers/gameModes'
 
 function leavePage(event: BeforeUnloadEvent) {
     event.returnValue = `You are still in game, are you sure you want to leave?`;
@@ -68,6 +68,13 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     updateTimer: Function | null = null
     serverGameOver: Function | null = null
     setSpectators: Function | null = null
+    addChatMessage: Function | null = null
+    setChatMessages: Function | null = null
+    pendingChatMessages: any[] = []
+    pendingChatHistory: any[] | null = null
+    intentionalClose = false
+    skipHomeRedirect = false
+    boundRegainedFocus = this.regainedFocus.bind(this)
 
     constructor(props: PlayGameProps) {
         super(props)
@@ -78,123 +85,130 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
             error: null
         }
 
-        const gameMode = props.mode;
-        const start = props.base;
-        const inc = props.increment;
-
         if (!this.token) {
             document.location.href = '/login/?ref=' + document.location.pathname + document.location.search;
+        }
+    }
+
+    establishWS() {
+        if (!this.token || this.intentionalClose)
             return
-        }
 
+        const gameMode = this.props.mode;
+        const start = this.props.base;
+        const inc = this.props.increment;
         const serverGameOverTypes = ['resignation', 'timeout', 'game abandoned']
-        const establishWS = () => {
-            const wsConnectionURL = `${wsURL}play/${gameMode}/${start}+${inc}/?token=${this.token?.token}&userId=${this.token?.userId}`
-            this.ws = new WebSocket(wsConnectionURL)
+        const wsConnectionURL = `${wsURL}play/${gameMode}/${start}+${inc}/?token=${this.token.token}&userId=${this.token.userId}`
+        this.ws = new WebSocket(wsConnectionURL)
 
-            let cancelReconnection = false
-
-            this.ws.onmessage = (message) => {
-                if (!this.ws)
-                    throw new Error("Why is this.ws undefined?!")
-                const event = JSON.parse(message.data)
-                const data: any = event.data
-                console.log(event)
-                switch (event.type) {
-                    case 'error':
-                        cancelReconnection = true
-                        this.setState({
-                            error: data
-                        })
-                        break;
-                    case 'queue':
-                        this.setState({
-                            queueInfo: data as gameOptions
-                        })
-                        break;
-                    case 'game':
-                        this.gameFound(data)
-                        break;
-                    case 'move':
-                        if (!this.state.game) throw new Error("Recieved move before game start");
-                        if (!this.doMove) throw new Error("Do move function is null");
-                        const startingPos = { 'x': data.startingPos[0], 'y': data.startingPos[1] }
-                        const endingPos = { 'x': data.endingPos[0], 'y': data.endingPos[1] }
-                        if (!data.promote)
-                            this.doMove(startingPos, endingPos)
-                        else
-                            this.doMove(startingPos, endingPos, data.promote[0])
-                        if (this.updateTimer && data.timer) {
-                            this.updateTimer(
-                                { // white
-                                    startTime: (new Date()).getTime(),
-                                    time: data.timer.whiteTimer.time,
-                                    countingDown: data.timer.whiteTimer.isCountingDown
-                                },
-                                { // black
-                                    startTime: (new Date()).getTime(),
-                                    time: data.timer.blackTimer.time,
-                                    countingDown: data.timer.blackTimer.isCountingDown
-                                }
-                            )
-                        }
-                        break;
-                    case 'gameOver':
-                        window.removeEventListener('beforeunload', leavePage);
-                        if (serverGameOverTypes.includes(data.by)) {
-                            if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
-                            this.serverGameOver(data.winner, data.by, data.info)
-                        }
-                        window.history.pushState(null, '', window.location.origin + '/viewGame/' + data.gameId);
-                        break
-                    case 'timerUpdate':
-                        if (this.updateTimer)
-                            this.updateTimer(
-                                {
-                                    startTime: (new Date()).getTime(),
-                                    time: data.whiteTimer.time,
-                                    countingDown: data.whiteTimer.isCountingDown
-                                },
-                                {
-                                    startTime: (new Date()).getTime(),
-                                    time: data.blackTimer.time,
-                                    countingDown: data.blackTimer.isCountingDown
-                                }
-                            )
-                        break
-                    case 'spectators':
-                        if (this.setSpectators)
-                            this.setSpectators(data)
-                        break
-                }
-            }
-
-            this.ws.onclose = () => {
-                console.log("Web socket Closed")
-                if (!cancelReconnection)
-                    window.location.href = '/home'
-            }
-
-            this.ws.onerror = (error) => {
-                console.log("Web socket error!")
-                console.error(error)
-                cancelReconnection = true
-                this.setState({
-                    error: {
-                        title: "Connection Issues!",
-                        description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
+        this.ws.onmessage = (message) => {
+            if (!this.ws)
+                throw new Error("Why is this.ws undefined?!")
+            const event = JSON.parse(message.data)
+            const data: any = event.data
+            console.log(event)
+            switch (event.type) {
+                case 'error':
+                    this.skipHomeRedirect = true
+                    this.setState({
+                        error: data
+                    })
+                    break;
+                case 'queue':
+                    this.setState({
+                        queueInfo: data as gameOptions
+                    })
+                    break;
+                case 'game':
+                    this.gameFound(data)
+                    break;
+                case 'move':
+                    if (!this.state.game) throw new Error("Recieved move before game start");
+                    if (!this.doMove) throw new Error("Do move function is null");
+                    const startingPos = { 'x': data.startingPos[0], 'y': data.startingPos[1] }
+                    const endingPos = { 'x': data.endingPos[0], 'y': data.endingPos[1] }
+                    if (!data.promote)
+                        this.doMove(startingPos, endingPos)
+                    else
+                        this.doMove(startingPos, endingPos, data.promote[0])
+                    if (this.updateTimer && data.timer) {
+                        this.updateTimer(
+                            {
+                                startTime: (new Date()).getTime(),
+                                time: data.timer.whiteTimer.time,
+                                countingDown: data.timer.whiteTimer.isCountingDown
+                            },
+                            {
+                                startTime: (new Date()).getTime(),
+                                time: data.timer.blackTimer.time,
+                                countingDown: data.timer.blackTimer.isCountingDown
+                            }
+                        )
                     }
-                })
-                window.location.reload()
-            }
-
-            this.ws.onopen = () => {
-                console.log("Web Socket Connected")
-                cancelReconnection = false
+                    break;
+                case 'gameOver':
+                    window.removeEventListener('beforeunload', leavePage);
+                    if (serverGameOverTypes.includes(data.by)) {
+                        if (!this.serverGameOver) throw new Error("Server Game Over in play.tsx is null");
+                        this.serverGameOver(data.winner, data.by, data.info)
+                    }
+                    window.history.pushState(null, '', window.location.origin + '/viewGame/' + data.gameId);
+                    break
+                case 'timerUpdate':
+                    if (this.updateTimer)
+                        this.updateTimer(
+                            {
+                                startTime: (new Date()).getTime(),
+                                time: data.whiteTimer.time,
+                                countingDown: data.whiteTimer.isCountingDown
+                            },
+                            {
+                                startTime: (new Date()).getTime(),
+                                time: data.blackTimer.time,
+                                countingDown: data.blackTimer.isCountingDown
+                            }
+                        )
+                    break
+                case 'spectators':
+                    if (this.setSpectators)
+                        this.setSpectators(data)
+                    break
+                case 'chat':
+                    if (this.addChatMessage)
+                        this.addChatMessage(data)
+                    else
+                        this.pendingChatMessages.push(data)
+                    break
+                case 'chatHistory':
+                    if (this.setChatMessages)
+                        this.setChatMessages(data)
+                    else
+                        this.pendingChatHistory = data
+                    break
             }
         }
 
-        establishWS()
+        this.ws.onclose = () => {
+            console.log("Web socket Closed")
+            if (!this.intentionalClose && !this.skipHomeRedirect)
+                window.location.href = '/home'
+        }
+
+        this.ws.onerror = (error) => {
+            console.log("Web socket error!")
+            console.error(error)
+            this.skipHomeRedirect = true
+            this.setState({
+                error: {
+                    title: "Connection Issues!",
+                    description: `Lost connect to the OggyP Chess Web Socket\nSocket URL: ${wsConnectionURL}`
+                }
+            })
+        }
+
+        this.ws.onopen = () => {
+            console.log("Web Socket Connected")
+        }
     }
 
     gameFound(game: gameFoundInfo) {
@@ -229,6 +243,16 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
         this.updateTimer = callbacks.updateTimer
         this.serverGameOver = callbacks.gameOver
         this.setSpectators = callbacks.setSpectators
+        this.addChatMessage = callbacks.addChatMessage
+        this.setChatMessages = callbacks.setChatMessages
+        if (this.pendingChatHistory && this.setChatMessages) {
+            this.setChatMessages(this.pendingChatHistory)
+            this.pendingChatHistory = null
+        }
+        if (this.pendingChatMessages.length && this.addChatMessage) {
+            this.pendingChatMessages.forEach((msg) => this.addChatMessage!(msg))
+            this.pendingChatMessages = []
+        }
     }
 
     regainedFocus() {
@@ -240,11 +264,18 @@ class PlayGame extends React.Component<PlayGameProps, PlayGameState>{
     }
 
     componentDidMount(): void {
-        document.addEventListener('visibilitychange', this.regainedFocus.bind(this));
+        document.addEventListener('visibilitychange', this.boundRegainedFocus);
+        this.intentionalClose = false
+        this.skipHomeRedirect = false
+        this.establishWS()
     }
 
     componentWillUnmount(): void {
-        window.removeEventListener("visibilitychange", this.regainedFocus.bind(this));
+        document.removeEventListener("visibilitychange", this.boundRegainedFocus);
+        this.intentionalClose = true
+        if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+            this.ws.close()
+        }
     }
 
     render() {
