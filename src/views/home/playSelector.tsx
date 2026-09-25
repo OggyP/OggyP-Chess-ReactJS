@@ -23,11 +23,8 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
     //     }
     // };
 
-    const colAmt = Math.floor(Math.sqrt(props.timeSelections.length))
-    const rowAmt = Math.ceil(props.timeSelections.length / colAmt)
-
-    const gameModeSelection = props.gameModes.map((gameMode, index) => {
-        return <button key={gameMode[0]} onClick={() => setGameMode(gameMode[0])} className={(selectedGameMode && selectedGameMode === gameMode[0]) ? 'selected' : ''}>
+    const gameModeSelection = props.gameModes.map((gameMode) => {
+        return <button key={gameMode[0]} type='button' onClick={() => setGameMode(gameMode[0])} className={(selectedGameMode && selectedGameMode === gameMode[0]) ? 'selected' : ''}>
             {gameMode[1]}
         </button>
     })
@@ -37,21 +34,24 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
         if (typeof time === 'string' || time instanceof String) {
             // Custom time
             if (selectedGameMode)
-                return <button key={index}>{time}</button>
+                return <button type='button' key={index}>{time}</button>
             else
-                return <button className='disabled' key={index}>{time}</button>
+                return <button type='button' className='disabled' key={index} disabled>{time}</button>
         } else {
             // Preset time
             if (selectedGameMode)
                 return <button
+                    type='button'
                     key={index}
                     onClick={() => { window.location.href = `/play/${selectedGameMode}/${Math.round(time[0]*60)}+${Math.round(time[1])}` }}>
                     {time[0]} + {time[1]}
                 </button>
             else
                 return <button
+                    type='button'
                     key={index}
-                    className='disabled'>
+                    className='disabled'
+                    disabled>
                     {time[0]} + {time[1]}
                 </button>
         }
@@ -65,10 +65,7 @@ function PlaySelectionMenu(props: PlaySelectionMenuProps) {
             {gameModeSelection}
         </div>
         <h3>Time Controls</h3>
-        <div className='time-selections' style={{
-            gridTemplateColumns: `repeat(${colAmt}, 1fr)`,
-            gridTemplateRows: `repeat(${rowAmt}, 1fr)`
-        }}>
+        <div className='time-selections'>
             {timeSelection}
         </div>
     </div>

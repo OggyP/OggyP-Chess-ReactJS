@@ -24,14 +24,14 @@ interface LobbyMenuProps {
 
 function LobbyMenu(props: LobbyMenuProps) {
     return (
-        <section id='lobby' style={{ width: '100%', textAlign: 'center' }}>
+        <section className='lobby-section'>
             <h2>Lobby</h2>
             {props.queues.length === 0 ? (
                 <p>No queues available</p>
             ) : (
                 <ul>
                     {props.queues.map((data, index) => (
-                        <li className='challenge' key={index} style={{ marginBottom: '10px' }}>
+                        <li className='challenge' key={index}>
                             <a className='container' href={`/play/${data.gameInfo.mode}/${data.gameInfo.time.base}+${data.gameInfo.time.increment}`}>
                                 <span className='user'>
                                     <span className='name'>{(data.player.title) ? <span className='title'>{data.player.title}</span> : null}{data.player.username}</span>

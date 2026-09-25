@@ -153,7 +153,7 @@ function Home(props: HomeProps) {
         <section className='user-stats'>
             <span className='type'>Rating</span><span className='content'>{displayRating(props.userInfo)}</span>
             <span className='type'># Games</span><span className='content'>{props.userInfo.gamesPlayed}</span>
-            <span className='type'>Win %</span><span className='content'>{Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%</span>
+            <span className='type'>Win %</span><span className='content'>{props.userInfo.gamesPlayed > 0 ? `${Math.round(1000 * props.userInfo.wins / props.userInfo.gamesPlayed) / 10}%` : '—'}</span>
             <span className='type'>ID</span><span className='content'>{props.userInfo.userId}</span>
             <span className='type'>Win:Loss</span><span className='content'>{props.userInfo.wins}:{props.userInfo.gamesPlayed - props.userInfo.wins - props.userInfo.draws}</span>
             <span className='type'>Joined</span><span className='content'>{formatDateShort(props.userInfo.createdAt)}</span>
@@ -193,7 +193,6 @@ function Home(props: HomeProps) {
 
                 <div id='lobby'>
                     <LobbyMenu queues={queues} />
-                    <br />
                     <SpectateMenu currentGames={currentGames} />
                 </div>
 

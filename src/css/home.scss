@@ -5,6 +5,10 @@
       VARIABLES
 ********************/
 $previous-games-width: 30%;
+$home-bp: 1000px;
+$home-narrow: 640px;
+$home-tiny: 400px;
+
 .title {
     margin-right: 0.3em;
     font-weight: bolder;
@@ -13,17 +17,28 @@ $previous-games-width: 30%;
     border-radius: 0.3em;
     color: white;
     font-size: 0.9em;
-    // font-size: max(0.7em, 1.7vw);
+}
+
+#home-wrapper {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /********************
        ACCOUNT
 ********************/
 .user-info {
+  padding: 0 globals.$margin-medium;
+  box-sizing: border-box;
+
   .username {
-    margin: globals.$margin-large 0;
-    font-size: 2.5rem;
+    margin: globals.$margin-large 0 globals.$margin-medium;
+    font-size: clamp(1.35rem, 4.5vw + 0.5rem, 2.5rem);
     text-align: center;
+    line-height: 1.25;
+    word-break: break-word;
     --underline-thickness: 0.1em;
 
     .name {
@@ -33,15 +48,33 @@ $previous-games-width: 30%;
 
   .user-stats {
     display: grid;
-    grid-template-columns: repeat(3, 100px 100px);
-    column-gap: globals.$margin-small;
+    grid-template-columns: repeat(3, auto auto);
+    column-gap: 0.5rem;
+    row-gap: 0.5rem;
     justify-content: center;
     align-content: center;
     font-size: 1rem;
+    max-width: 100%;
+    box-sizing: border-box;
 
     .type {
       color: var(--txt-2);
       text-align: right;
+      white-space: nowrap;
+    }
+
+    .content {
+      text-align: left;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      // Space between stat pairs on desktop (label↔value stay close via column-gap)
+      padding-right: 2.25rem;
+
+      &:nth-child(6n) {
+        padding-right: 0;
+      }
     }
 
     button {
@@ -52,13 +85,55 @@ $previous-games-width: 30%;
   }
 }
 
-@media only screen and (max-width: 1000px) {
+@media only screen and (max-width: $home-bp) {
   .user-info {
     .username {
       --underline-thickness: 0px;
+      margin: globals.$margin-medium 0;
 
       .name {
         --underline-thickness: 0.1em;
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: $home-narrow) {
+  .user-info {
+    .user-stats {
+      grid-template-columns: auto 1fr auto 1fr;
+      column-gap: globals.$margin-small;
+      row-gap: 6px;
+      font-size: 0.92rem;
+      width: 100%;
+      max-width: 22rem;
+      margin: 0 auto;
+
+      .content {
+        padding-right: 0;
+
+        &:nth-child(4n + 2) {
+          padding-right: globals.$margin-medium;
+        }
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: $home-tiny) {
+  .user-info {
+    padding: 0 globals.$margin-small;
+
+    .user-stats {
+      grid-template-columns: auto 1fr;
+      max-width: 16rem;
+
+      .content {
+        padding-right: 0;
+
+        &:nth-child(4n + 2) {
+          padding-right: 0;
+        }
       }
     }
   }
@@ -72,13 +147,16 @@ $previous-games-width: 30%;
 ********************/
 #content {
   margin: globals.$margin-large 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 
   h2 {
     margin-top: 0;
   }
 }
 
-@media only screen and (min-width: 1000px) {
+@media only screen and (min-width: $home-bp) {
   #content {
     display: flex;
     flex-direction: row;
@@ -86,6 +164,12 @@ $previous-games-width: 30%;
     hr {
       display: none;
     }
+  }
+}
+
+@media only screen and (max-width: #{$home-bp - 1}) {
+  #content {
+    margin: globals.$margin-medium 0;
   }
 }
 
@@ -97,6 +181,8 @@ $previous-games-width: 30%;
 ********************/
 main {
   padding: 0 globals.$margin-large;
+  min-width: 0;
+  box-sizing: border-box;
 
   hr {
     margin: auto;
@@ -106,9 +192,21 @@ main {
   }
 }
 
-@media only screen and (min-width: 1000px) {
+@media only screen and (min-width: $home-bp) {
   main {
     width: 100% - $previous-games-width;
+  }
+}
+
+@media only screen and (max-width: #{$home-bp - 1}) {
+  main {
+    padding: 0 globals.$margin-medium;
+  }
+}
+
+@media only screen and (max-width: $home-tiny) {
+  main {
+    padding: 0 globals.$margin-small;
   }
 }
 
@@ -121,24 +219,69 @@ main {
 #play-selector {
   margin-bottom: globals.$margin-large;
 
+  h2, h3 {
+    margin-left: 0;
+  }
+
   .game-modes {
     margin-bottom: globals.$margin-medium;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     column-gap: globals.$margin-medium;
+    row-gap: globals.$margin-small;
   }
   
   .time-selections {
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-gap: globals.$margin-medium;
   }
 
   button {
-    font-size: 1.75rem;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: clamp(1rem, 2.5vw + 0.55rem, 1.75rem);
+    padding: 0.55em 0.4em;
+    line-height: 1.15;
+    min-height: 2.75rem;
+    white-space: normal;
+    word-break: break-word;
 
     &.selected {
       background: var(--primary);
       color: var(--txt-dark-1);
+    }
+  }
+}
+
+@media only screen and (max-width: $home-narrow) {
+  #play-selector {
+    margin-bottom: globals.$margin-medium;
+
+    .game-modes {
+      column-gap: globals.$margin-small;
+    }
+
+    .time-selections {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-gap: globals.$margin-small;
+    }
+
+    button {
+      font-size: 1.1rem;
+      min-height: 2.85rem;
+    }
+  }
+}
+
+@media only screen and (max-width: $home-tiny) {
+  #play-selector {
+    .game-modes {
+      grid-template-columns: 1fr;
+    }
+
+    .time-selections {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 }
@@ -151,9 +294,13 @@ main {
 ********************/
 #previous-games {
   margin: globals.$margin-large globals.$margin-large 0;
+  min-width: 0;
+  box-sizing: border-box;
 
   ul {
     width: 100%;
+    padding: 0;
+    margin: 0;
     list-style: none;
   }
 }
@@ -168,6 +315,8 @@ main {
   width: 100%;
   height: $height;
   position: relative;
+  max-width: 100%;
+  box-sizing: border-box;
 
   .container {
     width: 100%;
@@ -176,17 +325,12 @@ main {
     top: 0;
     left: 0;
     text-decoration: none;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: $bdrs;
 
     &, * {
       transition: 150ms;
-    }
-
-    &:hover {
-      $increase: 5%;
-      width: 100% + $increase;
-      height: 100% + $increase;
-      top: -0.5 * $increase;
-      left: -0.5 * $increase;
     }
   }
 
@@ -206,6 +350,7 @@ main {
     position: absolute;
     top: 0;
     left: 0;
+    z-index: 1;
 
     &.draw {
       img {
@@ -223,19 +368,30 @@ main {
 
   %username {
     padding-left: $result-width + globals.$margin-small;
+    padding-right: $height + globals.$margin-small;
     width: 100%;
     height: 50%;
+    box-sizing: border-box;
 
     display: flex;
     flex-direction: row;
     align-items: center;
+    min-width: 0;
 
     .number {
       margin-right: globals.$margin-small;
       width: 1rem;
+      flex: 0 0 auto;
       display: inline-block;
       font-weight: bold;
       text-align: center;
+    }
+
+    .name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
@@ -268,10 +424,21 @@ main {
     position: absolute;
     top: 0;
     right: 0;
+    z-index: 1;
 
     font-size: 0.8rem;
     color: var(--txt-1);
     text-align: center;
+    box-sizing: border-box;
+    padding: 0 2px;
+
+    .game-mode,
+    .time-controls {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     .time-controls {
       margin-top: globals.$margin-small;
@@ -280,7 +447,19 @@ main {
   }
 }
 
-@media only screen and (min-width: 1000px) {
+@media (hover: hover) and (pointer: fine) {
+  .previous-game .container:hover {
+    $increase: 5%;
+    width: 100% + $increase;
+    height: 100% + $increase;
+    top: -0.5 * $increase;
+    left: -0.5 * $increase;
+    z-index: 2;
+    overflow: visible;
+  }
+}
+
+@media only screen and (min-width: $home-bp) {
   #previous-games {
     margin-top: 0;
     margin-left: 0;
@@ -292,6 +471,18 @@ main {
   }
 }
 
+@media only screen and (max-width: #{$home-bp - 1}) {
+  #previous-games {
+    margin: globals.$margin-medium;
+  }
+}
+
+@media only screen and (max-width: $home-tiny) {
+  #previous-games {
+    margin: globals.$margin-small;
+  }
+}
+
 
 
 
@@ -300,111 +491,159 @@ main {
 ********************/
 #lobby {
   margin: globals.$margin-large 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: globals.$margin-medium;
+}
+
+.lobby-section {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+
+  h2 {
+    text-align: center;
+    margin-top: 0;
+  }
+
+  > p {
+    text-align: center;
+    color: var(--txt-2);
+  }
 
   ul {
     width: 100%;
+    padding: 0;
+    margin: 0;
     list-style: none;
+  }
+}
+
+@media only screen and (max-width: $home-narrow) {
+  #lobby {
+    margin: globals.$margin-medium 0;
+    gap: globals.$margin-medium;
   }
 }
 
 .challenge {
   width: 100%;
-  height: calc(2 * globals.$margin-medium + 1.25em);
-  position: relative;
-  $increase-width: 7.5px;
-  $increase-height: 2px;
-  $padding-inline: globals.$margin-medium + $increase-width;
-  $padding-block: globals.$margin-medium + $increase-height;
+  max-width: 100%;
+  margin-bottom: globals.$margin-small;
+  box-sizing: border-box;
 
   .container {
     background: var(--bg-3);
     box-shadow: var(--drop-shadow-1);
-    
     border-radius: 5px;
     padding: globals.$margin-medium;
     width: 100%;
-    height: calc(2 * globals.$margin-medium + 1.25em);
-    position: absolute;
-    top: 0;
-    left: 0;
-
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: globals.$margin-small;
     color: var(--txt-1);
     text-decoration: none;
+    transition: background-color 150ms, box-shadow 150ms;
 
-    &, * {
-      transition: 150ms;
+    &:hover,
+    &:focus-visible {
+      background: var(--hover);
+      outline: none;
     }
   }
 
-  .container:hover {
-    width: calc(100% + 2 * $increase-width);
-    height: calc(2 * $padding-block + 1.25em);
-    top: -1 * $increase-height;
-    left: -1 * $increase-width;
-
-    .user {
-      top: $padding-block;
-      left: globals.$margin-medium;
-    }
-
-    .game-info {
-      top: $padding-block;
-      right: globals.$margin-medium;
-    }
-  }
-
-  .user {
-    display: inline-flex;
-    align-items: center;
-    position: absolute;
-    top: globals.$margin-medium;
-    left: globals.$margin-medium;
-
-    .name {
-      margin-right: globals.$margin-small;
-      display: inline-block;
-    }
-
-    .rating {
-      font-size: 0.85em;
-      color: var(--txt-2);
-    }
-  }
-
+  .user,
   .user-spectate {
     display: inline-flex;
     align-items: center;
-    // position: absolute;
-    top: globals.$margin-medium;
-    // left: globals.$margin-medium;
+    min-width: 0;
+    max-width: 100%;
 
     .name {
       margin-right: globals.$margin-small;
       display: inline-block;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .rating {
+      flex: 0 0 auto;
       font-size: 0.85em;
       color: var(--txt-2);
     }
   }
 
+  .players {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px globals.$margin-small;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .vs {
+    flex: 0 0 auto;
+    color: var(--txt-2);
+    font-size: 0.9em;
+  }
+
   .game-info {
-    position: absolute;
-    top: globals.$margin-medium;
-    right: globals.$margin-medium;
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    margin-left: auto;
+    gap: 0;
 
     .mode {
       margin-right: globals.$margin-small;
-      width: 6em;
+      min-width: 4.5em;
       display: inline-block;
       text-align: center;
+      white-space: nowrap;
     }
 
     .time-control {
-      width: 4.5em;
+      min-width: 3.5em;
       display: inline-block;
       text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+@media only screen and (max-width: $home-narrow) {
+  .challenge {
+    .container {
+      padding: 12px;
+      row-gap: 8px;
+    }
+
+    .game-info {
+      width: 100%;
+      margin-left: 0;
+      justify-content: space-between;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+      .mode {
+        margin-right: 0;
+        text-align: left;
+      }
+    }
+
+    .players {
+      width: 100%;
     }
   }
 }
