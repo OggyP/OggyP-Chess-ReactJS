@@ -5,81 +5,83 @@ import {
     StockfishVariant,
 } from './stockfishPaths'
 
-export const STOCKFISH_CACHE_NAME = 'oggyp-stockfish-19'
+/**
+ * Stockfish caching strategy:
+ * - Long-lived Cache-Control headers on /stockfish/* (see next.config.mjs)
+ * - No service worker: SW stream-caching caused empty WASM bodies and hung loads
+ * - On startup we unregister any old stockfish SWs left from earlier attempts
+ */
 
-const FULL_ASSETS: Record<'full' | 'full-single', string[]> = {
-    full: [
-        '/stockfish/full/stockfish.js',
-        '/stockfish/full/stockfish.wasm',
-    ],
-    'full-single': [
-        '/stockfish/full-single/stockfish.js',
-        '/stockfish/full-single/stockfish.wasm',
-    ],
-}
+let cleanupPromise: Promise<void> | null = null
 
-let registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null
-
-function fullAssetsForCurrentDevice(): { variant: StockfishVariant; paths: string[] } {
+function fullWasmPathForCurrentDevice(): string | null {
     const resolved = resolveStockfish('full' as StockfishTier, iOS())
-    if (resolved.variant === 'full' || resolved.variant === 'full-single') {
-        return { variant: resolved.variant, paths: FULL_ASSETS[resolved.variant] }
-    }
-    return { variant: resolved.variant, paths: [] }
+    if (resolved.variant === 'full')
+        return '/stockfish/full/stockfish.wasm'
+    if (resolved.variant === 'full-single')
+        return '/stockfish/full-single/stockfish.wasm'
+    return null
 }
 
-/** Register the Stockfish service worker (idempotent). */
-function ensureStockfishServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator))
-        return Promise.resolve(null)
-
-    if (!registrationPromise) {
-        registrationPromise = navigator.serviceWorker
-            .register('/stockfish/sw.js', { scope: '/stockfish/' })
-            .then(async (reg) => {
-                await navigator.serviceWorker.ready
-                return reg
-            })
-            .catch((err) => {
-                console.warn('[stockfish] service worker registration failed', err)
-                registrationPromise = null
-                return null
-            })
+/** Remove broken stockfish service workers / caches from earlier implementations. */
+function cleanupLegacyStockfishServiceWorkers(): Promise<void> {
+    if (typeof window === 'undefined')
+        return Promise.resolve()
+    if (!cleanupPromise) {
+        cleanupPromise = (async () => {
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations()
+                    await Promise.all(
+                        regs
+                            .filter((reg) => {
+                                const url = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || ''
+                                return url.includes('/stockfish/')
+                            })
+                            .map((reg) => reg.unregister())
+                    )
+                }
+                if (typeof caches !== 'undefined') {
+                    const keys = await caches.keys()
+                    await Promise.all(
+                        keys
+                            .filter((key) => key.startsWith('oggyp-stockfish-'))
+                            .map((key) => caches.delete(key))
+                    )
+                }
+            } catch (err) {
+                console.warn('[stockfish] legacy SW cleanup failed', err)
+            }
+        })()
     }
-    return registrationPromise
-}
-
-async function arePathsCached(paths: string[]): Promise<boolean> {
-    if (!paths.length || typeof caches === 'undefined')
-        return false
-    try {
-        const cache = await caches.open(STOCKFISH_CACHE_NAME)
-        const results = await Promise.all(paths.map((path) => cache.match(path)))
-        return results.every(Boolean)
-    } catch {
-        return false
-    }
-}
-
-/** True if the full engine for this device is already in Cache Storage. */
-async function isFullStockfishCached(): Promise<boolean> {
-    const { paths } = fullAssetsForCurrentDevice()
-    return arePathsCached(paths)
+    return cleanupPromise
 }
 
 /**
- * Ensure the SW is controlling /stockfish/ and report whether the full
- * engine is already cached (so the UI can skip "downloading" messaging).
+ * Prepare for full-engine load: clear legacy SW so it can't serve empty WASM,
+ * then let the engine worker fetch the file (browser HTTP cache keeps it after).
  */
-async function prepareFullStockfishCache(): Promise<{ cached: boolean }> {
-    await ensureStockfishServiceWorker()
-    const cached = await isFullStockfishCached()
-    return { cached }
+async function prepareFullStockfishCache(
+    _onProgress?: (percent: number) => void
+): Promise<{ cached: boolean }> {
+    await cleanupLegacyStockfishServiceWorkers()
+
+    // Best-effort: if the browser already has the wasm in HTTP cache, a HEAD
+    // (or quick GET of 0 bytes via range) isn't reliable cross-browser, so we
+    // just report "not pre-cached" and show worker download progress instead.
+    return { cached: false }
+}
+
+async function isFullStockfishCached(): Promise<boolean> {
+    return false
 }
 
 export {
-    ensureStockfishServiceWorker,
-    isFullStockfishCached,
+    cleanupLegacyStockfishServiceWorkers,
     prepareFullStockfishCache,
-    fullAssetsForCurrentDevice,
+    isFullStockfishCached,
+    fullWasmPathForCurrentDevice,
 }
+
+// Keep type-only re-export surface quiet for unused variant helper
+export type { StockfishVariant }

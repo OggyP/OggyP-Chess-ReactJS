@@ -222,36 +222,14 @@ class Game extends React.Component<GameProps, GameState> {
 
         const multiPV = this.props.versusStockfish && !this.state.game.gameOver ? 1 : 3
 
-        // Register SW + check Cache Storage so repeat visits don't re-download ~95MB.
-        prepareFullStockfishCache().then(({ cached }) => {
+        // Unregister legacy SWs that could serve empty WASM, then load via the
+        // engine worker. Repeat visits hit the browser HTTP cache (immutable headers).
+        this.setState({ engineDownloadProgress: 0 })
+        prepareFullStockfishCache().then(() => {
             if (!this.state.preferFullEngine) return
             if (this.pendingFullEngine) return
             if (this.activeEngineVariant && isFullVariant(this.activeEngineVariant)) return
 
-            if (cached) {
-                this.setState({ engineDownloadProgress: null })
-            } else {
-                this.setState({ engineDownloadProgress: 0 })
-            }
-
-            const { engine, variant, label } = this.spawnEngine('full', multiPV, {
-                trackProgress: !cached,
-                onReady: (readyEngine) => {
-                    if (!this.state.preferFullEngine) {
-                        readyEngine.quit()
-                        this.pendingFullEngine = null
-                        return
-                    }
-                    this.pendingFullEngine = null
-                    this.activateEngine(readyEngine, variant, label)
-                },
-            })
-            this.pendingFullEngine = engine
-        }).catch((err) => {
-            console.warn('[stockfish] cache prepare failed, loading anyway', err)
-            if (!this.state.preferFullEngine) return
-            if (this.pendingFullEngine) return
-            this.setState({ engineDownloadProgress: 0 })
             const { engine, variant, label } = this.spawnEngine('full', multiPV, {
                 trackProgress: true,
                 onReady: (readyEngine) => {
@@ -265,6 +243,11 @@ class Game extends React.Component<GameProps, GameState> {
                 },
             })
             this.pendingFullEngine = engine
+        }).catch((err) => {
+            console.warn('[stockfish] failed to prepare full engine', err)
+            if (!this.state.preferFullEngine) return
+            this.setState({ engineDownloadProgress: null, preferFullEngine: false })
+            setPreferFullStockfish(false)
         })
     }
 
