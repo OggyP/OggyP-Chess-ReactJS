@@ -9,6 +9,8 @@ function EngineInfo(props: {
   showMoves: boolean,
   showEval: boolean,
   mobile: boolean
+  engineLabel?: string
+  downloadProgress?: number | null
 }) {
   const [info, setInfo] = useState<{
     info: any,
@@ -61,6 +63,15 @@ function EngineInfo(props: {
     };
   }, [PVlist]);
 
+  const versionLine = props.engineLabel ? (
+    <p className="engine-version">
+      {props.engineLabel}
+      {typeof props.downloadProgress === 'number'
+        ? ` · Full ${props.downloadProgress}%`
+        : null}
+    </p>
+  ) : null
+
   if (info) {
     if (!props.mobile) {
     if (info.eval !== 'Checkmate' && info.eval !== 'Stalemate') {
@@ -80,6 +91,7 @@ function EngineInfo(props: {
         </div>
         : null
       return <div className='engine-info'>
+        {versionLine}
         <h3>Depth: {info.info.depth}{(props.showEval) ? ' | Eval: ' + info.eval : null}</h3>
         <p>Nodes: {info.info.nodes} | Nps: {info.info.nps}</p>
         {movesList}
@@ -87,6 +99,7 @@ function EngineInfo(props: {
     }
     else
       return <div className='engine-info'>
+        {versionLine}
         <h3>{info.eval}</h3>
       </div>
     } else {
@@ -94,18 +107,21 @@ function EngineInfo(props: {
             const movesList = (props.showMoves && PVlist[0]) ?
             <span className='pv'>{PVlist[0].pv}</span> : null
             return <div className='engine-info'>
+              {versionLine}
               <div className='mobile-engline-info'>{(props.showEval) ? <div className='eval-engine-info'><strong>Eval: {info.eval}</strong></div> : null}{(props.showEval) ? "\t\t" : null}Depth: {info.info.depth} {movesList}</div>
             </div>
           }
           else
             return <div className='engine-info'>
+              {versionLine}
               <p className='mobile-engline-info'><strong>{info.eval}</strong></p>
             </div>
     }
   }
   else
     return <div className='engine-info'>
-      <h3>Loading Engine</h3>
+      {versionLine}
+      <h3>{typeof props.downloadProgress === 'number' ? 'Downloading…' : 'Loading Engine'}</h3>
     </div>
 }
 

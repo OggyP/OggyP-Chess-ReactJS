@@ -3,28 +3,98 @@ import { Teams, Vector, PieceCodes } from "./chessLogic/types";
 
 const debugEngine = false;
 
+export interface UCIengineOptions {
+    path: string
+    initConfigCommands?: string[]
+    multiPV?: number
+    label?: string
+    onProgress?: (percent: number) => void
+    onReady?: () => void
+}
+
 class UCIengine {
     private _engine: Worker;
     private _isready: boolean;
     private _analyseFromTeam: Teams = "white";
     private _infoBuffer: any[] = []
+    private _progressChannel: MessageChannel | null = null
+    private _terminated = false
     multiPV: number;
+    label: string
     loadedNNUE: boolean = false
     _commandsQueue: string[];
-    constructor(path: string, initConfigCommands: string[] = [], multiPV: number = 1) {
-        this.multiPV = multiPV
-        this._engine = new Worker(path)
+
+    constructor(pathOrOptions: string | UCIengineOptions, initConfigCommands: string[] = [], multiPV: number = 1) {
+        const options: UCIengineOptions = typeof pathOrOptions === 'string'
+            ? { path: pathOrOptions, initConfigCommands, multiPV }
+            : pathOrOptions
+
+        this.multiPV = options.multiPV ?? 1
+        this.label = options.label || 'Stockfish'
+        this._commandsQueue = [...(options.initConfigCommands || [])]
+        this._isready = false
+        this._engine = new Worker(options.path)
         this._engine.onmessage = (event) => {
             this.onMessage(event)
         }
-        this._isready = false;
-        this._commandsQueue = initConfigCommands
-        this._engine.postMessage('uci')
-        this._engine.postMessage('setoption name MultiPV value ' + multiPV)
-        if (this.loadedNNUE) {
-            this.loadNNUE()
+
+        if (options.onProgress && typeof MessageChannel === 'function') {
+            this.setupDownloadProgress(options.onProgress)
         }
-        window.onbeforeunload = () => { this._engine.postMessage('quit') }
+
+        this._engine.postMessage('uci')
+        this._engine.postMessage('setoption name MultiPV value ' + this.multiPV)
+
+        if (options.onReady) {
+            const previousOnReady = options.onReady
+            // Fire once the first readyok arrives after startup commands flush.
+            const originalQueue = this._commandsQueue.slice()
+            this._commandsQueue = [
+                ...originalQueue,
+                'isready',
+            ]
+            const checkReady = () => {
+                if (this._terminated) return
+                previousOnReady()
+            }
+            // Hook via a one-shot flag after isready completes — handled in onMessage.
+            ;(this as any)._onReadyOnce = checkReady
+        }
+
+        window.addEventListener('beforeunload', this._onBeforeUnload)
+    }
+
+    private _onBeforeUnload = () => {
+        this.quit()
+    }
+
+    private setupDownloadProgress(onProgress: (percent: number) => void) {
+        this._progressChannel = new MessageChannel()
+        this._progressChannel.port1.onmessage = (ev) => {
+            const data = ev.data || {}
+            if (typeof data.percent === 'number') {
+                onProgress(Math.max(0, Math.min(100, Math.round(data.percent * 100))))
+            }
+            if (data.percent === 1) {
+                try { this._progressChannel?.port1.close() } catch { /* ignore */ }
+                this._progressChannel = null
+            }
+        }
+
+        this._engine.postMessage('setoption name CanOutputEngineDownloadProgress')
+        const handleProgressSupport = (e: MessageEvent) => {
+            if (e.data === 'info WillOutputEngineDownloadProgress') {
+                e.stopImmediatePropagation?.()
+                if (this._progressChannel) {
+                    this._engine.postMessage(
+                        { progressPort: this._progressChannel.port2 },
+                        [this._progressChannel.port2]
+                    )
+                }
+                this._engine.removeEventListener('message', handleProgressSupport)
+            }
+        }
+        this._engine.addEventListener('message', handleProgressSupport)
     }
 
     go(startingFEN: string, longNotationMoves: string[], type: string) {
@@ -72,6 +142,7 @@ class UCIengine {
     }
 
     addToQueueAndSend(cmd: string) {
+        if (this._terminated) return
         this._commandsQueue.push(cmd)
         if (this._isready) {
             const cmdToSend = this._commandsQueue.shift() as string
@@ -83,6 +154,7 @@ class UCIengine {
     }
 
     sendCmd(cmd: string) {
+        if (this._terminated) return
         if (this._isready) {
             this._engine.postMessage(cmd);
             if (debugEngine) console.log("SendD " + cmd)
@@ -99,6 +171,22 @@ class UCIengine {
         this.loadedNNUE = true
     }
 
+    quit() {
+        if (this._terminated) return
+        this._terminated = true
+        window.removeEventListener('beforeunload', this._onBeforeUnload)
+        try {
+            this._engine.postMessage('quit')
+        } catch { /* ignore */ }
+        try {
+            this._engine.terminate()
+        } catch { /* ignore */ }
+        try {
+            this._progressChannel?.port1.close()
+        } catch { /* ignore */ }
+        this._progressChannel = null
+    }
+
     onMessage(event: string | { data: string }) {
         let line: string
         if (event && typeof event === "object") {
@@ -106,6 +194,9 @@ class UCIengine {
         } else {
             line = event;
         }
+
+        // Ignore non-string worker messages (e.g. progress port handshake objects)
+        if (typeof line !== 'string') return
 
         if (debugEngine) console.log(`Receive: ${line}`)
 
@@ -169,6 +260,11 @@ class UCIengine {
         if (['uciok', 'readyok'].includes(line)) {
             this._infoBuffer = [] // clear info buffer
             this._isready = true
+            if (line === 'readyok' && (this as any)._onReadyOnce) {
+                const cb = (this as any)._onReadyOnce
+                ;(this as any)._onReadyOnce = null
+                cb()
+            }
         }
 
         while (this._commandsQueue.length > 0 && this._isready) {

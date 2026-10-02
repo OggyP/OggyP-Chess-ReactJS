@@ -16,6 +16,15 @@ import { userInfo } from './helpers/verifyToken';
 import displayRating from './helpers/displayRating'
 import { gameModeNamesType } from './helpers/gameModes';
 import { normalizePlayerInfo } from './helpers/playerName'
+import {
+    getPreferFullStockfish,
+    setPreferFullStockfish,
+    resolveStockfish,
+    isFullVariant,
+    StockfishTier,
+    StockfishVariant,
+} from './helpers/stockfishPaths'
+import { prepareFullStockfishCache } from './helpers/stockfishCache'
 
 import './css/index.scss'
 import './css/chess.scss'
@@ -107,6 +116,9 @@ interface GameState {
     spectators: userInfo[],
     engineDisplayToggle: boolean,
     chatMessages: ChatMessage[]
+    engineLabel: string
+    engineDownloadProgress: number | null
+    preferFullEngine: boolean
 }
 
 interface GameProps {
@@ -141,6 +153,8 @@ interface GameProps {
 
 class Game extends React.Component<GameProps, GameState> {
     engine: UCIengine | null = null
+    private pendingFullEngine: UCIengine | null = null
+    private activeEngineVariant: StockfishVariant | null = null
     getDraggingPiece: Function | undefined
     clearCustomSVGS: Function | undefined
     engineMoveType = 'movetime 60000'
@@ -149,10 +163,141 @@ class Game extends React.Component<GameProps, GameState> {
     static noStockfishGameModes = ['fourkings']
     static adminUsers = ['OggyP'] // Basically all users that have stockfish always enabled
 
+    private getEngineInitCommands(analyseMode: boolean): string[] {
+        const commands = [
+            "isready",
+            "ucinewgame"
+        ]
+        if (analyseMode)
+            commands.unshift('setoption name UCI_AnalyseMode value true')
+        if (this.props.mode === '960')
+            commands.unshift('setoption name UCI_Chess960 value true')
+        return commands
+    }
+
+    private spawnEngine(tier: StockfishTier, multiPV: number, opts?: {
+        trackProgress?: boolean
+        onReady?: (engine: UCIengine) => void
+    }): { engine: UCIengine; variant: StockfishVariant; label: string } {
+        const resolved = resolveStockfish(tier, iOS())
+        console.info("Using Stockfish: ", resolved.path, resolved.label)
+        let engine!: UCIengine
+        engine = new UCIengine({
+            path: resolved.path,
+            initConfigCommands: this.getEngineInitCommands(!this.props.versusStockfish || !!this.state?.game?.gameOver),
+            multiPV,
+            label: resolved.label,
+            onProgress: opts?.trackProgress
+                ? (percent) => {
+                    if (!this.state.preferFullEngine) return
+                    this.setState({ engineDownloadProgress: percent })
+                }
+                : undefined,
+            onReady: opts?.onReady
+                ? () => opts.onReady!(engine)
+                : undefined,
+        })
+        return { engine, variant: resolved.variant, label: resolved.label }
+    }
+
+    private activateEngine(engine: UCIengine, variant: StockfishVariant, label: string) {
+        if (this.engine && this.engine !== engine)
+            this.engine.quit()
+        this.engine = engine
+        this.activeEngineVariant = variant
+        if (this.props.versusStockfish && !this.state.game.gameOver)
+            this.engineMoveType = this.engine.setDifficulty(this.props.versusStockfish.skill, this.props.versusStockfish.fastGame)
+        this.setState({
+            engineLabel: label,
+            engineDownloadProgress: null,
+            loadedNNUE: engine.loadedNNUE,
+        })
+        if (this.state.engineDisplayToggle && (!this.props.versusStockfish || this.state.game.gameOver || !!this.props.versusStockfish))
+            this.engine.go(this.state.game.startingFEN, this.state.game.getMovesTo(this.state.viewingMove), this.engineMoveType)
+    }
+
+    private startFullEngineDownload() {
+        if (this.pendingFullEngine) return
+        if (this.activeEngineVariant && isFullVariant(this.activeEngineVariant)) return
+
+        const multiPV = this.props.versusStockfish && !this.state.game.gameOver ? 1 : 3
+
+        // Register SW + check Cache Storage so repeat visits don't re-download ~95MB.
+        prepareFullStockfishCache().then(({ cached }) => {
+            if (!this.state.preferFullEngine) return
+            if (this.pendingFullEngine) return
+            if (this.activeEngineVariant && isFullVariant(this.activeEngineVariant)) return
+
+            if (cached) {
+                this.setState({ engineDownloadProgress: null })
+            } else {
+                this.setState({ engineDownloadProgress: 0 })
+            }
+
+            const { engine, variant, label } = this.spawnEngine('full', multiPV, {
+                trackProgress: !cached,
+                onReady: (readyEngine) => {
+                    if (!this.state.preferFullEngine) {
+                        readyEngine.quit()
+                        this.pendingFullEngine = null
+                        return
+                    }
+                    this.pendingFullEngine = null
+                    this.activateEngine(readyEngine, variant, label)
+                },
+            })
+            this.pendingFullEngine = engine
+        }).catch((err) => {
+            console.warn('[stockfish] cache prepare failed, loading anyway', err)
+            if (!this.state.preferFullEngine) return
+            if (this.pendingFullEngine) return
+            this.setState({ engineDownloadProgress: 0 })
+            const { engine, variant, label } = this.spawnEngine('full', multiPV, {
+                trackProgress: true,
+                onReady: (readyEngine) => {
+                    if (!this.state.preferFullEngine) {
+                        readyEngine.quit()
+                        this.pendingFullEngine = null
+                        return
+                    }
+                    this.pendingFullEngine = null
+                    this.activateEngine(readyEngine, variant, label)
+                },
+            })
+            this.pendingFullEngine = engine
+        })
+    }
+
+    private switchToLiteEngine() {
+        if (this.pendingFullEngine) {
+            this.pendingFullEngine.quit()
+            this.pendingFullEngine = null
+        }
+        if (this.activeEngineVariant && !isFullVariant(this.activeEngineVariant) && this.engine) {
+            this.setState({ engineDownloadProgress: null })
+            return
+        }
+        const multiPV = this.props.versusStockfish && !this.state.game.gameOver ? 1 : 3
+        const { engine, variant, label } = this.spawnEngine('lite', multiPV)
+        this.activateEngine(engine, variant, label)
+        this.setState({ engineDownloadProgress: null })
+    }
+
+    private setPreferFullEngine(enabled: boolean) {
+        setPreferFullStockfish(enabled)
+        this.setState({ preferFullEngine: enabled })
+        if (enabled)
+            this.startFullEngineDownload()
+        else
+            this.switchToLiteEngine()
+    }
+
     constructor(props: GameProps) {
         super(props)
         this.gameType = getChessGame(this.props.mode)
 
+        const preferFullEngine = getPreferFullStockfish()
+        let engineLabel = ''
         if (!Game.noStockfishGameModes.includes(props.mode)
             && (props.engineEnabled.atBeginning ||
                 (
@@ -160,7 +305,9 @@ class Game extends React.Component<GameProps, GameState> {
                     || (props.players && props.team === 'black' && Game.adminUsers.includes(props.players.black.username))
                 ))
         ) {
-            let startingCommands = [
+            // Always start on lite so the board is usable immediately.
+            const resolved = resolveStockfish('lite', iOS())
+            const startingCommands = [
                 "isready",
                 "ucinewgame"
             ]
@@ -169,12 +316,15 @@ class Game extends React.Component<GameProps, GameState> {
             if (props.mode === '960')
                 startingCommands.unshift('setoption name UCI_Chess960 value true')
 
-            var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
-
-            const stockfishVersion = ("undefined" != typeof SharedArrayBuffer && !iOS()) ? '/stockfish/stockfish.js' : `/badStockfish/${wasmSupported ? 'stockfish.js' : 'stockfish.js'}`
-            console.info("Using Stockfish: ", stockfishVersion)
-
-            this.engine = new UCIengine(stockfishVersion, startingCommands, (props.versusStockfish) ? 1 : 3)
+            this.engine = new UCIengine({
+                path: resolved.path,
+                initConfigCommands: startingCommands,
+                multiPV: (props.versusStockfish) ? 1 : 3,
+                label: resolved.label,
+            })
+            this.activeEngineVariant = resolved.variant
+            engineLabel = resolved.label
+            console.info("Using Stockfish: ", resolved.path, resolved.label)
             if (props.versusStockfish)
                 this.engineMoveType = this.engine.setDifficulty(props.versusStockfish.skill, props.versusStockfish.fastGame)
         }
@@ -257,7 +407,10 @@ class Game extends React.Component<GameProps, GameState> {
             resetGameFEN: "",
             spectators: [],
             engineDisplayToggle: true,
-            chatMessages: props.initialChatMessages || []
+            chatMessages: props.initialChatMessages || [],
+            engineLabel,
+            engineDownloadProgress: null,
+            preferFullEngine,
         }
         this.boardMoveChanged((this.props.multiplayerWs) ? game.getMoveCount() : 0, true, true)
         if (props.pgnAndFenChange) this.updateURLtoHavePGN()
@@ -286,11 +439,19 @@ class Game extends React.Component<GameProps, GameState> {
             && !Game.noStockfishGameModes.includes(this.props.mode)
             && (this.state.game.gameOver && (!this.engine || this.engine.multiPV === 1))) {
             this.engineMoveType = 'movetime 60000'
-            this.engine = new UCIengine('/stockfish/stockfish.js', [
-                'setoption name UCI_AnalyseMode value true',
-                "isready",
-                "ucinewgame"
-            ], 3)
+            const preferFull = this.state.preferFullEngine
+            const alreadyFull = !!(this.activeEngineVariant && isFullVariant(this.activeEngineVariant))
+            const tier: StockfishTier = (preferFull && alreadyFull) ? 'full' : 'lite'
+
+            // Keep an in-flight full download; only replace the active analysis engine.
+            const { engine, variant, label } = this.spawnEngine(tier, 3)
+            if (this.engine)
+                this.engine.quit()
+            this.engine = engine
+            this.activeEngineVariant = variant
+            this.setState({ engineLabel: label })
+            if (preferFull && tier === 'lite')
+                this.startFullEngineDownload()
         }
 
         if (this.engine && this.state.engineDisplayToggle)
@@ -723,6 +884,8 @@ class Game extends React.Component<GameProps, GameState> {
         window.addEventListener("keydown", this.handleKeyPressed);
         if (this.props.versusStockfish)
             document.addEventListener("bestmove", this.doEngineMove);
+        if (this.state.preferFullEngine && this.engine)
+            this.startFullEngineDownload()
     }
 
     componentWillUnmount() {
@@ -731,6 +894,14 @@ class Game extends React.Component<GameProps, GameState> {
         window.removeEventListener("keydown", this.handleKeyPressed);
         if (this.props.versusStockfish)
             document.removeEventListener("bestmove", this.doEngineMove);
+        if (this.pendingFullEngine) {
+            this.pendingFullEngine.quit()
+            this.pendingFullEngine = null
+        }
+        if (this.engine) {
+            this.engine.quit()
+            this.engine = null
+        }
     }
 
     render() {
@@ -761,6 +932,8 @@ class Game extends React.Component<GameProps, GameState> {
                 showMoves={(!this.props.versusStockfish || !!this.state.game.gameOver)}
                 showEval={(!this.props.versusStockfish || !!this.state.game.gameOver)}
                 mobile={this.state.onMobile}
+                engineLabel={this.state.engineLabel}
+                downloadProgress={this.state.engineDownloadProgress}
             />
 
         let players: {
@@ -972,6 +1145,20 @@ class Game extends React.Component<GameProps, GameState> {
                                 }} />
                                 <span className="slider round"></span>
                             </label>
+                            <p>Full Stockfish (~95MB)</p>
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={this.state.preferFullEngine}
+                                    onChange={() => this.setPreferFullEngine(!this.state.preferFullEngine)}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                            {typeof this.state.engineDownloadProgress === 'number' ? (
+                                <p className="engine-download-status">Downloading full engine… {this.state.engineDownloadProgress}%</p>
+                            ) : (this.state.preferFullEngine && !(this.activeEngineVariant && isFullVariant(this.activeEngineVariant))) ? (
+                                <p className="engine-download-status">Loading full engine…</p>
+                            ) : null}
                         </div> : null
                 }
             </div>
