@@ -4,6 +4,7 @@ import { convertToPosition, convertToChessNotation } from './functions';
 import { Pawn } from './pieces';
 import { Vector, Teams, PieceCodes } from './types'
 import genBoard from './startingPosition'
+import { parsePlayerName } from '../../helpers/playerName'
 
 async function getJSON(path: string, callback: Function) {
     return callback(await fetch(path).then(r => r.json()));
@@ -40,6 +41,7 @@ interface History {
 interface PlayerInfo {
     username: string
     rating: number
+    title?: string
 }
 
 interface Opening {
@@ -341,13 +343,17 @@ class Game {
                 white: (this.metaValues.has('WhiteElo')) ? Number(this.metaValues.get('WhiteElo')) : 0,
                 black: (this.metaValues.has('BlackElo')) ? Number(this.metaValues.get('BlackElo')) : 0
             }
+            const white = parsePlayerName(this.metaValues.get('White') as string)
+            const black = parsePlayerName(this.metaValues.get('Black') as string)
             return {
                 white: {
-                    username: this.metaValues.get('White') as string,
+                    username: white.username,
+                    title: white.title,
                     rating: ratings.white
                 },
                 black: {
-                    username: this.metaValues.get('Black') as string,
+                    username: black.username,
+                    title: black.title,
                     rating: ratings.black
                 }
             }

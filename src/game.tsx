@@ -15,6 +15,7 @@ import iOS from './helpers/isIOS'
 import { userInfo } from './helpers/verifyToken';
 import displayRating from './helpers/displayRating'
 import { gameModeNamesType } from './helpers/gameModes';
+import { normalizePlayerInfo } from './helpers/playerName'
 
 import './css/index.scss'
 import './css/chess.scss'
@@ -241,7 +242,12 @@ class Game extends React.Component<GameProps, GameState> {
             promotionSelector: null,
             boxSize: boxSize,
             moveRightSection: false,
-            players: (props.players || playerInfo),
+            players: (props.players || playerInfo)
+                ? {
+                    white: normalizePlayerInfo((props.players || playerInfo)!.white),
+                    black: normalizePlayerInfo((props.players || playerInfo)!.black),
+                }
+                : null,
             premoveBoard: null,
             premoves: [],
             onMobile: onMobile,
@@ -779,6 +785,7 @@ class Game extends React.Component<GameProps, GameState> {
                 title={this.state.players?.[team].title}
                 username={this.state.players?.[team].username || team.charAt(0).toUpperCase() + team.slice(1)}
                 rating={(this.state.players) ? displayRating(this.state.players[team]) : undefined}
+                ratingChange={this.state.players?.[team].ratingChange}
                 timer={timers?.[team]}
                 material={cancelledOutTakenMaterial[team]}
                 isTurn={(currentTurn === team)}

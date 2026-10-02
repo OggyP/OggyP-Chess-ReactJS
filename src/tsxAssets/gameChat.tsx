@@ -1,4 +1,5 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { parsePlayerName } from '../helpers/playerName';
 
 export interface ChatMessage {
     id: number
@@ -16,13 +17,6 @@ interface GameChatProps {
     disabled?: boolean
     readOnly?: boolean
     emptyText?: string
-}
-
-function displayName(user: string) {
-    const parts = user.split('|')
-    if (parts.length > 1)
-        return { title: parts[0], username: parts.slice(1).join('|') }
-    return { title: undefined, username: user }
 }
 
 function formatMoveLabel(moveNum: number) {
@@ -59,7 +53,7 @@ function GameChat(props: GameChatProps) {
                     <p className="game-chat-empty">{props.emptyText || 'No messages yet'}</p>
                 ) : (
                     props.messages.map((msg) => {
-                        const name = displayName(msg.user)
+                        const name = parsePlayerName(msg.user)
                         return (
                             <div key={msg.id} className={`game-chat-msg role-${msg.role}`}>
                                 <div className="game-chat-body">

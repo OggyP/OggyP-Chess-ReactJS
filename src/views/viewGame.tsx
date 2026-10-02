@@ -11,10 +11,18 @@ import { GameModes } from '../chessLogic/types';
 import Loading from './loading';
 import { apiURL } from '../settings';
 import { ChatMessage } from '../tsxAssets/gameChat';
+import { parsePlayerName } from '../helpers/playerName';
 
 interface ViewGameProps {
     gameId: string
     viewAs?: string | null
+}
+
+interface PlayerInfo {
+    username: string
+    rating: number
+    title?: string
+    ratingChange?: number
 }
 
 interface ViewGameState {
@@ -23,6 +31,20 @@ interface ViewGameState {
     termination: string
     gameMode: string | undefined
     messages: ChatMessage[]
+    players: {
+        white: PlayerInfo
+        black: PlayerInfo
+    } | null
+}
+
+function playerFromApi(rawName: string, rating?: number, ratingChange?: number): PlayerInfo {
+    const { title, username } = parsePlayerName(rawName)
+    return {
+        title,
+        username,
+        rating: typeof rating === 'number' ? rating : 0,
+        ratingChange: typeof ratingChange === 'number' ? ratingChange : undefined,
+    }
 }
 
 class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
@@ -42,7 +64,8 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
             error: null,
             termination: 'Unknown',
             gameMode: undefined,
-            messages: []
+            messages: [],
+            players: null,
         }
     }
 
@@ -60,7 +83,11 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
                     PGN: data.pgn,
                     termination: data.gameOverReason,
                     gameMode: data.gameMode,
-                    messages: Array.isArray(data.messages) ? data.messages : []
+                    messages: Array.isArray(data.messages) ? data.messages : [],
+                    players: {
+                        white: playerFromApi(data.white, data.whiteRating, data.whiteRatingChange),
+                        black: playerFromApi(data.black, data.blackRating, data.blackRatingChange),
+                    },
                 })
             } catch {
                 this.setState({
@@ -95,6 +122,7 @@ class ViewGame extends React.Component<ViewGameProps, ViewGameState>{
                 allowMoving={false}
                 allowPreMoves={false}
                 mode={this.state.gameMode as GameModes}
+                players={this.state.players || undefined}
                 engineEnabled={{
                     atBeginning: true,
                     atEnd: true
