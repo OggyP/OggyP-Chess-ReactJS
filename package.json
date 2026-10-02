@@ -9,14 +9,14 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "next": "^16.3.6",
+        "next": "^16.3.8",
         "react": "^19.3.0",
         "react-dom": "^19.3.0",
         "rxjs": "^7.8.2",
-        "sass": "^1.105.0"
+        "sass": "^1.105.1"
     },
     "devDependencies": {
-        "@types/node": "^26.6.2",
+        "@types/node": "^26.6.4",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "typescript": "^7.0.2"
